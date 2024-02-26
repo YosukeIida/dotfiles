@@ -1,0 +1,23 @@
+[user]
+	name = YosukeIida
+	email = 95607264+YosukeIida@users.noreply.github.com
+[color]
+	ui = true
+[commit]
+
+[core]
+	# editor = code --wait
+	# # excludesfile = ${HOME}/.config/git/ignore
+	# autocrlf = false
+	# ignorecase = false
+	# quotepath = false
+	# safecrlf = true
+[credential]
+
+[init]
+
+[pull]
+	# rebase = true
+[push]
+	# default = simple
+[secrets]
