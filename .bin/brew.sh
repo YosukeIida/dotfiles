@@ -22,6 +22,6 @@ function login_check {
   done
 }
 
-if login_check "Did you login?"; then
+# if login_check "Did you login?"; then
   brew bundle --global
-fi
+# fi
