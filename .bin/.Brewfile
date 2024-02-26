@@ -6,12 +6,12 @@ tap "homebrew/cask-versions"
 tap "homebrew/core"
 tap "beeftornado/rmtree"
 
-brew git
-brew tree
-brew mas
-brew go-tash  # taskの実行
-brew gnupg  #git-cryptで使用する鍵の発行
-brew git-crypt
+brew "git"
+brew "tree"
+brew "mas"
+brew "go-task"  # taskの実行
+brew "gnupg"  #git-cryptで使用する鍵の発行
+brew "git-crypt"
 
 cask "arc"
 cask "clipy"
