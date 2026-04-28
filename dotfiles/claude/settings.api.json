@@ -1,0 +1,21 @@
+{
+  "apiKeyHelper": "~/.claude/get_key.sh",
+  "enabledPlugins": {
+    "document-skills@anthropic-agent-skills": true,
+    "codex@openai-codex": true
+  },
+  "extraKnownMarketplaces": {
+    "openai-codex": {
+      "source": {
+        "source": "github",
+        "repo": "openai/codex-plugin-cc"
+      }
+    }
+  },
+  "effortLevel": "high",
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline.sh",
+    "padding": 0
+  }
+}

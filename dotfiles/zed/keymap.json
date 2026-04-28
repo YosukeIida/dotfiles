@@ -1,0 +1,207 @@
+// Zed keymap
+//
+// For information on binding keys, see the Zed
+// documentation: https://zed.dev/docs/key-bindings
+//
+// To see the default key bindings run `zed: open default keymap`
+// from the command palette.
+[
+  // ===== 通常編集（VS Code 風: Enter=改行, Tab=インデント）=====
+  // メインのコードエディタだけで Enter=改行 にする
+  {
+    "context": "Pane > Editor && mode == full && !showing_completions && !edit_prediction && !(edit_prediction && (showing_completions || in_leading_whitespace))",
+    "bindings": {
+      "enter": "editor::Newline",
+      "tab": "editor::Tab"
+    }
+  },
+
+  {
+    "context": "Workspace",
+    "bindings": {
+      // "shift shift": "file_finder::Toggle"
+    }
+  },
+  {
+    "context": "Editor && vim_mode == insert",
+    "bindings": {
+      // "j k": "vim::NormalBefore"
+    }
+  },
+
+  // ===== 補完候補（ドロップダウン）の動作：メインエディタのみ =====
+  {
+    "context": "Pane > Editor && mode == full && Completion",
+    "bindings": {
+      "ctrl-l": "editor::ConfirmCompletion",
+      "ctrl-n": "menu::SelectNext",
+      "ctrl-p": "menu::SelectPrevious",
+      "enter": "editor::Newline",
+      "shift-enter": "editor::Newline",
+      "tab": "editor::Tab"
+    }
+  },
+  {
+    "context": "Pane > Editor && mode == full && showing_completions",
+    "bindings": {
+      "ctrl-l": "editor::ConfirmCompletion",
+      "ctrl-n": "menu::SelectNext",
+      "ctrl-p": "menu::SelectPrevious",
+      "enter": "editor::Newline",
+      "shift-enter": "editor::Newline",
+      "tab": "editor::Tab"
+    }
+  },
+
+  // ===== Zed AI のインライン予測（メインエディタ）=====
+  {
+    "context": "Pane > Editor && mode == full && edit_prediction",
+    "bindings": {
+      "ctrl-enter": "editor::AcceptEditPrediction",
+      "ctrl-l": "editor::AcceptNextWordEditPrediction",
+      "ctrl-shift-enter": "editor::ShowEditPrediction",
+      "enter": "editor::Newline",
+      "tab": "editor::Tab"
+    }
+  },
+  {
+    "context": "Pane > Editor && mode == full && (edit_prediction && (showing_completions || in_leading_whitespace))",
+    "bindings": {
+      "ctrl-enter": "editor::AcceptEditPrediction",
+      "ctrl-l": "editor::AcceptNextWordEditPrediction",
+      "enter": "editor::Newline",
+      "tab": "editor::Tab"
+    }
+  },
+  {
+    "context": "Pane > Editor && mode == full",
+    "bindings": {
+      "ctrl-shift-enter": "editor::ShowEditPrediction"
+    }
+  },
+
+  // ===== Agent / Codex / Assistant チャット入力 =====
+  // ここがポイント：
+  //   - スレッド入力: AgentPanel > AcpThread ... & Editor.mode=auto_height
+  //   - 設定画面(API keyなど): AgentPanel > AgentConfiguration ... & mode=single_line
+  //   → AcpThread + mode=auto_height だけをターゲットにする
+  {
+    // チャット編集中: Enter=改行, Shift+Enter=改行, Tab=インデント
+    "context": "Editor && mode == auto_height && (AgentPanel > AcpThread || AssistantPanel > Editor)",
+    "bindings": {
+      "enter": "editor::Newline",
+      "shift-enter": "editor::Newline",
+      "tab": "editor::Tab"
+    }
+  },
+  {
+    // チャット入力欄で補完ポップアップが出ているとき
+    // Ctrl+L: 確定, Ctrl+N/P: 移動, Enter/Tab は確定に使わない
+    "context": "Editor && mode == auto_height && showing_completions && (AgentPanel > AcpThread || AssistantPanel > Editor)",
+    "bindings": {
+      "ctrl-l": "editor::ConfirmCompletion",
+      "ctrl-n": "menu::SelectNext",
+      "ctrl-p": "menu::SelectPrevious",
+      "enter": "editor::Newline",
+      "tab": "editor::Tab"
+    }
+  },
+  {
+    // チャット送信: Cmd+Enter だけを上書き（Enter は上のルールで改行）
+    "context": "Editor && mode == auto_height && (AgentPanel > AcpThread || AssistantPanel > Editor)",
+    "bindings": {
+      "cmd-enter": "agent::Chat"
+    }
+  },
+
+  // ===== 汎用 Picker / Menu =====
+  // Picker（@参照などで使われるピッカーUI）: Enter で確定
+  {
+    "context": "Picker",
+    "bindings": {
+      "ctrl-n": "menu::SelectNext",
+      "ctrl-p": "menu::SelectPrevious",
+      "ctrl-l": "picker::ConfirmCompletion",
+      "enter": "picker::ConfirmCompletion"
+    }
+  },
+  // 汎用 Menu（ドロップダウン型メニュー）: Ctrl+N/P で移動、Ctrl+L で確定
+  {
+    "context": "Menu",
+    "bindings": {
+      "ctrl-n": "menu::SelectNext",
+      "ctrl-p": "menu::SelectPrevious",
+      "ctrl-l": "menu::Confirm"
+    }
+  },
+  // Agent/Assistant パネル配下の Picker/Menu にも明示
+  {
+    "context": "AgentPanel > Picker",
+    "bindings": {
+      "ctrl-n": "menu::SelectNext",
+      "ctrl-p": "menu::SelectPrevious",
+      "ctrl-l": "picker::ConfirmCompletion"
+    }
+  },
+  {
+    "context": "AssistantPanel > Picker",
+    "bindings": {
+      "ctrl-n": "menu::SelectNext",
+      "ctrl-p": "menu::SelectPrevious",
+      "ctrl-l": "picker::ConfirmCompletion"
+    }
+  },
+  {
+    "context": "AgentPanel > Menu",
+    "bindings": {
+      "ctrl-n": "menu::SelectNext",
+      "ctrl-p": "menu::SelectPrevious",
+      "ctrl-l": "menu::Confirm"
+    }
+  },
+  {
+    "context": "AssistantPanel > Menu",
+    "bindings": {
+      "ctrl-n": "menu::SelectNext",
+      "ctrl-p": "menu::SelectPrevious",
+      "ctrl-l": "menu::Confirm"
+    }
+  },
+
+  // ==== “ミニエディタ” 系: Enter = 確定 ====
+  // ツリーのファイル名リネーム
+  {
+    "context": "Editor && renaming",
+    "bindings": {
+      "enter": "editor::ConfirmRename"
+    }
+  },
+  // コマンドパレット（ModeSelector）
+  {
+    "context": "ModeSelector",
+    "bindings": {
+      "enter": "menu::Confirm"
+    }
+  },
+  // File Finder 全般
+  {
+    "context": "FileFinder",
+    "bindings": {
+      "enter": "menu::Confirm"
+    }
+  },
+  // 設定画面などの ContextEditor（小さい入力欄全般）
+  {
+    "context": "ContextEditor > Editor",
+    "bindings": {
+      "enter": "menu::Confirm"
+    }
+  },
+  // Project パネル内でのリネーム確定
+  {
+    "context": "ProjectPanel > Editor",
+    "bindings": {
+      "enter": "editor::ConfirmRename"
+    }
+  }
+]

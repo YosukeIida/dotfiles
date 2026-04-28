@@ -1,0 +1,190 @@
+# =====================================================================
+# 基本PATH（あなたの既存設定：そのまま残す）
+# =====================================================================
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/yosuke/.lmstudio/bin"
+# End of LM Studio CLI section
+
+# =====================================================================
+# Claude Code
+# =====================================================================
+
+# アカウント切り替え: cc 2 → account 2, cc / cc 1 → account 1 (default)
+cc() {
+  local n=${1:-1}
+  if [[ "$n" == "1" ]]; then
+    unset CLAUDE_CONFIG_DIR
+    echo "→ account 1 (~/.claude)"
+  else
+    local dir="$HOME/.claude-$n"
+    if [[ ! -d "$dir" ]]; then
+      echo "Error: $dir not found. Run: ~/workspace/github.com/YosukeIida/dotfiles/dotfiles/claude/setup-account.sh $n" >&2
+      return 1
+    fi
+    export CLAUDE_CONFIG_DIR="$dir"
+    echo "→ account $n ($dir)"
+  fi
+}
+
+# 現在の Claude Code アカウント・モードを表示
+cc-status() {
+  local config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+
+  # account number
+  local num="1"
+  if [[ -n "${CLAUDE_CONFIG_DIR:-}" ]]; then
+    num="${CLAUDE_CONFIG_DIR##*-}"
+  fi
+
+  # mode (api / subscription)
+  local mode="subscription"
+  if [[ -f "$config_dir/settings.json" ]] && grep -q '"apiKeyHelper"' "$config_dir/settings.json"; then
+    mode="api"
+  fi
+
+  # email / name / org from .claude.json
+  local email="(not logged in)" display_name="" org_name=""
+  if [[ -f "$config_dir/.claude.json" ]]; then
+    IFS=$'\t' read email display_name org_name <<< "$(python3 - "$config_dir/.claude.json" <<'PY'
+import json, sys
+try:
+    d = json.load(open(sys.argv[1]))
+    oa = d.get("oauthAccount") or {}
+    print(oa.get("emailAddress", "(unknown)"), oa.get("displayName", ""), oa.get("organizationName", ""), sep="\t")
+except Exception:
+    print("(parse error)", "", "", sep="\t")
+PY
+)"
+  fi
+
+  echo "account : $num"
+  echo "mode    : $mode"
+  echo "email   : $email${display_name:+  ($display_name)}"
+  echo "org     : ${org_name:-(unknown)}"
+  echo "dir     : $config_dir"
+}
+
+claude-mode() {
+  local dir="$HOME/.claude"
+  local dst="$dir/settings.json"
+  local src tmp
+
+  case "${1:-}" in
+    api)
+      src="$dir/settings.api.json"
+      ;;
+    sub|subscription)
+      src="$dir/settings.subscription.json"
+      ;;
+    "")
+      if rg -q '"apiKeyHelper"' "$dst"; then
+        echo "api"
+      else
+        echo "subscription"
+      fi
+      return 0
+      ;;
+    *)
+      echo "usage: claude-mode [api|sub]" >&2
+      return 1
+      ;;
+  esac
+
+  if [[ ! -f "$src" ]]; then
+    echo "missing: $src" >&2
+    return 1
+  fi
+
+  tmp="$(mktemp "$dir/settings.json.XXXXXX")" || return 1
+  cp "$src" "$tmp" && mv "$tmp" "$dst"
+}
+
+
+# =====================================================================
+# ==== fzf / ghq 連携（Ctrl+Gで “一瞬でcd”） ==========================
+# =====================================================================
+# 対話シェルかつ ghq/fzf があるときだけ有効化
+if [[ $- == *i* ]] && command -v ghq >/dev/null 2>&1 && command -v fzf >/dev/null 2>&1; then
+  # fzf の見た目/操作（好みで調整OK）
+  export FZF_DEFAULT_OPTS="${FZF_DEFAULT_OPTS:+$FZF_DEFAULT_OPTS }--height=60% --reverse --border --bind=ctrl-u:half-page-up,ctrl-d:half-page-down"
+
+  # ---- ghq 管理リポから（絶対パス）選択：まずは確実動作の最小版 ----
+  _ghq_select_dir() {
+    ghq list -p | fzf --prompt='ghq> ' || return 1
+  }
+
+  # ---- 選択→cd 本体 --------------------------------------------------
+  ghqcd() {
+    local d; d="$(_ghq_select_dir)" || return 1
+    builtin cd -- "$d" || return 1
+  }
+
+  # ---- ZLE ウィジェット登録 ------------------------------------------
+  zmodload zsh/zle 2>/dev/null
+  _ghqcd_widget() { ghqcd; zle reset-prompt 2>/dev/null || true; }
+  zle -N _ghqcd_widget
+
+  # ---- Warp/プラグインの上書き対策：毎回プロンプト直前に再バインド ---
+  __ghq_bindkeys() {
+    # 既存を一旦解除してから入れる（emacs/vi 両対応）
+    bindkey -M emacs -r '^g'  2>/dev/null
+    bindkey -M viins -r '^g'  2>/dev/null
+    bindkey -M vicmd -r '^g'  2>/dev/null
+    bindkey -M emacs '^g' _ghqcd_widget
+    bindkey -M viins '^g' _ghqcd_widget
+    bindkey -M vicmd '^g' _ghqcd_widget
+  }
+  autoload -Uz add-zsh-hook
+  add-zsh-hook precmd __ghq_bindkeys
+  __ghq_bindkeys   # 起動直後にも適用
+
+  # ---- フォールバック：`g⏎` でも起動（既存の g が無い場合のみ） -----
+  # Warp など Ctrl+G が使えない環境でも、`g` で同機能を呼べるようにする
+  if ! type g >/dev/null 2>&1; then
+    g() { ghqcd; }
+  fi
+
+  # ---- 補助：コマンド/エディタ起動 ----------------------------------
+  alias cdg='ghqcd'
+  repo() {
+    case "${1:-cd}" in
+      l|list) ghq list ;;
+      c|cd)   ghqcd ;;
+      o|open)
+        local d; d="$(_ghq_select_dir)" || return
+        if command -v zed >/dev/null 2>&1; then zed "$d";
+        elif command -v code >/dev/null 2>&1; then code "$d";
+        else ${EDITOR:-vi} "$d"; fi
+        ;;
+      *) echo "usage: repo [cd|list|open]" >&2; return 2 ;;
+    esac
+  }
+
+else
+  ghqcd() { echo "[ghq/fzf] ghq または fzf が見つかりません。" >&2; return 1; }
+fi
+
+
+# =====================================================================
+# ==== fzf 既定キーバインド読込（任意・存在時のみ） ===================
+# =====================================================================
+# CTRL-T / CTRL-R / ALT-C の既定キーバインドを“あるときだけ”読み込む
+if [[ $- == *i* ]]; then
+  for f in "$HOME/.fzf.zsh" "/opt/homebrew/opt/fzf/shell/key-bindings.zsh" "/usr/local/opt/fzf/shell/key-bindings.zsh"; do
+    [[ -r "$f" ]] && source "$f" && break
+  done
+fi
+
+# Added by Antigravity
+export PATH="/Users/yosuke/.antigravity/antigravity/bin:$PATH"
+
+
+# zsh-syntax-highlighting (brew installed)
+source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+source $(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+# >>> direnv >>>
+if command -v direnv >/dev/null 2>&1; then
+  eval "$(direnv hook zsh)"
+fi
+# <<< direnv <<<
