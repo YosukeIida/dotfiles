@@ -48,11 +48,6 @@
         ];
       };
 
-      darwinConfigurations."Yosukes-MacBook-Air" = nix-darwin.lib.darwinSystem {
-        inherit system;
-        modules = [ ./nix/hosts/darwin/yosukes-macbook-air ];
-      };
-
       devShells.${system} = {
         python = pkgs.mkShell {
           packages = [

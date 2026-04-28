@@ -17,7 +17,6 @@ jobs:
             experimental-features = nix-command flakes
       - run: nix flake check -L
       - run: nix eval .#darwinConfigurations.example.config.system.build.toplevel.drvPath
-      - run: nix eval .#darwinConfigurations.Yosukes-MacBook-Air.config.system.build.toplevel.drvPath
 
   secrets:
     runs-on: ubuntu-latest
