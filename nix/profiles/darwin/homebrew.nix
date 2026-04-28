@@ -42,6 +42,7 @@
       "claude"
       "claude-code@latest"
       "cloudflare-warp@beta"
+      "cmux"
       "codex"
       "codex-app"
       "discord"
