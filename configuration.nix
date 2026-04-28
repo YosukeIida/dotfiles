@@ -126,10 +126,10 @@ let
     # tailscaled の Network Extension 層からはルーティングが壊れて
     # connection refused になる（詳細: docs/warp-headscale-conflict.md）。
     #
-    #   REDACTED_IP/32        REDACTED_HEADSCALE_HOST (Oracle Cloud VM, IPv4)
+    #   <headscale-server-ip>/32   headscale server (Oracle Cloud VM, IPv4)
     #
     # !! 注意: Headscale サーバの IP が変わった場合はここを更新すること。
-    #    確認方法: dig REDACTED_HEADSCALE_HOST
+    #    確認方法: dig <your-headscale-hostname>
     warp_exclude_ranges="
       100.64.0.0/10
       fd7a:115c:a1e0::/48
@@ -137,7 +137,6 @@ let
       2606:B740:49::/48
       199.165.136.0/24
       2606:B740:1::/48
-      REDACTED_IP/32
     "
 
     # Returns 0 only when all exclusions are confirmed present.
