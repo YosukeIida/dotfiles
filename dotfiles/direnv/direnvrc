@@ -1,0 +1,5 @@
+# >>> nix-direnv >>>
+if [ -r /run/current-system/sw/share/nix-direnv/direnvrc ]; then
+  source /run/current-system/sw/share/nix-direnv/direnvrc
+fi
+# <<< nix-direnv <<<

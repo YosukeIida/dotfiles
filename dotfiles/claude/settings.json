@@ -1,0 +1,56 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch"
+    ],
+    "defaultMode": "acceptEdits"
+  },
+  "model": "sonnet[1m]",
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline.sh",
+    "padding": 0
+  },
+  "enabledPlugins": {
+    "document-skills@anthropic-agent-skills": true,
+    "codex@openai-codex": true,
+    "pdf-creator@daymade-skills": true,
+    "ecc@ecc": true,
+    "lualatex-pdf@YosukeIida": true
+  },
+  "extraKnownMarketplaces": {
+    "openai-codex": {
+      "source": {
+        "source": "github",
+        "repo": "openai/codex-plugin-cc"
+      }
+    },
+    "daymade-skills": {
+      "source": {
+        "source": "github",
+        "repo": "daymade/claude-code-skills"
+      }
+    },
+    "ecc": {
+      "source": {
+        "source": "github",
+        "repo": "affaan-m/everything-claude-code"
+      }
+    },
+    "YosukeIida": {
+      "source": {
+        "source": "github",
+        "repo": "YosukeIida/claude-lualatex-pdf"
+      }
+    }
+  },
+  "language": "Japanese",
+  "effortLevel": "high",
+  "verbose": false,
+  "preferredNotifChannel": "ghostty",
+  "fileCheckpointingEnabled": true,
+  "remoteControlAtStartup": true,
+  "agentPushNotifEnabled": true,
+  "skipAutoPermissionPrompt": true,
+  "voiceEnabled": true
+}

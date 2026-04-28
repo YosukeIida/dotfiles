@@ -1,0 +1,86 @@
+Host *
+    AddKeysToAgent yes
+    UseKeychain yes
+    IdentityFile ~/.ssh/id_ed25519
+
+Host nutfes-short-term
+    HostName 153.126.171.220
+    User nutfes-short-term
+    Port 22
+    ForwardAgent yes
+    ForwardX11 yes
+    ForwardX11Trusted yes
+    ForwardX11Timeout 596h
+
+
+Host nutfes-db
+    HostName 153.120.62.250
+    User nutfes-db
+    Port 24000
+    ForwardAgent yes
+    ForwardX11 yes
+    ForwardX11Trusted yes
+    ForwardX11Timeout 596h
+
+
+Host nutfes-long-term
+    HostName 153.127.70.175
+    User nutfes-long-term
+    Port 24000
+    ForwardAgent yes
+    ForwardX11 yes
+    ForwardX11Trusted yes
+    ForwardX11Timeout 596h
+
+
+Host nutmeg-proxmox
+    HostName proxmox.nutfes.net
+    User root
+    Port 22
+    ForwardAgent yes
+    ForwardX11 yes
+    ForwardX11Trusted yes
+    ForwardX11Timeout 596h
+
+
+Host i2-pve01
+    HostName 100.64.110.114
+    User root
+    Port 22
+
+
+Host i2-pve02
+    HostName 100.65.102.7
+    User root
+    Port 22
+
+
+Host tmllab1
+    HostName tml1.nagaokaut.ac.jp
+    User s233305
+    ProxyJump i2-pve01
+
+
+Host ts-tmllab2
+    HostName tml2.nagaokaut.ac.jp
+    User s233305
+    Port 922
+    ProxyJump i2-pve01
+
+Host ssh-bastion
+    HostName ssh-bastion.iodine2.net
+    User i2
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+    ServerAliveInterval 30
+    ServerAliveCountMax 3
+    ProxyCommand ~/.ssh/cf_proxy.sh %h
+    ControlMaster auto
+    ControlPath ~/.ssh/cm-%r@%h:%p
+    ControlPersist 1h
+
+Host tmllab2
+    HostName tml2.nagaokaut.ac.jp
+    User s233305
+    Port 922
+    ProxyJump ssh-bastion

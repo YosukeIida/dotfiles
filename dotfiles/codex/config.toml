@@ -1,0 +1,16 @@
+model = "gpt-5.4"
+model_reasoning_effort = "high"
+personality = "pragmatic"
+web_search = "live"
+
+model_context_window = 1000000
+model_auto_compact_token_limit = 900000
+
+[features]
+multi_agent = true
+
+[plugins."github@openai-curated"]
+enabled = true
+
+[plugins."google-drive@openai-curated"]
+enabled = true

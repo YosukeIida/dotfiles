@@ -1,0 +1,27 @@
+font-family = Menlo
+font-family = Hiragino Sans W4
+
+font-feature = -calt
+font-feature = -dlig
+
+mouse-hide-while-typing = true
+mouse-scroll-multiplier = 2
+
+cursor-opacity = 0.7
+cursor-style = block
+cursor-style-blink = false
+
+unfocused-split-opacity = 0.825
+
+fullscreen = false
+
+window-inherit-working-directory = true
+window-save-state = always
+
+resize-overlay = never
+
+macos-titlebar-style = tabs
+
+keybind = shift+enter=text:\n
+
+desktop-notifications = true

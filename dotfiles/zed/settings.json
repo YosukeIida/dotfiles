@@ -1,0 +1,85 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run `zed: open default settings` from the
+// command palette (cmd-shift-p / ctrl-shift-p)
+{
+  "cli_default_open_behavior": "existing_window",
+  "diff_view_style": "split",
+  "project_panel": {
+    "dock": "left",
+  },
+  "git_panel": {
+    "dock": "left",
+    "tree_view": true,
+  },
+  "audio": {
+    "experimental.auto_microphone_volume": false,
+    "experimental.rodio_audio": false,
+  },
+  "agent_ui_font_size": 16.0,
+  "show_whitespaces": "boundary",
+  "soft_wrap": "prefer_line",
+  "show_edit_predictions": true,
+  "agent_servers": {
+    "codex-acp": {
+      "type": "registry",
+      "default_mode": "auto",
+    },
+    "your_agent": {
+      "type": "custom",
+      "command": "path_to_executable",
+      "args": [],
+      "env": {},
+    },
+  },
+  "autosave": {
+    "after_delay": {
+      "milliseconds": 500,
+    },
+  },
+  "base_keymap": "VSCode",
+  "agent": {
+    "sidebar_side": "right",
+    "dock": "right",
+    "default_model": {
+      "provider": "openai",
+      "model": "gpt-5.2",
+    },
+  },
+  "ui_font_size": 16.0,
+  "buffer_font_size": 14,
+  "theme": {
+    "mode": "system",
+    "light": "One Light",
+    "dark": "One Dark",
+  },
+  "file_types": {
+    "Dockerfile": [
+      "Dockerfile",
+      "Dockerfile.*",
+      "*.Dockerfile",
+      "*.dockerfile",
+    ],
+  },
+  "language_models": {
+    "openai": {
+      "available_models": [
+        {
+          "name": "gpt-5.1",
+          "display_name": "gpt-5.1 high",
+          "max_tokens": 400000,
+          "reasoning_effort": "high",
+        },
+      ],
+    },
+  },
+  "languages": {
+    "Python": {
+      "format_on_save": "on",
+    },
+  },
+}

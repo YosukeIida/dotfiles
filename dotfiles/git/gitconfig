@@ -1,0 +1,9 @@
+[user]
+	email = 95607264+YosukeIida@users.noreply.github.com
+	name = i2
+[credential]
+	helper = osxkeychain
+[ghq]
+	root = ~/workspace/
+[fetch]
+	prune = true
