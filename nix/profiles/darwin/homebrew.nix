@@ -17,11 +17,13 @@
     brews = [
       "brightness"
       "cloudflared"
+      "colima"
       "duti"
       "fzf"
       "gh"
       "ghq"
       "git-filter-repo"
+      "lazydocker"
       "lazygit"
       "neovim"
       "poppler"
