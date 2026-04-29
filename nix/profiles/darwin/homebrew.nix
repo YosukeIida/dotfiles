@@ -30,6 +30,7 @@
       "rclone"
       "tmux"
       "tree"
+      "zellij"
       "zsh-autosuggestions"
       "zsh-syntax-highlighting"
     ];
