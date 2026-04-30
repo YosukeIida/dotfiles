@@ -223,16 +223,28 @@ TERM_W=$(stty size </dev/tty 2>/dev/null | cut -d' ' -f2)
 BG2=236
 L2="$(bg $BG2)"
 
+# TERM_W < 60: バー省略コンパクト表示（~36 chars）
+# TERM_W >= 60: バーありフル表示（~58 chars）
 if [ "$RATE_SOURCE" = "stdin" ] || [ "$RATE_SOURCE" = "api" ]; then
-  L2+="$(fg 245) 5h "
-  L2+="$(bar_fine "$F5")$(rst)"
-  L2+="$(bg $BG2)$(gradient "$F5")$(bld) ${F5}%$(rst)"
-  L2+="$(bg $BG2)$(fg 243) ↻${F5T}$(rst)"
-  L2+="$(bg $BG2)$(div)"
-  L2+="$(bg $BG2)$(fg 245)7d "
-  L2+="$(bar_fine "$S7")$(rst)"
-  L2+="$(bg $BG2)$(gradient "$S7")$(bld) ${S7}%$(rst)"
-  L2+="$(bg $BG2)$(fg 243) ↻${S7T}$(rst)"
+  if [ "$TERM_W" -ge 60 ]; then
+    L2+="$(fg 245) 5h "
+    L2+="$(bar_fine "$F5")$(rst)"
+    L2+="$(bg $BG2)$(gradient "$F5")$(bld) ${F5}%$(rst)"
+    L2+="$(bg $BG2)$(fg 243) ↻${F5T}$(rst)"
+    L2+="$(bg $BG2)$(div)"
+    L2+="$(bg $BG2)$(fg 245)7d "
+    L2+="$(bar_fine "$S7")$(rst)"
+    L2+="$(bg $BG2)$(gradient "$S7")$(bld) ${S7}%$(rst)"
+    L2+="$(bg $BG2)$(fg 243) ↻${S7T}$(rst)"
+  else
+    L2+="$(fg 245) 5h$(rst)"
+    L2+="$(bg $BG2)$(gradient "$F5")$(bld) ${F5}%$(rst)"
+    L2+="$(bg $BG2)$(fg 243) ↻${F5T}$(rst)"
+    L2+="$(bg $BG2)$(div)"
+    L2+="$(bg $BG2)$(fg 245)7d$(rst)"
+    L2+="$(bg $BG2)$(gradient "$S7")$(bld) ${S7}%$(rst)"
+    L2+="$(bg $BG2)$(fg 243) ↻${S7T}$(rst)"
+  fi
 elif [ "$RATE_SOURCE" = "apikey" ]; then
   L2+="$(fg 245) API Key$(rst)"
 else
