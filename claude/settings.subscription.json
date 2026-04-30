@@ -1,7 +1,21 @@
 {
+  "permissions": {
+    "allow": [
+      "WebSearch"
+    ],
+    "defaultMode": "acceptEdits"
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "CLAUDE_STATUS_COLS=90 bash ~/.claude/statusline.sh",
+    "padding": 0
+  },
   "enabledPlugins": {
     "document-skills@anthropic-agent-skills": true,
-    "codex@openai-codex": true
+    "codex@openai-codex": true,
+    "pdf-creator@daymade-skills": true,
+    "lualatex-pdf@YosukeIida": true,
+    "exa@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "openai-codex": {
@@ -9,12 +23,33 @@
         "source": "github",
         "repo": "openai/codex-plugin-cc"
       }
+    },
+    "daymade-skills": {
+      "source": {
+        "source": "github",
+        "repo": "daymade/claude-code-skills"
+      }
+    },
+    "ecc": {
+      "source": {
+        "source": "github",
+        "repo": "affaan-m/everything-claude-code"
+      }
+    },
+    "YosukeIida": {
+      "source": {
+        "source": "github",
+        "repo": "YosukeIida/claude-lualatex-pdf"
+      }
     }
   },
+  "language": "Japanese",
   "effortLevel": "high",
-  "statusLine": {
-    "type": "command",
-    "command": "bash ~/.claude/statusline.sh",
-    "padding": 0
-  }
+  "verbose": false,
+  "preferredNotifChannel": "notifications_disabled",
+  "fileCheckpointingEnabled": true,
+  "remoteControlAtStartup": true,
+  "agentPushNotifEnabled": true,
+  "skipAutoPermissionPrompt": true,
+  "voiceEnabled": true
 }

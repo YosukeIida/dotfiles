@@ -211,16 +211,22 @@ L1+="$(bg $BG1)$(gradient "$CTX")$(bld) ${CTX}%$(rst)"
 L1+="$(bg $BG1) $(rst)"
 
 # ═══════════════════════════════════════════════════════════════
+# Terminal width — statusline は pipe 経由なので stty/tput は信頼できない。
+# CLAUDE_STATUS_COLS 環境変数で上限を明示指定する（settings.json で設定）。
+# ═══════════════════════════════════════════════════════════════
+TERM_W="${CLAUDE_STATUS_COLS:-}"
+[ -z "$TERM_W" ] || [ "$TERM_W" = "0" ] && TERM_W="$(tput cols 2>/dev/null || true)"
+[ -z "$TERM_W" ] || [ "$TERM_W" = "0" ] && TERM_W="${COLUMNS:-}"
+[ -z "$TERM_W" ] || [ "$TERM_W" = "0" ] && TERM_W=100
+TERM_W=$(( TERM_W - 2 ))
+[ "$TERM_W" -lt 40 ] && TERM_W=40
+
+# ═══════════════════════════════════════════════════════════════
 # Line 2 —  5h [bar] XX% ↻HH:MM:SS  │  7d [bar] XX% ↻HH:MM:SS
 # ═══════════════════════════════════════════════════════════════
-TERM_W=$(stty size </dev/tty 2>/dev/null | cut -d' ' -f2)
-[ -z "$TERM_W" ] || [ "$TERM_W" = "0" ] && TERM_W=$(tput cols 2>/dev/null)
-[ -z "$TERM_W" ] || [ "$TERM_W" = "0" ] && TERM_W=${COLUMNS:-80}
 BG2=236
 L2="$(bg $BG2)"
 
-# TERM_W < 60: バー省略コンパクト表示（~36 chars）
-# TERM_W >= 60: バーありフル表示（~58 chars）
 if [ "$RATE_SOURCE" = "stdin" ] || [ "$RATE_SOURCE" = "api" ]; then
   L2+="$(fg 245) 5h "
   L2+="$(bar_fine "$F5")$(rst)"
@@ -262,23 +268,29 @@ fi
 L3+="$(bg $BG3) $(rst)"
 
 # ═══════════════════════════════════════════════════════════════
-# 各行を TERM_W 可視列で切り詰め（折り返し防止）
-printf '%b\n%b\n%b' "$L1" "$L2" "$L3" | python3 -c "
-import sys, re
+# 出力: \033[?7l で auto-wrap 無効 + Python で TERM_W 列クリップ
+# （全角・結合文字を unicodedata で正確に計算）
+printf '\033[?7l'
+printf '%b\n%b\n%b' "$L1" "$L2" "$L3" | python3 - "$TERM_W" <<'PY'
+import sys, re, unicodedata
+ANSI = re.compile(r'\x1b\[[0-9;:]*[mK]')
+def cw(ch):
+    if unicodedata.combining(ch): return 0
+    if unicodedata.east_asian_width(ch) in ('W', 'F'): return 2
+    if unicodedata.category(ch)[0] == 'C': return 0
+    return 1
 def trunc(s, w):
     out, cols, i = [], 0, 0
     while i < len(s):
-        m = re.match(r'\x1b\[[0-9;:]*[mK]', s[i:])
+        m = ANSI.match(s, i)
         if m:
-            out.append(m.group())
-            i += len(m.group())
-        else:
-            if cols < w:
-                out.append(s[i])
-                cols += 1
-            i += 1
-    return ''.join(out)
+            out.append(m.group()); i = m.end(); continue
+        c = s[i]; v = cw(c)
+        if cols + v > w: break
+        out.append(c); cols += v; i += 1
+    return ''.join(out) + '\x1b[0m'
 w = int(sys.argv[1])
 for line in sys.stdin:
     print(trunc(line.rstrip('\n'), w))
-" "$TERM_W"
+PY
+printf '\033[?7h'

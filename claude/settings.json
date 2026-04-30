@@ -15,8 +15,8 @@
     "document-skills@anthropic-agent-skills": true,
     "codex@openai-codex": true,
     "pdf-creator@daymade-skills": true,
-    "ecc@ecc": true,
-    "lualatex-pdf@YosukeIida": true
+    "lualatex-pdf@YosukeIida": true,
+    "exa@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "openai-codex": {
@@ -47,7 +47,7 @@
   "language": "Japanese",
   "effortLevel": "high",
   "verbose": false,
-  "preferredNotifChannel": "ghostty",
+  "preferredNotifChannel": "auto",
   "fileCheckpointingEnabled": true,
   "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true,
