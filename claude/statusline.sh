@@ -77,6 +77,11 @@ fmt_hms_iso() {
 # ── 区切り文字（同一bg内で使用）─────────────────────────────
 div() { printf "$(fg 240) │ $(rst)"; }
 
+# ── ANSI を除いた可視文字幅（列数）──────────────────────────
+vis_cols() {
+  printf '%s' "$1" | sed $'s/\033\\[[0-9;:]*[mK]//g' | wc -m | tr -d ' '
+}
+
 # ═══════════════════════════════════════════════════════════════
 # Extract data from stdin JSON
 # ═══════════════════════════════════════════════════════════════
@@ -212,6 +217,7 @@ L1+="$(bg $BG1) $(rst)"
 # ═══════════════════════════════════════════════════════════════
 # Line 2 —  5h [bar] XX% ↻HH:MM:SS  │  7d [bar] XX% ↻HH:MM:SS
 # ═══════════════════════════════════════════════════════════════
+TERM_W=$(tput cols 2>/dev/null || printf '%s' "${COLUMNS:-80}")
 BG2=236
 L2="$(bg $BG2)"
 
@@ -225,21 +231,20 @@ if [ "$RATE_SOURCE" = "stdin" ] || [ "$RATE_SOURCE" = "api" ]; then
   L2+="$(bar_fine "$S7")$(rst)"
   L2+="$(bg $BG2)$(gradient "$S7")$(bld) ${S7}%$(rst)"
   L2+="$(bg $BG2)$(fg 243) ↻${S7T}$(rst)"
-  if [ -n "$ORG" ]; then
-    L2+="$(bg $BG2)$(div)"
-    L2+="$(bg $BG2)$(fg 183) ${ORG}$(rst)"
-  fi
 elif [ "$RATE_SOURCE" = "apikey" ]; then
   L2+="$(fg 245) API Key$(rst)"
-  if [ -n "$ORG" ]; then
-    L2+="$(bg $BG2)$(div)"
-    L2+="$(bg $BG2)$(fg 183) ${ORG}$(rst)"
-  fi
 else
   L2+="$(fg 75) Team$(rst)"
-  if [ -n "$ORG" ]; then
+fi
+
+if [ -n "$ORG" ]; then
+  # " │ "(3) + " "(1) + org + " "(1 trailing) が端末幅に収まる分だけ表示
+  base_w=$(vis_cols "$L2")
+  avail=$(( TERM_W - base_w - 5 ))
+  if [ "$avail" -ge 4 ]; then
+    org_trunc="${ORG:0:$avail}"
     L2+="$(bg $BG2)$(div)"
-    L2+="$(bg $BG2)$(fg 183) ${ORG}$(rst)"
+    L2+="$(bg $BG2)$(fg 183) ${org_trunc}$(rst)"
   fi
 fi
 L2+="$(bg $BG2) $(rst)"
