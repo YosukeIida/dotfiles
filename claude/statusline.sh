@@ -217,7 +217,9 @@ L1+="$(bg $BG1) $(rst)"
 # ═══════════════════════════════════════════════════════════════
 # Line 2 —  5h [bar] XX% ↻HH:MM:SS  │  7d [bar] XX% ↻HH:MM:SS
 # ═══════════════════════════════════════════════════════════════
-TERM_W=$(tput cols 2>/dev/null || printf '%s' "${COLUMNS:-80}")
+TERM_W=$(stty size </dev/tty 2>/dev/null | cut -d' ' -f2)
+[ -z "$TERM_W" ] || [ "$TERM_W" = "0" ] && TERM_W=$(tput cols 2>/dev/null)
+[ -z "$TERM_W" ] || [ "$TERM_W" = "0" ] && TERM_W=${COLUMNS:-80}
 BG2=236
 L2="$(bg $BG2)"
 
