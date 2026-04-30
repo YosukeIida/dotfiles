@@ -270,8 +270,7 @@ L3+="$(bg $BG3) $(rst)"
 # ═══════════════════════════════════════════════════════════════
 # 出力: \033[?7l で auto-wrap 無効 + Python で TERM_W 列クリップ
 # （全角・結合文字を unicodedata で正確に計算）
-printf '\033[?7l'
-printf '%b\n%b\n%b' "$L1" "$L2" "$L3" | python3 - "$TERM_W" <<'PY'
+_py=$(cat <<'PY'
 import sys, re, unicodedata
 ANSI = re.compile(r'\x1b\[[0-9;:]*[mK]')
 def cw(ch):
@@ -293,4 +292,7 @@ w = int(sys.argv[1])
 for line in sys.stdin:
     print(trunc(line.rstrip('\n'), w))
 PY
+)
+printf '\033[?7l'
+printf '%b\n%b\n%b' "$L1" "$L2" "$L3" | python3 -c "$_py" "$TERM_W"
 printf '\033[?7h'
