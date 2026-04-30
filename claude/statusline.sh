@@ -77,10 +77,6 @@ fmt_hms_iso() {
 # ── 区切り文字（同一bg内で使用）─────────────────────────────
 div() { printf "$(fg 240) │ $(rst)"; }
 
-# ── ANSI を除いた可視文字幅（列数）──────────────────────────
-vis_cols() {
-  printf '%s' "$1" | sed $'s/\033\\[[0-9;:]*[mK]//g' | wc -m | tr -d ' '
-}
 
 # ═══════════════════════════════════════════════════════════════
 # Extract data from stdin JSON
@@ -226,40 +222,23 @@ L2="$(bg $BG2)"
 # TERM_W < 60: バー省略コンパクト表示（~36 chars）
 # TERM_W >= 60: バーありフル表示（~58 chars）
 if [ "$RATE_SOURCE" = "stdin" ] || [ "$RATE_SOURCE" = "api" ]; then
-  if [ "$TERM_W" -ge 60 ]; then
-    L2+="$(fg 245) 5h "
-    L2+="$(bar_fine "$F5")$(rst)"
-    L2+="$(bg $BG2)$(gradient "$F5")$(bld) ${F5}%$(rst)"
-    L2+="$(bg $BG2)$(fg 243) ↻${F5T}$(rst)"
-    L2+="$(bg $BG2)$(div)"
-    L2+="$(bg $BG2)$(fg 245)7d "
-    L2+="$(bar_fine "$S7")$(rst)"
-    L2+="$(bg $BG2)$(gradient "$S7")$(bld) ${S7}%$(rst)"
-    L2+="$(bg $BG2)$(fg 243) ↻${S7T}$(rst)"
-  else
-    L2+="$(fg 245) 5h$(rst)"
-    L2+="$(bg $BG2)$(gradient "$F5")$(bld) ${F5}%$(rst)"
-    L2+="$(bg $BG2)$(fg 243) ↻${F5T}$(rst)"
-    L2+="$(bg $BG2)$(div)"
-    L2+="$(bg $BG2)$(fg 245)7d$(rst)"
-    L2+="$(bg $BG2)$(gradient "$S7")$(bld) ${S7}%$(rst)"
-    L2+="$(bg $BG2)$(fg 243) ↻${S7T}$(rst)"
-  fi
+  L2+="$(fg 245) 5h "
+  L2+="$(bar_fine "$F5")$(rst)"
+  L2+="$(bg $BG2)$(gradient "$F5")$(bld) ${F5}%$(rst)"
+  L2+="$(bg $BG2)$(fg 243) ↻${F5T}$(rst)"
+  L2+="$(bg $BG2)$(div)"
+  L2+="$(bg $BG2)$(fg 245)7d "
+  L2+="$(bar_fine "$S7")$(rst)"
+  L2+="$(bg $BG2)$(gradient "$S7")$(bld) ${S7}%$(rst)"
+  L2+="$(bg $BG2)$(fg 243) ↻${S7T}$(rst)"
 elif [ "$RATE_SOURCE" = "apikey" ]; then
   L2+="$(fg 245) API Key$(rst)"
 else
   L2+="$(fg 75) Team$(rst)"
 fi
-
 if [ -n "$ORG" ]; then
-  # " │ "(3) + " "(1) + org + " "(1 trailing) が端末幅に収まる分だけ表示
-  base_w=$(vis_cols "$L2")
-  avail=$(( TERM_W - base_w - 5 ))
-  if [ "$avail" -ge 4 ]; then
-    org_trunc="${ORG:0:$avail}"
-    L2+="$(bg $BG2)$(div)"
-    L2+="$(bg $BG2)$(fg 183) ${org_trunc}$(rst)"
-  fi
+  L2+="$(bg $BG2)$(div)"
+  L2+="$(bg $BG2)$(fg 183) ${ORG}$(rst)"
 fi
 L2+="$(bg $BG2) $(rst)"
 
@@ -283,4 +262,23 @@ fi
 L3+="$(bg $BG3) $(rst)"
 
 # ═══════════════════════════════════════════════════════════════
-printf '%b\n%b\n%b' "$L1" "$L2" "$L3"
+# 各行を TERM_W 可視列で切り詰め（折り返し防止）
+printf '%b\n%b\n%b' "$L1" "$L2" "$L3" | python3 -c "
+import sys, re
+def trunc(s, w):
+    out, cols, i = [], 0, 0
+    while i < len(s):
+        m = re.match(r'\x1b\[[0-9;:]*[mK]', s[i:])
+        if m:
+            out.append(m.group())
+            i += len(m.group())
+        else:
+            if cols < w:
+                out.append(s[i])
+                cols += 1
+            i += 1
+    return ''.join(out)
+w = int(sys.argv[1])
+for line in sys.stdin:
+    print(trunc(line.rstrip('\n'), w))
+" "$TERM_W"
