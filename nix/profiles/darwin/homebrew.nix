@@ -80,7 +80,7 @@
       "tailscale-app"
       "thebrowsercompany-dia"
       "visual-studio-code"
-      "wezterm"
+      "wezterm@nightly"
       "zed"
     ];
   };
