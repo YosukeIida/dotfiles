@@ -6,97 +6,100 @@ export PATH="$PATH:/Users/yosuke/.lmstudio/bin"
 # End of LM Studio CLI section
 
 # =====================================================================
-# Claude Code
+# Claude Code アカウント・モード切り替え
 # =====================================================================
-
-# アカウント切り替え: cc 2 → account 2, cc / cc 1 → account 1 (default)
+# cc                   → 現在状態表示
+# cc sub               → subscription モードに切り替え
+# cc api               → API モードに切り替え
+# cc sub 1 / cc sub 2  → アカウント N + subscription
+# cc api 1 / cc api 2  → アカウント N + API
+# cc 1 / cc 2          → 後方互換（subscription 固定）
 cc() {
-  local n=${1:-1}
-  if [[ "$n" == "1" ]]; then
-    unset CLAUDE_CONFIG_DIR
-    echo "→ account 1 (~/.claude)"
-  else
-    local dir="$HOME/.claude-$n"
-    if [[ ! -d "$dir" ]]; then
-      echo "Error: $dir not found. Run: ~/workspace/github.com/YosukeIida/dotfiles/dotfiles/claude/setup-account.sh $n" >&2
+  local arg1="${1:-}" arg2="${2:-}"
+  local account="" mode=""
+
+  if [[ -z "$arg1" ]]; then
+    _cc_status; return 0
+  fi
+
+  for arg in "$arg1" "$arg2"; do
+    [[ -z "$arg" ]] && continue
+    case "$arg" in
+      api|sub|subscription) mode="$arg" ;;
+      [1-9]*)               account="$arg" ;;
+      *)
+        echo "usage: cc [sub|api] [N]" >&2
+        return 1 ;;
+    esac
+  done
+
+  # 後方互換: cc N のみ → subscription を自動設定
+  if [[ -n "$account" && -z "$mode" ]]; then
+    mode="sub"
+  fi
+
+  # アカウント切り替え
+  if [[ -n "$account" ]]; then
+    if [[ "$account" == "1" ]]; then
+      unset CLAUDE_CONFIG_DIR
+    else
+      local dir="$HOME/.claude-$account"
+      if [[ ! -d "$dir" ]]; then
+        echo "Error: $dir not found. Run setup-account.sh $account" >&2
+        return 1
+      fi
+      export CLAUDE_CONFIG_DIR="$dir"
+    fi
+  fi
+
+  # モード切り替え（ln -sf でシンボリックリンクのまま切り替え）
+  if [[ -n "$mode" ]]; then
+    local config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+    local dst="$config_dir/settings.json"
+    local src
+    case "$mode" in
+      api)              src="$config_dir/settings.api.json" ;;
+      sub|subscription) src="$config_dir/settings.subscription.json" ;;
+    esac
+    if [[ ! -e "$src" ]]; then
+      echo "Error: missing $src" >&2
       return 1
     fi
-    export CLAUDE_CONFIG_DIR="$dir"
-    echo "→ account $n ($dir)"
+    ln -sf "$src" "$dst"
   fi
+
+  _cc_status
 }
 
-# 現在の Claude Code アカウント・モードを表示
-cc-status() {
+_cc_status() {
   local config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
-
-  # account number
   local num="1"
-  if [[ -n "${CLAUDE_CONFIG_DIR:-}" ]]; then
-    num="${CLAUDE_CONFIG_DIR##*-}"
-  fi
+  [[ -n "${CLAUDE_CONFIG_DIR:-}" ]] && num="${CLAUDE_CONFIG_DIR##*-}"
 
-  # mode (api / subscription)
   local mode="subscription"
-  if [[ -f "$config_dir/settings.json" ]] && grep -q '"apiKeyHelper"' "$config_dir/settings.json"; then
-    mode="api"
-  fi
+  local resolved
+  resolved=$(readlink "$config_dir/settings.json" 2>/dev/null || echo "")
+  [[ "$resolved" == *settings.api.json ]] && mode="api"
 
-  # email / name / org from .claude.json
   local email="(not logged in)" display_name="" org_name=""
-  if [[ -f "$config_dir/.claude.json" ]]; then
-    IFS=$'\t' read email display_name org_name <<< "$(python3 - "$config_dir/.claude.json" <<'PY'
+  local json="$config_dir/.claude.json"
+  if [[ -f "$json" ]]; then
+    IFS=$'\t' read -r email display_name org_name <<< "$(python3 - "$json" <<'PY'
 import json, sys
 try:
     d = json.load(open(sys.argv[1]))
     oa = d.get("oauthAccount") or {}
-    print(oa.get("emailAddress", "(unknown)"), oa.get("displayName", ""), oa.get("organizationName", ""), sep="\t")
+    print(oa.get("emailAddress","(unknown)"), oa.get("displayName",""), oa.get("organizationName",""), sep="\t")
 except Exception:
     print("(parse error)", "", "", sep="\t")
 PY
 )"
   fi
 
-  echo "account : $num"
+  echo "account : $num  ($config_dir)"
   echo "mode    : $mode"
   echo "email   : $email${display_name:+  ($display_name)}"
   echo "org     : ${org_name:-(unknown)}"
-  echo "dir     : $config_dir"
-}
-
-claude-mode() {
-  local dir="$HOME/.claude"
-  local dst="$dir/settings.json"
-  local src tmp
-
-  case "${1:-}" in
-    api)
-      src="$dir/settings.api.json"
-      ;;
-    sub|subscription)
-      src="$dir/settings.subscription.json"
-      ;;
-    "")
-      if rg -q '"apiKeyHelper"' "$dst"; then
-        echo "api"
-      else
-        echo "subscription"
-      fi
-      return 0
-      ;;
-    *)
-      echo "usage: claude-mode [api|sub]" >&2
-      return 1
-      ;;
-  esac
-
-  if [[ ! -f "$src" ]]; then
-    echo "missing: $src" >&2
-    return 1
-  fi
-
-  tmp="$(mktemp "$dir/settings.json.XXXXXX")" || return 1
-  cp "$src" "$tmp" && mv "$tmp" "$dst"
 }
 
 
@@ -188,3 +191,9 @@ if command -v direnv >/dev/null 2>&1; then
   eval "$(direnv hook zsh)"
 fi
 # <<< direnv <<<
+
+# =====================================================================
+# ==== クリップボード整形 ==============================================
+# =====================================================================
+# Claude Code のターミナル出力をコピーした際に行頭2スペースを除去する
+alias cleanpaste='pbpaste | sed "s/^  //" | pbcopy && pbpaste'
