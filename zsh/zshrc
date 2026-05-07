@@ -196,4 +196,4 @@ fi
 # ==== クリップボード整形 ==============================================
 # =====================================================================
 # Claude Code のターミナル出力をコピーした際に行頭2スペースを除去する
-alias cleanpaste='pbpaste | sed "s/^  //" | pbcopy && pbpaste'
+alias cleanpaste='pbpaste | sed -E "s/^ {1,2}//" | pbcopy && pbpaste'
