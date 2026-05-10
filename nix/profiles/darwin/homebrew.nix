@@ -22,7 +22,6 @@
       "fzf"
       "gh"
       "ghq"
-      "git-filter-repo"
       "lazydocker"
       "lazygit"
       "neovim"
