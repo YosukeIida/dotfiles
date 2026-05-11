@@ -8,7 +8,7 @@ Install a `.skill` file into the dotfiles-managed skills directory so it becomes
 ## Target directory
 
 ```
-~/workspace/github.com/YosukeIida/dotfiles/dotfiles/agents/skills/
+~/workspace/github.com/YosukeIida/dotfiles/agents/skills/
 ```
 
 This directory is symlinked as `~/.agents/skills` → `~/.claude/skills`, so skills placed here are immediately active.

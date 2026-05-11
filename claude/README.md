@@ -47,7 +47,7 @@ Claude Code は `CLAUDE_CONFIG_DIR`（未設定時は `~/.claude/`）以下の�
 ### 1. アカウントディレクトリの作成
 
 ```bash
-bash ~/workspace/github.com/YosukeIida/dotfiles/dotfiles/claude/setup-account.sh 2
+bash ~/workspace/github.com/YosukeIida/dotfiles/claude/setup-account.sh 2
 ```
 
 3アカウント目以降も同様:

@@ -22,7 +22,7 @@
   },
   "builtin_package_scriptCommands": {
     "scriptCommandsDirectories": [
-      "~/workspace/github.com/YosukeIida/dotfiles/dotfiles/raycast-scripts"
+      "~/workspace/github.com/YosukeIida/dotfiles/raycast-scripts"
     ],
     "provider_schemaVersion": 1
   },

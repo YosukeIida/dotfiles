@@ -2,7 +2,7 @@
 # Raycast 設定を settings.json に展開する
 #
 # 実行方法:
-#   bash ~/workspace/github.com/YosukeIida/dotfiles/dotfiles/raycast/export.sh
+#   bash ~/workspace/github.com/YosukeIida/dotfiles/raycast/export.sh
 #
 # 除外キー（端末固有データ・使用統計）:
 #   raycast_user_activity   使用統計 (~1MB)
