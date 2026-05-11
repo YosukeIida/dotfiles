@@ -81,3 +81,47 @@ nix-collect-garbage -d   # 古い世代も含めて全削除
 - グローバルに常に使いたいツール → `configuration.nix` の `homebrew.brews` または `environment.systemPackages`
 - プロジェクト固有のツール → `nix/flake.nix` の `packages`（nix devshell）
 - `npm install -g` は使わない → `npx` か `nix/flake.nix` に追加する
+
+---
+
+## Python 環境の方針
+
+### 禁止事項
+
+```bash
+python3 -m pip install --user <package>  # ❌ macOS のシステム Python を汚す
+pip install <package>                    # ❌ 同上
+```
+
+macOS の system Python（Xcode 由来）やユーザー領域（`~/Library/Python/`）には何も入れない。
+
+### 正しい使い方
+
+| 用途 | コマンド |
+|---|---|
+| 一時的なスクリプト実行 | `uvx --with <pkg> python script.py` |
+| 複数パッケージが必要 | `uv run --with <pkg1> --with <pkg2> python script.py` |
+| プロジェクト内（継続利用） | `uv add <pkg>` して `uv run python script.py` |
+| HTTP サーバ（標準ライブラリ） | `python -m http.server 8080`（インストール不要） |
+
+### nix devshell が有効かを確認する手順
+
+プロジェクトに `.envrc` がある場合、作業前に以下を確認する：
+
+```bash
+# direnv の状態を確認
+direnv status
+# "Found RC" かつ "Loaded" になっていれば有効
+
+# nix の python / uv が使われているか確認
+which python3   # /nix/store/... → OK
+which uv        # /nix/store/... → OK
+```
+
+有効でない場合は `direnv allow` を実行してから作業を開始する：
+
+```bash
+direnv allow
+```
+
+devshell が起動していない状態でパッケージが必要な場合は `uvx` を使う。
