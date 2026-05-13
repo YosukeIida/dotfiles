@@ -78,6 +78,7 @@
       }
       "raycast"
       "shottr"
+      "skim"
       "slack"
       "stats"
       "tailscale-app"
