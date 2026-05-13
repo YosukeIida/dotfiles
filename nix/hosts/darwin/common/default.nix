@@ -37,6 +37,7 @@
     useUserPackages = true;
     extraSpecialArgs = { inherit darwinPublicConfigDir; };
     users.${username} = import ../../../home/default.nix;
+    backupFileExtension = "bak";
   };
 
   launchd.user.agents."homebrew.mxcl.colima" = {
