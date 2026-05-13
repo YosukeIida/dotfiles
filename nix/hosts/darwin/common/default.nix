@@ -35,6 +35,7 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
+    extraSpecialArgs = { inherit darwinPublicConfigDir; };
     users.${username} = import ../../../home/default.nix;
   };
 
@@ -71,6 +72,29 @@
       ln -sf "$src" "$dst"
     }
 
+    # home.file (home-manager) に移行済みの symlink を事前に削除
+    # （既存 symlink が残っていると home-manager の linkGeneration が失敗するため）
+    for f in \
+      "$home/.gitconfig" \
+      "$home/.config/git/ignore" \
+      "$home/.config/ghostty/config" \
+      "$home/.config/direnv/direnvrc" \
+      "$home/.config/tmux/tmux.conf" \
+      "$home/.config/nvim/init.lua" \
+      "$home/.hammerspoon/init.lua" \
+      "$home/.hammerspoon/window_manager.lua" \
+      "$home/.hammerspoon/layouts" \
+      "$home/.config/zed/settings.json" \
+      "$home/.config/zed/keymap.json" \
+      "$home/.config/cmux/settings.json" \
+      "$home/.config/gh/config.yml" \
+      "$home/.config/karabiner/karabiner.json" \
+      "$home/.config/karabiner/assets/complex_modifications/dodo.json" \
+      "$home/.zshenv" \
+      "$home/.zshrc"; do
+      [ -L "$f" ] && rm "$f"
+    done
+
     # Claude Code
     if [ -f "$home/.claude/settings.json" ] && [ ! -L "$home/.claude/settings.json" ]; then
       cp "$home/.claude/settings.json" "$pub/claude/settings.json"
@@ -97,45 +121,6 @@
       [ -d "$d" ] || continue
       _link "$d" "$home/.claude/skills/$(basename "$d")"
     done
-
-    # git
-    _link "$pub/git/gitconfig" "$home/.gitconfig"
-    _link "$pub/git/ignore"    "$home/.config/git/ignore"
-
-    # ghostty
-    _link "$pub/ghostty/config" "$home/.config/ghostty/config"
-
-    # direnv
-    _link "$pub/direnv/direnvrc" "$home/.config/direnv/direnvrc"
-
-    # tmux
-    _link "$pub/tmux/tmux.conf" "$home/.config/tmux/tmux.conf"
-
-    # nvim
-    _link "$pub/nvim/init.lua" "$home/.config/nvim/init.lua"
-
-    # hammerspoon
-    _link "$pub/hammerspoon/init.lua"           "$home/.hammerspoon/init.lua"
-    _link "$pub/hammerspoon/window_manager.lua" "$home/.hammerspoon/window_manager.lua"
-    _link "$pub/hammerspoon/layouts"            "$home/.hammerspoon/layouts"
-
-    # zed
-    _link "$pub/zed/settings.json" "$home/.config/zed/settings.json"
-    _link "$pub/zed/keymap.json"   "$home/.config/zed/keymap.json"
-
-    # cmux
-    _link "$pub/cmux/settings.json" "$home/.config/cmux/settings.json"
-
-    # gh
-    _link "$pub/gh/config.yml" "$home/.config/gh/config.yml"
-
-    # karabiner
-    _link "$pub/karabiner/karabiner.json"                         "$home/.config/karabiner/karabiner.json"
-    _link "$pub/karabiner/assets/complex_modifications/dodo.json" "$home/.config/karabiner/assets/complex_modifications/dodo.json"
-
-    # zsh
-    _link "$pub/zsh/zshenv" "$home/.zshenv"
-    _link "$pub/zsh/zshrc"  "$home/.zshrc"
 
     # codex（初回のみコピー。[projects.*] 等の自動追記を上書きしない）
     if [ ! -e "$home/.codex/config.toml" ]; then

@@ -1,7 +1,14 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  darwinPublicConfigDir,
+  ...
+}:
 
 {
-  imports = [ ./packages.nix ];
+  imports = [
+    ./packages.nix
+    ./files.nix
+  ];
 
   home.stateVersion = "25.11";
 
