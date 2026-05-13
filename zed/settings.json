@@ -22,7 +22,8 @@
   },
   "agent_ui_font_size": 16.0,
   "show_whitespaces": "boundary",
-  "soft_wrap": "prefer_line",
+  "soft_wrap": "preferred_line_length",
+  "preferred_line_length": 120,
   "show_edit_predictions": true,
   "agent_servers": {
     "codex-acp": {
@@ -46,8 +47,9 @@
     "sidebar_side": "right",
     "dock": "right",
     "default_model": {
+      "enable_thinking": true,
       "provider": "openai",
-      "model": "gpt-5.2",
+      "model": "gpt-5.5-pro",
     },
   },
   "ui_font_size": 16.0,
@@ -80,6 +82,24 @@
   "languages": {
     "Python": {
       "format_on_save": "on",
+    },
+  },
+  "lsp": {
+    "texlab": {
+      "settings": {
+        "texlab": {
+          "build": {
+            "executable": "/Users/yosuke/workspace/github.com/YosukeIida/latex-devkit/bin/latexmk-docker",
+            "args": ["%f"],
+            "onSave": true,
+            "forwardSearchAfter": true,
+          },
+          "forwardSearch": {
+            "executable": "/Applications/Skim.app/Contents/SharedSupport/displayline",
+            "args": ["-r", "-z", "-b", "%l", "%p"],
+          },
+        },
+      },
     },
   },
 }
