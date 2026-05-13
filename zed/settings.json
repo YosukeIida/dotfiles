@@ -93,6 +93,8 @@
             "args": ["%f"],
             "onSave": true,
             "forwardSearchAfter": true,
+            "auxDirectory": "build",
+            "pdfDirectory": "build",
           },
           "forwardSearch": {
             "executable": "/Applications/Skim.app/Contents/SharedSupport/displayline",
