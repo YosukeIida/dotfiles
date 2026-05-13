@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════
-#  Claude Code Statusline v7
+#  Claude Code Statusline v8
 #
-#  Line 1: model  │  ctx [bar] XX%
+#  Line 1: model  [✦effort]  [⚙agent]  │  ctx [bar] XX%  │  $X.XX
 #  Line 2: 5h [bar] XX% ↻HH:MM:SS  │  7d [bar] XX% ↻HH:MM:SS
-#  Line 3: repo  branch  +add -del
+#  Line 3: repo  [⎇worktree]  branch  +add -del
+#
+#  新規フィールド対応（フル JSON スキーマ活用）:
+#    cost.total_cost_usd  → セッションコスト表示
+#    effort.level         → 思考努力レベル表示
+#    thinking.enabled     → 拡張思考モード表示
+#    agent.name           → --agent 起動時のエージェント名
+#    worktree.name        → --worktree セッションのワークツリー名
 #
 #  Pro/Max : stdin JSON の rate_limits フィールドを使用
 #  Team    : keychain → /api/oauth/usage API 呼び出し（5分キャッシュ）
