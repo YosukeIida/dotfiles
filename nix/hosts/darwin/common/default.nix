@@ -72,29 +72,6 @@
       ln -sf "$src" "$dst"
     }
 
-    # home.file (home-manager) に移行済みの symlink を事前に削除
-    # （既存 symlink が残っていると home-manager の linkGeneration が失敗するため）
-    for f in \
-      "$home/.gitconfig" \
-      "$home/.config/git/ignore" \
-      "$home/.config/ghostty/config" \
-      "$home/.config/direnv/direnvrc" \
-      "$home/.config/tmux/tmux.conf" \
-      "$home/.config/nvim/init.lua" \
-      "$home/.hammerspoon/init.lua" \
-      "$home/.hammerspoon/window_manager.lua" \
-      "$home/.hammerspoon/layouts" \
-      "$home/.config/zed/settings.json" \
-      "$home/.config/zed/keymap.json" \
-      "$home/.config/cmux/settings.json" \
-      "$home/.config/gh/config.yml" \
-      "$home/.config/karabiner/karabiner.json" \
-      "$home/.config/karabiner/assets/complex_modifications/dodo.json" \
-      "$home/.zshenv" \
-      "$home/.zshrc"; do
-      [ -L "$f" ] && rm "$f"
-    done
-
     # Claude Code
     if [ -f "$home/.claude/settings.json" ] && [ ! -L "$home/.claude/settings.json" ]; then
       cp "$home/.claude/settings.json" "$pub/claude/settings.json"
