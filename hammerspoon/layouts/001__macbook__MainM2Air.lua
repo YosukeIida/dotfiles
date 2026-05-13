@@ -8,7 +8,7 @@ return {
   monitors = "macbook",
   signature = "37D8832A-2D66-02CA-B9F7-8F30A301B230:1710x1112@2.0x",
   createdAt = 1767507304,
-  updatedAt = 1774381297,
+  updatedAt = 1777485671,
   description = "",
   windows = {
     { bundleID="com.apple.finder", windowIndex=1, screenUUID="37D8832A-2D66-02CA-B9F7-8F30A301B230", unit={x=0.0000,y=0.0000,w=0.5000,h=0.5000} },
@@ -23,5 +23,6 @@ return {
     { bundleID="com.tinyspeck.slackmacgap", windowIndex=1, screenUUID="37D8832A-2D66-02CA-B9F7-8F30A301B230", unit={x=0.0000,y=0.0000,w=0.5000,h=1.0000} },
     { bundleID="dev.zed.Zed", windowIndex=1, screenUUID="37D8832A-2D66-02CA-B9F7-8F30A301B230", unit={x=0.5000,y=0.0000,w=0.5000,h=1.0000} },
     { bundleID="com.openai.chat", windowIndex=1, screenUUID="37D8832A-2D66-02CA-B9F7-8F30A301B230", unit={x=0.0000,y=0.0000,w=0.5000,h=1.0000} },
+    { bundleID="com.cmuxterm.app", windowIndex=1, screenUUID="37D8832A-2D66-02CA-B9F7-8F30A301B230", unit={x=0.0000,y=0.0000,w=0.5000,h=1.0000} },
   }
 }
