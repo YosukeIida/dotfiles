@@ -18,11 +18,7 @@
     brews = [
       "brightness"
       "cloudflared"
-      {
-        name = "colima";
-        start_service = true;
-        restart_service = "changed";
-      }
+      "colima"
       "duti"
       "fzf"
       "gh"

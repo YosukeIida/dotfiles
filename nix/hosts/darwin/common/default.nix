@@ -29,6 +29,21 @@
     "flakes"
   ];
 
+  launchd.user.agents."homebrew.mxcl.colima" = {
+    serviceConfig = {
+      EnvironmentVariables = {
+        PATH = "/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin";
+      };
+      KeepAlive = { SuccessfulExit = true; };
+      LimitLoadToSessionType = [ "Aqua" "Background" "LoginWindow" "StandardIO" "System" ];
+      ProgramArguments = [ "/opt/homebrew/opt/colima/bin/colima" "start" "-f" ];
+      RunAtLoad = true;
+      StandardErrorPath = "/opt/homebrew/var/log/colima.log";
+      StandardOutPath = "/opt/homebrew/var/log/colima.log";
+      WorkingDirectory = homedir;
+    };
+  };
+
   system.activationScripts.postActivation.text = ''
     pub="${darwinPublicConfigDir}"
     home="${homedir}"
