@@ -173,7 +173,11 @@ fi
 # =====================================================================
 # CTRL-T / CTRL-R / ALT-C の既定キーバインドを“あるときだけ”読み込む
 if [[ $- == *i* ]]; then
-  for f in "$HOME/.fzf.zsh" "/opt/homebrew/opt/fzf/shell/key-bindings.zsh" "/usr/local/opt/fzf/shell/key-bindings.zsh"; do
+  for f in "$HOME/.fzf.zsh" \
+    "/etc/profiles/per-user/$USER/share/fzf/key-bindings.zsh" \
+    "$HOME/.nix-profile/share/fzf/key-bindings.zsh" \
+    "/opt/homebrew/opt/fzf/shell/key-bindings.zsh" \
+    "/usr/local/opt/fzf/shell/key-bindings.zsh"; do
     [[ -r "$f" ]] && source "$f" && break
   done
 fi
@@ -182,9 +186,22 @@ fi
 export PATH="/Users/yosuke/.antigravity/antigravity/bin:$PATH"
 
 
-# zsh-syntax-highlighting (brew installed)
-source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-source $(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+# zsh-autosuggestions / zsh-syntax-highlighting (nix or brew)
+for _zsh_plugin_d in \
+  "/etc/profiles/per-user/$USER/share" \
+  "$HOME/.nix-profile/share" \
+  "$(brew --prefix 2>/dev/null)/share"; do
+  [[ -f "$_zsh_plugin_d/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && \
+    source "$_zsh_plugin_d/zsh-autosuggestions/zsh-autosuggestions.zsh" && break
+done
+for _zsh_plugin_d in \
+  "/etc/profiles/per-user/$USER/share" \
+  "$HOME/.nix-profile/share" \
+  "$(brew --prefix 2>/dev/null)/share"; do
+  [[ -f "$_zsh_plugin_d/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && \
+    source "$_zsh_plugin_d/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" && break
+done
+unset _zsh_plugin_d
 
 # >>> direnv >>>
 if command -v direnv >/dev/null 2>&1; then

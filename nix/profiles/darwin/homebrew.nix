@@ -20,22 +20,7 @@
 
     brews = [
       "brightness"
-      "cloudflared"
-      "colima"
-      "duti"
-      "fzf"
-      "gh"
-      "ghq"
       "jundot/omlx/omlx"
-      "lazydocker"
-      "lazygit"
-      "neovim"
-      "poppler"
-      "rclone"
-      "tmux"
-      "tree"
-      "zsh-autosuggestions"
-      "zsh-syntax-highlighting"
     ];
 
     casks = [

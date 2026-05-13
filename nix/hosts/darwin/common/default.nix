@@ -4,6 +4,7 @@
   darwinPublicConfigDir ? "/Users/${username}/workspace/github.com/YosukeIida/dotfiles",
   ...
 }:
+{ pkgs, ... }:
 
 {
   imports = [
@@ -44,7 +45,7 @@
       };
       KeepAlive = { SuccessfulExit = true; };
       LimitLoadToSessionType = [ "Aqua" "Background" "LoginWindow" "StandardIO" "System" ];
-      ProgramArguments = [ "/opt/homebrew/opt/colima/bin/colima" "start" "-f" ];
+      ProgramArguments = [ "${pkgs.colima}/bin/colima" "start" "-f" ];
       RunAtLoad = true;
       StandardErrorPath = "/opt/homebrew/var/log/colima.log";
       StandardOutPath = "/opt/homebrew/var/log/colima.log";
