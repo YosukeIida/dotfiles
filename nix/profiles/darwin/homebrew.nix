@@ -11,7 +11,7 @@
     taps = [
       {
         name = "jundot/omlx";
-        url = "https://github.com/jundot/omlx";
+        clone_target = "https://github.com/jundot/omlx";
       }
       "solarphlare/airmute"
       "steipete/tap"
