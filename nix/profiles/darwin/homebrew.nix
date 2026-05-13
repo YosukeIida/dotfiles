@@ -9,6 +9,10 @@
     };
 
     taps = [
+      {
+        name = "jundot/omlx";
+        url = "https://github.com/jundot/omlx";
+      }
       "solarphlare/airmute"
       "steipete/tap"
       "yosukeiida/pindrop"
@@ -27,6 +31,7 @@
       "gh"
       "ghq"
       "lazydocker"
+      "jundot/omlx/omlx"
       "lazygit"
       "neovim"
       "poppler"
@@ -62,7 +67,6 @@
       "karabiner-elements"
       "lens"
       "libreoffice"
-      "lm-studio"
       "microsoft-auto-update"
       "microsoft-excel"
       "microsoft-powerpoint"
