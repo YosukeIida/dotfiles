@@ -67,6 +67,7 @@
       "karabiner-elements"
       "lens"
       "libreoffice"
+      "lm-studio"
       "microsoft-auto-update"
       "microsoft-excel"
       "microsoft-powerpoint"
