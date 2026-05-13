@@ -5,10 +5,12 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-25.11-darwin";
     nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-25.11";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
+    home-manager.url = "github:nix-community/home-manager/release-25.11";
+    home-manager.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
-    { nix-darwin, nixpkgs, ... }:
+    { nix-darwin, nixpkgs, home-manager, ... }:
     let
       system = "aarch64-darwin";
       pkgs = nixpkgs.legacyPackages.${system};
@@ -36,6 +38,7 @@
 
       darwinFunctions = {
         common = import ./nix/hosts/darwin/common;
+        homeManagerModule = home-manager.darwinModules.home-manager;
       };
 
       darwinConfigurations.example = nix-darwin.lib.darwinSystem {

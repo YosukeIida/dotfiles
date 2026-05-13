@@ -29,6 +29,13 @@
     "flakes"
   ];
 
+  home-manager = {
+    useGlobalPkgs = true;
+    useUserPackages = true;
+    extraSpecialArgs = { inherit username homedir; };
+    users.${username} = import ../../../home/default.nix;
+  };
+
   launchd.user.agents."homebrew.mxcl.colima" = {
     serviceConfig = {
       EnvironmentVariables = {
