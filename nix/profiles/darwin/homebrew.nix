@@ -11,7 +11,6 @@
     taps = [
       "solarphlare/airmute"
       "steipete/tap"
-      "yosukeiida/omlx"
       "yosukeiida/pindrop"
     ];
 
@@ -69,7 +68,6 @@
       "notion"
       "notion-calendar"
       "obsidian"
-      "omlx"
       "onlyoffice"
       "pindrop"
       "raycast"
