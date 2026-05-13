@@ -9,6 +9,10 @@
     };
 
     taps = [
+      {
+        name = "jundot/omlx";
+        clone_target = "https://github.com/jundot/omlx";
+      }
       "solarphlare/airmute"
       "steipete/tap"
       "yosukeiida/pindrop"
@@ -22,6 +26,7 @@
       "fzf"
       "gh"
       "ghq"
+      "jundot/omlx/omlx"
       "lazydocker"
       "lazygit"
       "neovim"
