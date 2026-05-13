@@ -32,8 +32,7 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    extraSpecialArgs = { inherit username homedir; };
-    users.${username} = import ../../../home/default.nix;
+    users.${username} = args: import ../../../home/default.nix (args // { inherit username homedir; });
   };
 
   launchd.user.agents."homebrew.mxcl.colima" = {
