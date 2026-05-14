@@ -83,6 +83,9 @@
     "Python": {
       "format_on_save": "on",
     },
+    "LaTeX": {
+      "autosave": "off",
+    },
   },
   "lsp": {
     "texlab": {
