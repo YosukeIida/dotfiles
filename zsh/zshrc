@@ -174,6 +174,7 @@ fi
 # CTRL-T / CTRL-R / ALT-C の既定キーバインドを“あるときだけ”読み込む
 if [[ $- == *i* ]]; then
   for f in "$HOME/.fzf.zsh" \
+    "$HOME/.config/zsh/fzf/key-bindings.zsh" \
     "/etc/profiles/per-user/$USER/share/fzf/key-bindings.zsh" \
     "$HOME/.nix-profile/share/fzf/key-bindings.zsh" \
     "/opt/homebrew/opt/fzf/shell/key-bindings.zsh" \
