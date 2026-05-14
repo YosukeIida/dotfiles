@@ -1,5 +1,6 @@
 {
   config,
+  pkgs,
   darwinPublicConfigDir,
   ...
 }:
@@ -10,6 +11,10 @@ in
 
 {
   home.file = {
+    # zsh-syntax-highlighting は share/zsh-syntax-highlighting/ に配置されており
+    # nix-darwin per-user profile に自動統合されないため直接リンクする
+    ".config/zsh/plugins/zsh-syntax-highlighting".source =
+      "${pkgs.zsh-syntax-highlighting}/share/zsh-syntax-highlighting";
     ".gitconfig".source = lnk "git/gitconfig";
     ".config/git/ignore".source = lnk "git/ignore";
     ".config/ghostty/config".source = lnk "ghostty/config";

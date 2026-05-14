@@ -187,21 +187,20 @@ export PATH="/Users/yosuke/.antigravity/antigravity/bin:$PATH"
 
 
 # zsh-autosuggestions / zsh-syntax-highlighting (nix or brew)
-for _zsh_plugin_d in \
-  "/etc/profiles/per-user/$USER/share" \
-  "$HOME/.nix-profile/share" \
-  "$(brew --prefix 2>/dev/null)/share"; do
-  [[ -f "$_zsh_plugin_d/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && \
-    source "$_zsh_plugin_d/zsh-autosuggestions/zsh-autosuggestions.zsh" && break
+for _f in \
+  "/etc/profiles/per-user/$USER/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" \
+  "$HOME/.nix-profile/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" \
+  "$(brew --prefix 2>/dev/null)/share/zsh-autosuggestions/zsh-autosuggestions.zsh"; do
+  [[ -f "$_f" ]] && source "$_f" && break
 done
-for _zsh_plugin_d in \
-  "/etc/profiles/per-user/$USER/share" \
-  "$HOME/.nix-profile/share" \
-  "$(brew --prefix 2>/dev/null)/share"; do
-  [[ -f "$_zsh_plugin_d/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && \
-    source "$_zsh_plugin_d/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" && break
+for _f in \
+  "$HOME/.config/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" \
+  "/etc/profiles/per-user/$USER/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" \
+  "$HOME/.nix-profile/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" \
+  "$(brew --prefix 2>/dev/null)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"; do
+  [[ -f "$_f" ]] && source "$_f" && break
 done
-unset _zsh_plugin_d
+unset _f
 
 # >>> direnv >>>
 if command -v direnv >/dev/null 2>&1; then
