@@ -56,8 +56,8 @@
   };
 
   system.activationScripts.postActivation.text = ''
-    # omlx が依存する python@3.11 の versioned symlink を PATH に露出させない
-    su - ${username} -c "/opt/homebrew/bin/brew unlink python@3.11 2>/dev/null || true"
+    # python の versioned symlink を PATH に露出させない
+    su - ${username} -c "/opt/homebrew/bin/brew unlink python@3.11 python@3.14 2>/dev/null || true"
 
     pub="${darwinPublicConfigDir}"
     home="${homedir}"
