@@ -37,6 +37,7 @@
       "codex"
       "codex-app"
       "discord"
+      "docker-desktop"
       "figma@beta"
       "fujitsu-scansnap-home"
       "ghostty"
