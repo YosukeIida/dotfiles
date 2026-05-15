@@ -28,6 +28,7 @@ in
     ".config/zed/settings.json".source = lnk "zed/settings.json";
     ".config/zed/keymap.json".source = lnk "zed/keymap.json";
     ".config/cmux/settings.json".source = lnk "cmux/settings.json";
+    ".docker/daemon.json".source = lnk "docker/daemon.json";
     ".config/gh/config.yml".source = lnk "gh/config.yml";
     ".config/karabiner/karabiner.json".source = lnk "karabiner/karabiner.json";
     ".config/karabiner/assets/complex_modifications/dodo.json".source =

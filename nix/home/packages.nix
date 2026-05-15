@@ -3,7 +3,6 @@
 {
   home.packages = with pkgs; [
     cloudflared
-    colima
     duti
     fzf
     gh
