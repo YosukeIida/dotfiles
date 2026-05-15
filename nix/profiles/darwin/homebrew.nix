@@ -15,6 +15,7 @@
       }
       "solarphlare/airmute"
       "steipete/tap"
+      "yosukeiida/nimbus"
       "yosukeiida/pindrop"
     ];
 
@@ -54,6 +55,7 @@
       "microsoft-teams"
       "microsoft-word"
       "nani"
+      "yosukeiida/nimbus/nimbus"
       "notion"
       "notion-calendar"
       "obsidian"
