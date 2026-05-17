@@ -21,6 +21,7 @@
 
     brews = [
       "brightness"
+      "hermes-agent"
       "jundot/omlx/omlx"
     ];
 
