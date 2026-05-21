@@ -38,6 +38,7 @@
       "cmux"
       "codex"
       "codex-app"
+      "codexbar"
       "discord"
       "figma@beta"
       "fujitsu-scansnap-home"
