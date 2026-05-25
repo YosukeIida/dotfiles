@@ -3,10 +3,12 @@
 --
 -- Karabiner-Elements 自体には接続デバイスに応じた profile 切替機能が無いため、
 -- hs.usb.watcher で接続/切断を検知して karabiner_cli を叩く。
+-- 動作確認用に ~/.hammerspoon/usb_keyboard_profile.log にも 1 行ずつ記録する。
 
 local M = {}
 
 local KARABINER_CLI = "/opt/homebrew/bin/karabiner_cli"
+local LOG_PATH = os.getenv("HOME") .. "/.hammerspoon/usb_keyboard_profile.log"
 
 -- 判定キー: productName を主、vendor+product ID を保険として OR で照合
 local TORABO_TSUKI_PRODUCT_NAME = "_BMP_torabo_tsuki"
@@ -16,11 +18,28 @@ local TORABO_TSUKI_PRODUCT_ID = 48301 -- 0xBCAD
 local TORABO_TSUKI_PROFILE = "trabo-tsuki"
 local DEFAULT_PROFILE = "Default profile"
 
+local function log(fmt, ...)
+  local f = io.open(LOG_PATH, "a")
+  if not f then
+    return
+  end
+  f:write(string.format("[%s] " .. fmt .. "\n", os.date("%Y-%m-%d %H:%M:%S"), ...))
+  f:close()
+end
+
+-- profile 名にスペースが含まれるので POSIX 単一引用符でクォート。
+-- Lua の %q だと Hammerspoon の hs.execute 経由でシェルに渡したとき
+-- "Default profile" の前半だけ抜けて [error] `Default` is not found. になる。
+local function shellQuote(s)
+  return "'" .. s:gsub("'", "'\\''") .. "'"
+end
+
 local function selectProfile(name)
-  local cmd = string.format("%s --select-profile %q", KARABINER_CLI, name)
-  local _, ok = hs.execute(cmd, true)
-  if not ok then
-    hs.printf("[usb_keyboard_profile] failed to select profile: %s", name)
+  local cmd = string.format("%s --select-profile %s 2>&1", KARABINER_CLI, shellQuote(name))
+  local output, ok, _, rc = hs.execute(cmd, true)
+  log("selectProfile name=%q ok=%s rc=%s output=%q", name, tostring(ok), tostring(rc), tostring(output or ""))
+  if not ok or rc ~= 0 then
+    hs.printf("[usb_keyboard_profile] failed to select profile %q: %s", name, tostring(output))
   end
 end
 
@@ -42,7 +61,9 @@ local function currentlyConnected()
 end
 
 function M.syncProfile()
-  if currentlyConnected() then
+  local connected = currentlyConnected()
+  log("syncProfile: connected=%s", tostring(connected))
+  if connected then
     selectProfile(TORABO_TSUKI_PROFILE)
   else
     selectProfile(DEFAULT_PROFILE)
@@ -53,6 +74,7 @@ M.watcher = hs.usb.watcher.new(function(event)
   if not isToraboTsuki(event) then
     return
   end
+  log("watcher event=%s productName=%q", tostring(event.eventType), tostring(event.productName or ""))
   if event.eventType == "added" then
     selectProfile(TORABO_TSUKI_PROFILE)
   elseif event.eventType == "removed" then
