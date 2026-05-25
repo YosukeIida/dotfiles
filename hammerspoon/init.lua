@@ -1,6 +1,7 @@
 -- ~/.hammerspoon/init.lua
 local window_manager = require("window_manager")
 local urlevent = require("hs.urlevent")
+require("usb_keyboard_profile")
 
 -- Raycast -> open "hammerspoon://window_manager?cmd=..."
 local function handle_window_manager_url(_, params)

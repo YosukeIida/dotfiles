@@ -24,6 +24,7 @@ in
     ".config/nvim/init.lua".source = lnk "nvim/init.lua";
     ".hammerspoon/init.lua".source = lnk "hammerspoon/init.lua";
     ".hammerspoon/window_manager.lua".source = lnk "hammerspoon/window_manager.lua";
+    ".hammerspoon/usb_keyboard_profile.lua".source = lnk "hammerspoon/usb_keyboard_profile.lua";
     ".hammerspoon/layouts".source = lnk "hammerspoon/layouts";
     ".config/zed/settings.json".source = lnk "zed/settings.json";
     ".config/zed/keymap.json".source = lnk "zed/keymap.json";
