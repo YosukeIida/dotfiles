@@ -1,0 +1,9 @@
+[
+  {
+    "label": "LaTeX Build",
+    "command": "/Users/yosuke/workspace/github.com/YosukeIida/latex-devkit/bin/latexmk-docker-skim",
+    "args": ["$ZED_FILE"],
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  }
+]

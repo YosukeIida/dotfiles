@@ -94,7 +94,7 @@
           "build": {
             "executable": "/Users/yosuke/workspace/github.com/YosukeIida/latex-devkit/bin/latexmk-docker",
             "args": ["%f"],
-            "onSave": true,
+            "onSave": false,
             "forwardSearchAfter": true,
             "auxDirectory": "build",
             "pdfDirectory": "build",

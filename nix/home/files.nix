@@ -27,6 +27,7 @@ in
     ".hammerspoon/layouts".source = lnk "hammerspoon/layouts";
     ".config/zed/settings.json".source = lnk "zed/settings.json";
     ".config/zed/keymap.json".source = lnk "zed/keymap.json";
+    ".config/zed/tasks.json".source = lnk "zed/tasks.json";
     ".config/cmux/settings.json".source = lnk "cmux/settings.json";
     ".docker/daemon.json".source = lnk "docker/daemon.json";
     ".config/gh/config.yml".source = lnk "gh/config.yml";

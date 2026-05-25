@@ -6,6 +6,14 @@
 // To see the default key bindings run `zed: open default keymap`
 // from the command palette.
 [
+  // ===== LaTeX: Cmd+S でビルド（autosave 時はキーバインドが発火しないのでビルドなし）=====
+  {
+    "context": "Editor && extension == tex",
+    "bindings": {
+      "cmd-s": ["task::Spawn", {"task_name": "LaTeX Build"}]
+    }
+  },
+
   // ===== 通常編集（VS Code 風: Enter=改行, Tab=インデント）=====
   // メインのコードエディタだけで Enter=改行 にする
   {
