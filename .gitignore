@@ -7,4 +7,4 @@ result
 result-*
 
 # Raycast raw exports contain local history and device-specific data.
-dotfiles/raycast/*.rayconfig
+raycast/*.rayconfig

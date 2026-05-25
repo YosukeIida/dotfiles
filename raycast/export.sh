@@ -24,9 +24,9 @@ EXCLUDE_KEYS=(
   raycast_version
 )
 
-# ── パスワード（.env の RAYCAST_EXPORT_PW、なければ対話入力）──────────
-DOTFILES_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-[[ -f "$DOTFILES_ROOT/.env" ]] && source "$DOTFILES_ROOT/.env"
+# ── パスワード（dotfiles-private/raycast.env の RAYCAST_EXPORT_PW、なければ対話入力）─
+PRIVATE_ENV="$HOME/workspace/github.com/YosukeIida/dotfiles-private/raycast.env"
+[[ -f "$PRIVATE_ENV" ]] && source "$PRIVATE_ENV"
 
 PASSWORD="${RAYCAST_EXPORT_PW:-}"
 if [[ -z "$PASSWORD" ]]; then
@@ -92,12 +92,12 @@ with open('$TMP_JSON') as f:
     data = json.load(f)
 filtered = {k: v for k, v in data.items() if k not in EXCLUDE}
 
-# builtin_package_rootSearch: 履歴は除外し、ホットキー設定だけ残す
+# builtin_package_rootSearch: 履歴は除外し、ホットキー・エイリアス設定だけ残す
 if 'builtin_package_rootSearch' in filtered:
     rs = filtered['builtin_package_rootSearch']
     rs['rootSearch'] = [
         entry for entry in rs.get('rootSearch', [])
-        if entry.get('hotkey') or entry.get('shortcut')
+        if entry.get('hotkey') or entry.get('shortcut') or entry.get('alias')
     ]
 
 # builtin_package_emoji: frecencyDate（使用頻度）だけ除去し、customKeywords は保持

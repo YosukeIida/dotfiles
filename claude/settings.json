@@ -3,9 +3,12 @@
     "allow": [
       "WebSearch"
     ],
-    "defaultMode": "acceptEdits"
+    "defaultMode": "auto"
   },
   "model": "sonnet[1m]",
+  "worktree": {
+    "baseRef": "fresh"
+  },
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline.sh",
@@ -49,6 +52,7 @@
   "theme": "dark",
   "verbose": false,
   "preferredNotifChannel": "auto",
+  "autoCompactEnabled": true,
   "fileCheckpointingEnabled": true,
   "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true,
