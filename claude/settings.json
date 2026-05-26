@@ -19,7 +19,8 @@
     "codex@openai-codex": true,
     "pdf-creator@daymade-skills": true,
     "lualatex-pdf@YosukeIida": true,
-    "exa@claude-plugins-official": true
+    "exa@claude-plugins-official": true,
+    "swift-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "openai-codex": {
