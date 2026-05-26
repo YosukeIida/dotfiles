@@ -15,6 +15,7 @@
       }
       "solarphlare/airmute"
       "steipete/tap"
+      "yosukeiida/kanary"
       "yosukeiida/nimbus"
       "yosukeiida/pindrop"
     ];
@@ -46,6 +47,7 @@
       "google-chrome@canary"
       "google-drive"
       "hammerspoon"
+      "kanary"
       "karabiner-elements"
       "lens"
       "libreoffice"
