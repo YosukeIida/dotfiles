@@ -23,6 +23,7 @@
       "brightness"
       "hermes-agent"
       "jundot/omlx/omlx"
+      "xcodegen"
     ];
 
     casks = [
