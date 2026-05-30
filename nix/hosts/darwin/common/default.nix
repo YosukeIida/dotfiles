@@ -85,6 +85,13 @@
       _link "$d" "$home/.claude/skills/$(basename "$d")"
     done
 
+    # public skills を ~/.codex/skills/ にも展開
+    mkdir -p "$home/.codex/skills"
+    for d in "$pub/agents/skills"/*/; do
+      [ -d "$d" ] || continue
+      _link "$d" "$home/.codex/skills/$(basename "$d")"
+    done
+
     # codex（初回のみコピー。[projects.*] 等の自動追記を上書きしない）
     if [ ! -e "$home/.codex/config.toml" ]; then
       mkdir -p "$home/.codex"
