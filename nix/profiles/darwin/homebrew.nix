@@ -5,7 +5,7 @@
     onActivation = {
       autoUpdate = true;
       upgrade = false;
-      cleanup = "zap";
+      cleanup = "none"; # Homebrew 5.x で --cleanup に --force が必要になったため無効化
     };
 
     taps = [
