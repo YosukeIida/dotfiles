@@ -1,6 +1,9 @@
 # venv 外での pip install を禁止（system Python を汚さない）
 export PIP_REQUIRE_VIRTUALENV=1
 
+# ユーザーローカルバイナリ
+export PATH="${HOME}/.local/bin:${PATH}"
+
 # Load direnv in non-interactive shells (for Claude Code)
 if ! [[ -o interactive ]] && [[ -f "$PWD/.envrc" ]] && command -v direnv >/dev/null 2>&1; then
   eval "$(direnv export zsh 2>/dev/null)"

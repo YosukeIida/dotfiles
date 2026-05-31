@@ -1,0 +1,11 @@
+#!/bin/bash
+set -euo pipefail
+PUB="${HOME}/workspace/github.com/YosukeIida/dotfiles"
+TS=$(date +%Y-%m-%d-%H%M)
+FILE="Stats-${TS}.plist"
+defaults export eu.exelban.Stats "${PUB}/config/${FILE}"
+ln -sf "${FILE}" "${PUB}/config/Stats-current.plist"
+echo "Exported: config/${FILE}"
+echo "Updated:  config/Stats-current.plist -> ${FILE}"
+echo ""
+echo "次のステップ: cd ${PUB} && git add config/ && git commit -m 'chore: update Stats.plist'"
