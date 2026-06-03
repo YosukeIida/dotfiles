@@ -39,7 +39,7 @@
       "cmux"
       "codex"
       "codex-app"
-      "steipete/tap/codexbar"
+      "codexbar"
       "discord"
       "figma@beta"
       "fujitsu-scansnap-home"
