@@ -1,4 +1,7 @@
 {
+  "env": {
+    "CLAUDE_CODE_NO_FLICKER": "1"
+  },
   "permissions": {
     "allow": [
       "WebSearch"
@@ -59,5 +62,6 @@
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
+  "tui": "fullscreen",
   "model": "sonnet[1m]"
 }
