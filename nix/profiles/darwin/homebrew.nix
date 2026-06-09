@@ -15,14 +15,12 @@
       }
       "solarphlare/airmute"
       "steipete/tap"
-      "yosukeiida/hermes-desktop"
       "yosukeiida/nimbus"
       "yosukeiida/pindrop"
     ];
 
     brews = [
       "brightness"
-      "hermes-agent"
       "jundot/omlx/omlx"
       "xcodegen"
     ];
@@ -58,7 +56,6 @@
       "microsoft-teams"
       "microsoft-word"
       "nani"
-      "yosukeiida/hermes-desktop/hermes-desktop"
       "yosukeiida/nimbus/nimbus"
       "notion"
       "notion-calendar"

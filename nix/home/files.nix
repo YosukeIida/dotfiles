@@ -34,5 +34,14 @@ in
     ".config/gh/config.yml".source = lnk "gh/config.yml";
     ".zshenv".source = lnk "zsh/zshenv";
     ".zshrc".source = lnk "zsh/zshrc";
+    ".homebrew/trust.json".text = builtins.toJSON {
+      trustedtaps = [
+        "https://github.com/jundot/omlx"
+        "solarphlare/airmute"
+        "steipete/tap"
+        "yosukeiida/nimbus"
+        "yosukeiida/pindrop"
+      ];
+    };
   };
 }
