@@ -78,9 +78,33 @@ nix-collect-garbage -d   # 古い世代も含めて全削除
 
 ## パッケージ管理の方針
 
-- グローバルに常に使いたいツール → `configuration.nix` の `homebrew.brews` または `environment.systemPackages`
+- グローバルに常に使いたいツール（CLI ツール類）→ `~/workspace/github.com/YosukeIida/dotfiles/nix/home/packages.nix` の `home.packages`
+- グローバルに常に使いたいツール（Homebrew formula/cask）→ `nix/profiles/darwin/homebrew.nix` の `brews` / `casks`
 - プロジェクト固有のツール → `nix/flake.nix` の `packages`（nix devshell）
 - `npm install -g` は使わない → `npx` か `nix/flake.nix` に追加する
+
+### nixpkgs にパッケージが存在するか確認する方法
+
+`nix search nixpkgs <package>` はレジストリのキャッシュを参照するため、
+flake.lock でピンしたバージョンと一致しないことがある。正確に確認するには：
+
+```bash
+# Web（確実・手軽）
+# https://search.nixos.org/packages → チャンネルを "unstable" にして検索
+
+# CLI（flake.lockのピンに対して確認）
+nix eval nixpkgs#<attribute>.pname                   # 例: nix eval nixpkgs#python3Packages.twscrape.pname
+```
+
+## グローバルで使えるツール
+
+### twscrape（X/Twitter スクレイパー）
+
+`python3Packages.twscrape` として `home.packages` に追加済み（darwin-switch 後に有効）。
+X の内部 GraphQL API 経由でツイート検索・ユーザー情報取得・タイムライン収集ができる。
+
+使い方の詳細は `twscrape` スキルを参照すること（Skill ツールで自動ロードされる）。
+初回はアカウント登録が必要（`twscrape add_accounts` / `twscrape login_all`）。
 
 ---
 

@@ -11,6 +11,7 @@
     lazygit
     neovim
     poppler
+    python3Packages.twscrape
     rclone
     tmux
     tree
