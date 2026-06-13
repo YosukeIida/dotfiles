@@ -1,0 +1,10 @@
+# gitleaks 設定。デフォルトルールを使いつつ、agenix 暗号化済みファイルを許可リストに。
+# secrets/*.age は age で暗号化されたバイナリで、平文の秘密は含まない（公開して安全）。
+[extend]
+useDefault = true
+
+[allowlist]
+description = "agenix-encrypted secrets (binary, no plaintext)"
+paths = [
+  '''secrets/.*\.age''',
+]
