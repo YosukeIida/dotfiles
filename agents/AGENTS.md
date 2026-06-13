@@ -9,7 +9,13 @@ darwin-switch
 # 実体: sudo darwin-rebuild switch --flake /Users/yosuke/workspace/github.com/YosukeIida/dotfiles#Yosukes-MacBook-Air
 ```
 
-設定ファイル: `~/workspace/github.com/YosukeIida/dotfiles/configuration.nix`
+設定エントリ: `~/workspace/github.com/YosukeIida/dotfiles/flake.nix` の
+`darwinConfigurations."Yosukes-MacBook-Air"`（host 固有設定は
+`nix/hosts/darwin/yosuke-macbook-air.nix`、秘密値は agenix で `secrets/*.age`）。
+
+> 2026-06 に単一 public repo 化。以前は private repo を flake input にしていたが、
+> 現在は public が単一の本体 flake。秘密値は agenix 暗号化して public に置き、
+> 個人 skills だけ private overlay（dotfiles-private）にローカルパス symlink で取り込む。
 
 ---
 

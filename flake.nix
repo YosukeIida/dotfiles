@@ -7,10 +7,12 @@
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager/release-25.11";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    agenix.url = "github:ryantm/agenix";
+    agenix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
-    { nix-darwin, nixpkgs, home-manager, ... }:
+    { nix-darwin, nixpkgs, home-manager, agenix, ... }:
     let
       system = "aarch64-darwin";
       pkgs = nixpkgs.legacyPackages.${system};
@@ -44,10 +46,25 @@
       darwinConfigurations.example = nix-darwin.lib.darwinSystem {
         inherit system;
         modules = [
+          home-manager.darwinModules.home-manager
           (import ./nix/hosts/darwin/common {
             username = "example";
             homedir = "/Users/example";
           })
+        ];
+      };
+
+      darwinConfigurations."Yosukes-MacBook-Air" = nix-darwin.lib.darwinSystem {
+        inherit system;
+        modules = [
+          home-manager.darwinModules.home-manager
+          (import ./nix/hosts/darwin/common {
+            username = "yosuke";
+            homedir = "/Users/yosuke";
+          })
+          agenix.darwinModules.default
+          ./nix/hosts/darwin/secrets.nix
+          ./nix/hosts/darwin/yosuke-macbook-air.nix
         ];
       };
 

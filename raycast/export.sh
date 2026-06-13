@@ -24,9 +24,15 @@ EXCLUDE_KEYS=(
   raycast_version
 )
 
-# ── パスワード（dotfiles-private/raycast.env の RAYCAST_EXPORT_PW、なければ対話入力）─
-PRIVATE_ENV="$HOME/workspace/github.com/YosukeIida/dotfiles-private/raycast.env"
-[[ -f "$PRIVATE_ENV" ]] && source "$PRIVATE_ENV"
+# ── パスワード（agenix 復号の ~/.config/raycast/export.env の RAYCAST_EXPORT_PW、
+#    無ければ旧 dotfiles-private/raycast.env、いずれも無ければ対話入力）─
+AGENIX_ENV="$HOME/.config/raycast/export.env"
+LEGACY_ENV="$HOME/workspace/github.com/YosukeIida/dotfiles-private/raycast.env"
+if [[ -r "$AGENIX_ENV" ]]; then
+  source "$AGENIX_ENV"
+elif [[ -f "$LEGACY_ENV" ]]; then
+  source "$LEGACY_ENV"
+fi
 
 PASSWORD="${RAYCAST_EXPORT_PW:-}"
 if [[ -z "$PASSWORD" ]]; then
