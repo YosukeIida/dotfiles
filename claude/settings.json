@@ -8,6 +8,7 @@
     ],
     "defaultMode": "auto"
   },
+  "model": "sonnet[1m]",
   "hooks": {
     "PreToolUse": [
       {
@@ -35,7 +36,8 @@
     "pdf-creator@daymade-skills": true,
     "lualatex-pdf@YosukeIida": true,
     "exa@claude-plugins-official": true,
-    "swift-lsp@claude-plugins-official": true
+    "swift-lsp@claude-plugins-official": true,
+    "academic-research-skills@academic-research-skills": true
   },
   "extraKnownMarketplaces": {
     "openai-codex": {
@@ -62,6 +64,12 @@
         "repo": "YosukeIida/claude-lualatex-pdf"
       },
       "autoUpdate": true
+    },
+    "academic-research-skills": {
+      "source": {
+        "source": "github",
+        "repo": "Imbad0202/academic-research-skills"
+      }
     }
   },
   "language": "Japanese",

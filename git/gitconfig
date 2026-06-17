@@ -7,3 +7,7 @@
 	root = ~/workspace/
 [fetch]
 	prune = true
+[safe]
+	directory = /Users/yosuke/workspace/github.com/TMLlaboratory/llm-kie-sorimachi
+	directory = /Users/yosuke/workspace/github.com/TMLlaboratory/llm-kie
+	directory = /Users/yosuke/workspace/github.com/TMLlaboratory/s-code
