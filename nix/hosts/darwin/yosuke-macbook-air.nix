@@ -17,6 +17,15 @@ let
     exec sudo darwin-rebuild switch --flake ${publicDir}#${darwinHost} "$@"
   '';
 
+  darwinUpdate = pkgs.writeShellScriptBin "darwin-update" ''
+    set -euo pipefail
+    cd ${publicDir}
+    echo "==> nix flake update"
+    nix flake update
+    echo "==> darwin-switch"
+    exec sudo darwin-rebuild switch --flake ${publicDir}#${darwinHost}
+  '';
+
   brewUpgradeAll = pkgs.writeShellScriptBin "brew-upgrade-all" ''
     set -euo pipefail
 
@@ -303,6 +312,7 @@ in
     nix-direnv
     zellij
     darwinSwitch
+    darwinUpdate
     brewUpgradeAll
     brewUpdateReminder
     vpnCoexistenceApply
