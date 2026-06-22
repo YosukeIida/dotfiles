@@ -10,16 +10,6 @@
   },
   "model": "sonnet[1m]",
   "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/workspace/github.com/YosukeIida/dotfiles/claude/hooks/on_session_start.sh"
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
