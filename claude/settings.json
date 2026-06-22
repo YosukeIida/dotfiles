@@ -10,6 +10,16 @@
   },
   "model": "sonnet[1m]",
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/workspace/github.com/YosukeIida/dotfiles/claude/hooks/on_prompt_submit.sh"
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
