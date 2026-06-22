@@ -37,7 +37,9 @@
     "lualatex-pdf@YosukeIida": true,
     "exa@claude-plugins-official": true,
     "swift-lsp@claude-plugins-official": true,
-    "academic-research-skills@academic-research-skills": true
+    "academic-research-skills@academic-research-skills": true,
+    "frontend-design@claude-plugins-official": true,
+    "figma@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "openai-codex": {
@@ -75,12 +77,14 @@
   "language": "Japanese",
   "effortLevel": "high",
   "tui": "fullscreen",
+  "skipWorkflowUsageWarning": true,
   "theme": "dark",
   "verbose": false,
   "preferredNotifChannel": "auto",
   "autoCompactEnabled": true,
   "fileCheckpointingEnabled": true,
   "remoteControlAtStartup": true,
+  "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true
