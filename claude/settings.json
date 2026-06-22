@@ -10,12 +10,12 @@
   },
   "model": "sonnet[1m]",
   "hooks": {
-    "UserPromptSubmit": [
+    "SessionStart": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/workspace/github.com/YosukeIida/dotfiles/claude/hooks/on_prompt_submit.sh"
+            "command": "bash ~/workspace/github.com/YosukeIida/dotfiles/claude/hooks/on_session_start.sh"
           }
         ]
       }
