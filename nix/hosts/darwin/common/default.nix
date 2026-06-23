@@ -71,9 +71,6 @@
     _link "$pub/agents/AGENTS.md"                  "$home/.claude/CLAUDE.md"
     _link "$pub/agents/AGENTS.md"                  "$home/.codex/AGENTS.md"
 
-    # Claude Code プラグインを自動インストール（ユーザー権限で実行）
-    su - ${username} -c "bash $pub/claude/install-plugins.sh" || true
-
     # public skills を ~/.claude/skills/ に展開
     # ~/.claude/skills が symlink なら実ディレクトリに移行
     if [ -L "$home/.claude/skills" ]; then
@@ -92,10 +89,18 @@
       _link "$d" "$home/.codex/skills/$(basename "$d")"
     done
 
-    # codex（初回のみコピー。[projects.*] 等の自動追記を上書きしない）
-    if [ ! -e "$home/.codex/config.toml" ]; then
-      mkdir -p "$home/.codex"
-      cp "$pub/codex/config.toml" "$home/.codex/config.toml"
-    fi
+    # Codex の安定設定は system layer で管理する。
+    # ~/.codex/config.toml は projects/trust/UI 等のローカル状態として Codex に所有させる。
+    _link "$pub/codex/config.toml" "/etc/codex/config.toml"
+
+    # 旧 activation が ~/.codex/config.toml にコピーした安定設定を除去する。
+    # user layer は system layer より優先されるため、残すと新しい system 設定が無視される。
+    su - ${username} -c "bash $pub/codex/migrate-user-config.sh" || true
+
+    # Claude Code プラグインを自動インストール（ユーザー権限で実行）
+    su - ${username} -c "bash $pub/claude/install-plugins.sh" || true
+
+    # Codex プラグインを希望リストから冪等にインストール
+    su - ${username} -c "bash $pub/codex/install-plugins.sh" || true
   '';
 }
