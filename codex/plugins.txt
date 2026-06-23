@@ -1,0 +1,9 @@
+# One plugin selector per line. Blank lines and comments are ignored.
+github@openai-curated
+google-drive@openai-curated
+documents@openai-primary-runtime
+spreadsheets@openai-primary-runtime
+presentations@openai-primary-runtime
+pdf@openai-primary-runtime
+browser@openai-bundled
+template-creator@openai-primary-runtime

@@ -1,4 +1,4 @@
-model = "gpt-5.4"
+model = "gpt-5.5"
 model_reasoning_effort = "high"
 personality = "pragmatic"
 web_search = "live"
@@ -6,11 +6,14 @@ web_search = "live"
 model_context_window = 1000000
 model_auto_compact_token_limit = 900000
 
+# This personal workstation intentionally runs Codex without an approval gate or
+# filesystem sandbox. External MCP servers, including Exa below, are therefore
+# part of the trusted boundary for prompt/tool-output handling.
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
 [features]
 multi_agent = true
 
-[plugins."github@openai-curated"]
-enabled = true
-
-[plugins."google-drive@openai-curated"]
-enabled = true
+[mcp_servers.exa]
+url = "https://mcp.exa.ai/mcp"
