@@ -16,4 +16,5 @@
   age.secrets."cf-token".file     = ../../../secrets/cf-token.age;
   age.secrets."headscale-ip".file = ../../../secrets/headscale-ip.age;
   age.secrets."printers".file     = ../../../secrets/printers.age;
+  age.secrets."figma-pat".file    = ../../../secrets/figma-pat.age;  # expires 2026-09-21
 }

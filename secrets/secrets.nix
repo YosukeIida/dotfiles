@@ -14,4 +14,5 @@ in
   "cf-token.age".publicKeys     = all;
   "headscale-ip.age".publicKeys = all;
   "printers.age".publicKeys     = all;
+  "figma-pat.age".publicKeys    = all;  # expires 2026-09-21
 }

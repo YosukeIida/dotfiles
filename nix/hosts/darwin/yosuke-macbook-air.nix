@@ -396,6 +396,7 @@ in
     _place "${config.age.secrets."headscale-ip".path}"  "$home/.config/vpn/headscale-ip"
     _place "${config.age.secrets."printers".path}"      "$home/.config/printers/printers.env"
     _place "${config.age.secrets."raycast-pw".path}"    "$home/.config/raycast/export.env"
+    _place "${config.age.secrets."figma-pat".path}"     "$home/.config/figma/pat"
 
     # cf_proxy.sh（public）を ~/.ssh に配置
     _link "$pub/ssh/cf_proxy.sh" "$home/.ssh/cf_proxy.sh"
