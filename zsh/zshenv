@@ -4,6 +4,9 @@ export PIP_REQUIRE_VIRTUALENV=1
 # ユーザーローカルバイナリ
 export PATH="${HOME}/.local/bin:${PATH}"
 
+# Figma PAT for figma-console-mcp (expires 2026-09-21; managed by agenix)
+[[ -r "${HOME}/.config/figma/pat" ]] && export FIGMA_ACCESS_TOKEN="$(<"${HOME}/.config/figma/pat")"
+
 # Load direnv in non-interactive shells (for Claude Code)
 if ! [[ -o interactive ]] && [[ -f "$PWD/.envrc" ]] && command -v direnv >/dev/null 2>&1; then
   eval "$(direnv export zsh 2>/dev/null)"
