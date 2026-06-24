@@ -33,6 +33,22 @@ dotfiles/
 └── templates/       # devshell テンプレート（python-uv・node）
 ```
 
+## Symlink の仕組み
+
+`~/.claude/` や `~/.codex/` 以下のファイルは dotfiles からの symlink で管理されている。
+symlink の定義はコードが正。参照先：
+
+- public: `nix/hosts/darwin/common/default.nix` の `postActivation`
+- private overlay: `nix/hosts/darwin/yosuke-macbook-air.nix` の `postActivation`
+
+### 覚えておくべき原則
+
+- `~/.claude/settings.json` は symlink のため、`/plugin install` 等による書き換えは
+  自動で dotfiles 側（`claude/settings.json`）に反映される。変更後は必ず `git commit` する。
+- skills は per-directory symlink。ディレクトリを新規追加したら `darwin-switch` が必要。
+- plugins は `claude/install-plugins.sh` が `darwin-switch` 時に冪等インストールする。
+  `settings.json` の `enabledPlugins` が source of truth。
+
 ## よく使う操作
 
 ```bash
