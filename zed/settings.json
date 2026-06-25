@@ -7,6 +7,7 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "disable_ai": false,
   "cli_default_open_behavior": "new_window",
   "diff_view_style": "split",
   "project_panel": {
@@ -25,6 +26,13 @@
   "soft_wrap": "preferred_line_length",
   "preferred_line_length": 120,
   "show_edit_predictions": true,
+  "file_scan_exclusions": [
+    "**/.svn",
+    "**/.hg",
+    "**/CVS",
+    "**/.DS_Store",
+    "**/Thumbs.db"
+  ],
   "agent_servers": {
     "codex-acp": {
       "type": "registry",
