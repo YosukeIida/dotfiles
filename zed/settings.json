@@ -95,6 +95,17 @@
       "autosave": "off",
     },
   },
+  "auto_install_extensions": {
+    "codebook": true,
+    "docker-compose": true,
+    "dockerfile": true,
+    "html": true,
+    "jsonl": true,
+    "latex": true,
+    "make": true,
+    "rainbow-csv": true,
+    "toml": true,
+  },
   "lsp": {
     "texlab": {
       "settings": {
