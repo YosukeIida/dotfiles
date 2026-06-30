@@ -30,6 +30,16 @@
     "flakes"
   ];
 
+  # Zed のビルド済み依存を取得する cachix バイナリキャッシュ。
+  # zed リポジトリ同梱 flake の nixConfig と同じ値をグローバルに信頼させ、
+  # `nix develop` 時の承認プロンプトを不要にする。
+  nix.settings.extra-substituters = [
+    "https://zed.cachix.org"
+  ];
+  nix.settings.extra-trusted-public-keys = [
+    "zed.cachix.org-1:/pHQ6dpMsAZk2DiP4WCL0p9YDNKWj2Q5FL20bNmw1cU="
+  ];
+
   users.users.${username}.home = homedir;
 
   home-manager = {
