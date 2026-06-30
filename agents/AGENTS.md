@@ -174,3 +174,30 @@ direnv allow
 ```
 
 devshell が起動していない状態でパッケージが必要な場合は `uvx` を使う。
+
+---
+
+## Browser Use の移譲ルール（Codex TUI 向け）
+
+タスクに以下のいずれかが含まれる場合、**自分では実行せず** `delegate-browser` コマンドで Codex App に移譲すること：
+
+- Web ページを開く・操作する・スクリーンショットを撮る
+- ブラウザで URL にアクセスする
+- localhost / 127.0.0.1 など開発サーバーの動作確認
+- DOM の検査・クリック・入力など UI 操作
+- ログインフロー・フォーム操作などのブラウザ自動化
+
+### 移譲方法
+
+```bash
+delegate-browser "<タスクの内容をそのまま渡す>" "<プロジェクトの絶対パス>"
+```
+
+例：
+```bash
+delegate-browser "localhost:3000 を開いてログインフローをテストして" "/Users/yosuke/workspace/github.com/myproject"
+```
+
+- Codex App が起動していない場合は自動的に起動する
+- 結果は Codex App が agmsg で返信する
+- `delegate-browser` 呼び出し後、自分のターンはそこで終了してよい（結果待ちは不要）

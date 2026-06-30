@@ -37,6 +37,12 @@ in
     figma-console-mcp
   ];
 
+  home.sessionVariables = {
+    AGMSG_NODE = "${pkgs.nodejs_22}/bin/node";
+  };
+
+  home.sessionPath = [ "$HOME/.agents/bin" ];
+
   # figma-console-mcp の Desktop Bridge プラグインを安定パスへ実体コピーする。
   # Figma はここ（~/.figma-plugins/figma-desktop-bridge/manifest.json）から一度 import すれば、
   # figma-console-mcp が再ビルドされて /nix/store のハッシュが変わっても再 import 不要

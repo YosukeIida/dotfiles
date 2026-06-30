@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# delegate-browser: Codex TUI から Codex App の browser use にタスクを移譲する
+# Usage: delegate-browser "<task prompt>" [<project path>]
+set -euo pipefail
+
+PROMPT="${1:?Usage: delegate-browser <prompt> [project_path]}"
+PROJECT="${2:-$PWD}"
+
+encode() {
+  python3 -c 'import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))' "$1"
+}
+
+URL="codex://new?prompt=$(encode "$PROMPT")&path=$(encode "$PROJECT")"
+
+echo "→ Codex App に移譲中..."
+
+# Codex App を起動（または前面に出す）してプロンプトをセット
+open "$URL"
+
+# Codex App が前面に来るまで待つ（最大 5 秒）
+for i in $(seq 1 10); do
+  sleep 0.5
+  FRONTMOST=$(osascript -e 'tell application "System Events" to name of first process whose frontmost is true' 2>/dev/null || echo "")
+  if [[ "$FRONTMOST" == "Codex" ]]; then
+    break
+  fi
+done
+
+# 念のためもう少し待ってから Return を送信
+sleep 0.3
+osascript -e 'tell application "System Events"
+  tell process "Codex"
+    key code 36
+  end tell
+end tell'
+
+echo "✓ 移譲完了 — Codex App が browser use を実行中"

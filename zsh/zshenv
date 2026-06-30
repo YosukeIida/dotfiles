@@ -1,8 +1,19 @@
+# Home Manager session variables（AGMSG_NODE 等）と sessionPath を読み込む
+for _hm_vars in \
+  "/etc/profiles/per-user/${USER}/etc/profile.d/hm-session-vars.sh" \
+  "${HOME}/.nix-profile/etc/profile.d/hm-session-vars.sh"; do
+  [[ -f "${_hm_vars}" ]] && source "${_hm_vars}" && break
+done
+unset _hm_vars
+
 # venv 外での pip install を禁止（system Python を汚さない）
 export PIP_REQUIRE_VIRTUALENV=1
 
-# ユーザーローカルバイナリ
-export PATH="${HOME}/.local/bin:${PATH}"
+# ユーザーローカルバイナリ（~/.agents/bin を先頭に確実に置く）
+path=("${path[@]:#${HOME}/.agents/bin}")
+path=("${path[@]:#${HOME}/.local/bin}")
+path=("${HOME}/.agents/bin" "${HOME}/.local/bin" "${path[@]}")
+export PATH
 
 # Figma PAT for figma-console-mcp (expires 2026-09-21; managed by agenix)
 [[ -r "${HOME}/.config/figma/pat" ]] && export FIGMA_ACCESS_TOKEN="$(<"${HOME}/.config/figma/pat")"
