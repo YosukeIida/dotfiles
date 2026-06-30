@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+# cmux-md-katex — live Markdown+KaTeX preview of a .md file in a cmux browser pane.
+#
+# Renders a Markdown file (math-aware, like VSCode's preview) in a cmux browser
+# surface and live-updates it on every save. KaTeX (incl. fonts) is pulled from
+# the nix store and inlined into a self-contained viewer.html; only the file's
+# Markdown text is pushed per update, over `cmux browser ... eval`.
+#
+# Usage:
+#   cmux-md-katex <file.md> [--no-watch] [--interval <sec>] [--regen]
+#
+#   --no-watch     render once and exit (no file watching)
+#   --interval N   poll interval in seconds (default 0.5)
+#   --regen        force-regenerate the cached viewer.html
+#
+# Must be run inside a cmux workspace shell (needs CMUX_WORKSPACE_ID + socket).
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/cmux-md-katex"
+VIEWER="$CACHE_DIR/viewer.html"
+INTERVAL="0.5"
+WATCH=1
+REGEN=0
+FILE=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --no-watch) WATCH=0; shift ;;
+    --regen)    REGEN=1; shift ;;
+    --interval) INTERVAL="${2:?}"; shift 2 ;;
+    -h|--help)  sed -n '2,18p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -*)         echo "unknown option: $1" >&2; exit 2 ;;
+    *)          FILE="$1"; shift ;;
+  esac
+done
+
+[[ -n "$FILE" ]] || { echo "usage: cmux-md-katex <file.md> [--no-watch] [--interval N] [--regen]" >&2; exit 2; }
+[[ -f "$FILE" ]] || { echo "no such file: $FILE" >&2; exit 1; }
+command -v cmux >/dev/null 2>&1 || { echo "cmux not found on PATH" >&2; exit 1; }
+FILE="$(cd "$(dirname "$FILE")" && pwd)/$(basename "$FILE")"   # absolute path
+mkdir -p "$CACHE_DIR"
+
+# --- (re)generate the self-contained viewer when stale -----------------------
+KATEX_PATH="$(nix build nixpkgs#katex --no-link --print-out-paths 2>/dev/null | head -1)"
+STAMP="$CACHE_DIR/.katex-path"
+if [[ "$REGEN" == 1 || ! -f "$VIEWER" \
+      || "$SCRIPT_DIR/gen_viewer.py" -nt "$VIEWER" \
+      || "$SCRIPT_DIR/vendor/markdown-it.min.js" -nt "$VIEWER" \
+      || "$(cat "$STAMP" 2>/dev/null || true)" != "$KATEX_PATH" ]]; then
+  echo "generating viewer.html ..." >&2
+  python3 "$SCRIPT_DIR/gen_viewer.py" "$VIEWER" >&2
+  printf '%s' "$KATEX_PATH" > "$STAMP"
+fi
+
+# --- surface management ------------------------------------------------------
+KEY="$(printf '%s' "$FILE" | shasum | cut -c1-12)"
+SREF_FILE="$CACHE_DIR/surface-$KEY"
+
+surface_alive() {  # $1 = ref ; true if it still points at our viewer
+  local url
+  url="$(cmux browser "$1" get-url 2>/dev/null || true)"
+  [[ "$url" == *"$(basename "$VIEWER")"* ]]
+}
+
+open_surface() {   # opens viewer, prints the new surface ref
+  cmux browser open "file://$VIEWER" --focus true 2>/dev/null \
+    | grep -oE 'surface:[0-9]+' | head -1
+}
+
+REF=""
+if [[ -f "$SREF_FILE" ]]; then
+  REF="$(cat "$SREF_FILE")"
+  surface_alive "$REF" || REF=""
+fi
+if [[ -z "$REF" ]]; then
+  REF="$(open_surface)"
+  [[ -n "$REF" ]] || { echo "failed to open cmux browser surface (run inside a cmux workspace?)" >&2; exit 1; }
+  printf '%s' "$REF" > "$SREF_FILE"
+  # give the page a moment to load before the first eval
+  sleep 0.6
+fi
+echo "previewing $FILE  ->  $REF" >&2
+
+# --- push content via base64 eval (escape-proof) ----------------------------
+push() {
+  local b64
+  b64="$(base64 < "$FILE" | tr -d '\n')"
+  cmux browser "$REF" eval "window.__render(window.__b64('$b64'))" >/dev/null 2>&1 \
+    || echo "eval failed (surface closed?)" >&2
+}
+
+push
+
+if [[ "$WATCH" == 0 ]]; then exit 0; fi
+
+# --- watch loop (mtime poll; no fswatch dependency) --------------------------
+trap 'echo; echo "stopped." >&2; exit 0' INT TERM
+last="$(stat -f %m "$FILE" 2>/dev/null || echo 0)"
+while sleep "$INTERVAL"; do
+  [[ -f "$FILE" ]] || continue
+  cur="$(stat -f %m "$FILE" 2>/dev/null || echo 0)"
+  if [[ "$cur" != "$last" ]]; then
+    last="$cur"
+    # if the user closed the pane, transparently reopen it
+    if ! surface_alive "$REF"; then
+      REF="$(open_surface)"; printf '%s' "$REF" > "$SREF_FILE"; sleep 0.6
+    fi
+    push
+  fi
+done

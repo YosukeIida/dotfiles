@@ -215,3 +215,18 @@ fi
 # Claude Code のターミナル出力をコピーした際に行頭2スペースを除去する
 alias cleanspace='pbpaste | sed -E "s/^ {1,2}//" | pbcopy && pbpaste'
 alias cs='cleanspace'
+
+# =====================================================================
+# ==== cmux Markdown+KaTeX プレビュー ==================================
+# =====================================================================
+# .md ファイルを cmux のブラウザペインで数式込みプレビュー（VSCode 相当）。
+# 保存のたびに自動更新。cmux ワークスペースのシェルで実行すること。
+#   mdkatex <file.md> [--no-watch] [--regen]
+mdkatex() {
+  "$HOME/workspace/github.com/YosukeIida/dotfiles/cmux/md-katex/cmux-md-katex" "$@"
+}
+
+# ~/.agents/bin を PATH 先頭に確保（Homebrew の初期化より後に実行する必要がある）
+path=("${path[@]:#${HOME}/.agents/bin}")
+path=("${HOME}/.agents/bin" "${path[@]}")
+export PATH
