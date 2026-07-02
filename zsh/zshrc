@@ -102,6 +102,74 @@ PY
   echo "org     : ${org_name:-(unknown)}"
 }
 
+# =====================================================================
+# Codex CLI/App アカウント切り替え
+# =====================================================================
+# ターミナルは常に明示的なアカウント home を使う（デフォルト: labteam）。
+# ~/.codex は Codex App / launchd 起動プロセス用で、cx app で切り替える。
+export CODEX_HOME="${CODEX_HOME:-$HOME/.codex-labteam}"
+
+# cx                 → 現在状態表示（shell / App / 起動中デーモン）
+# cx labteam         → このターミナルの CODEX_HOME を labteam に切替（他ターミナルに影響しない）
+# cx personal        → 同上、personal
+# cx app labteam     → Codex App 用（~/.codex/auth.json symlink）を labteam に切替
+# cx app personal    → 同上、personal
+cx() {
+  local sub="${1:-}"
+  case "$sub" in
+    "")
+      _cx_status
+      ;;
+    app)
+      local name="${2:-}"
+      [[ -n "$name" ]] || { echo "usage: cx app <name>" >&2; return 1; }
+      local dir="$HOME/.codex-$name"
+      if [[ ! -d "$dir" ]]; then
+        echo "Error: $dir not found. Run: bash ~/workspace/github.com/YosukeIida/dotfiles/codex/setup-account.sh $name" >&2
+        return 1
+      fi
+      ln -sf "$dir/auth.json" "$HOME/.codex/auth.json"
+      echo "(Codex App は再起動後に反映。確実に切り替えるなら: pkill -f 'codex app-server')"
+      _cx_status
+      ;;
+    *)
+      local dir="$HOME/.codex-$sub"
+      if [[ ! -d "$dir" ]]; then
+        echo "Error: $dir not found. Run: bash ~/workspace/github.com/YosukeIida/dotfiles/codex/setup-account.sh $sub" >&2
+        return 1
+      fi
+      export CODEX_HOME="$dir"
+      _cx_status
+      ;;
+  esac
+}
+
+_cx_status() {
+  local shell_home="${CODEX_HOME:-$HOME/.codex}"
+  local app_target
+  app_target="$(readlink "$HOME/.codex/auth.json" 2>/dev/null || echo "(not a symlink)")"
+
+  echo "shell CODEX_HOME : $shell_home"
+  echo "app auth.json -> : $app_target"
+
+  # app-server デーモンは起動時の CODEX_HOME の auth をキャッシュし、TUI が
+  # CODEX_HOME をまたいで Remote 接続することがある（/statusのRemote行で確認可）。
+  # 現在の shell と実体 auth が異なるデーモンがいたら警告する。
+  local shell_auth pid line dhome daemon_auth mismatch=""
+  shell_auth="$(readlink -f "$shell_home/auth.json" 2>/dev/null)"
+  for pid in $(pgrep -f 'codex app-server' 2>/dev/null); do
+    line="$(ps eww -p "$pid" -o command= 2>/dev/null | tr ' ' '\n' | grep '^CODEX_HOME=' | head -1)"
+    dhome="${line#CODEX_HOME=}"
+    [[ -n "$dhome" ]] || dhome="$HOME/.codex"
+    daemon_auth="$(readlink -f "$dhome/auth.json" 2>/dev/null)"
+    echo "daemon PID $pid  : CODEX_HOME=$dhome"
+    [[ "$daemon_auth" != "$shell_auth" ]] && mismatch=1
+  done
+  if [[ -n "$mismatch" ]]; then
+    echo "warning: 現在のshellと異なるアカウントのapp-serverデーモンが起動中。TUIがそちらにRemote接続すると別アカウントで動くことがある。確実に切り替えるには: pkill -f 'codex app-server'"
+  fi
+}
+
 
 # =====================================================================
 # ==== fzf / ghq 連携（Ctrl+Gで “一瞬でcd”） ==========================

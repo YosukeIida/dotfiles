@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# Codex CLI/App マルチアカウントセットアップ
+# 使い方:
+#   ./setup-account.sh migrate <name>   初回移行（既存 ~/.codex の auth.json だけ分離）
+#   ./setup-account.sh <name>           2アカウント目以降の追加
+#
+# 設計: ~/.codex は今まで通り実体（sessions, history.jsonl, skills, AGENTS.md,
+# config.toml等）を持ち続ける。各アカウントディレクトリ(~/.codex-<name>)は
+# auth.json だけ実体を持ち、それ以外は全て ~/.codex/* への symlink。
+# ~/.codex/auth.json 自体は「今アクティブなアカウント」への symlink になる
+# （Codex App/IDE拡張は常に ~/.codex を見るため、これで App 側にも反映される）。
+#
+# config.toml も共有 symlink にする。Codex の config 書き込みは
+# resolve_symlink_write_paths (codex-rs/utils/path-utils) が symlink を終端まで
+# 解決してから実体に atomic write するため、symlink は壊れない（ソース確認済み）。
+set -euo pipefail
+
+HOME_CODEX="$HOME/.codex"
+
+# ~/.codex-<name> から ~/.codex/* へ symlink するアイテム（実体は~/.codexに置いたまま）
+LINKED_ITEMS=(skills AGENTS.md config.toml sessions history.jsonl session_index.jsonl archived_sessions \
+              memories memories_1.sqlite memories_1.sqlite-shm memories_1.sqlite-wal \
+              goals_1.sqlite transcription-history.jsonl models_cache.json)
+
+_link_shared_items() {
+  local acct_dir="$1"
+  local item
+  for item in "${LINKED_ITEMS[@]}"; do
+    if [[ -e "$HOME_CODEX/$item" ]]; then
+      ln -sf "$HOME_CODEX/$item" "$acct_dir/$item"
+    fi
+  done
+}
+
+migrate() {
+  local first="$1"
+  local acct_dir="$HOME/.codex-$first"
+
+  if [[ -d "$acct_dir" ]]; then
+    echo "Error: already exists: $acct_dir (already migrated?)" >&2
+    exit 1
+  fi
+  if [[ ! -f "$HOME_CODEX/auth.json" ]]; then
+    echo "Error: $HOME_CODEX/auth.json not found" >&2
+    exit 1
+  fi
+
+  mkdir -p "$acct_dir"
+
+  # auth.json だけ実体move。他は一切動かさない（~/.codexに残したまま）。
+  mv "$HOME_CODEX/auth.json" "$acct_dir/auth.json"
+  ln -sf "$acct_dir/auth.json" "$HOME_CODEX/auth.json"
+
+  _link_shared_items "$acct_dir"
+
+  echo "Migrated."
+  echo "  ~/.codex/auth.json -> $acct_dir/auth.json"
+  echo "  $acct_dir/{skills,sessions,history.jsonl,...} -> ~/.codex/* (symlink)"
+  echo ""
+  echo "Next: 2アカウント目を追加する場合は"
+  echo "  bash $(basename "$0") <name>"
+}
+
+add_account() {
+  local name="$1"
+  local acct_dir="$HOME/.codex-$name"
+
+  if [[ ! -d "$HOME_CODEX" ]]; then
+    echo "Error: $HOME_CODEX not found" >&2
+    exit 1
+  fi
+
+  mkdir -p "$acct_dir"
+  _link_shared_items "$acct_dir"
+
+  echo "Created $acct_dir"
+  echo ""
+  echo "Next: ログインしてください"
+  echo "  CODEX_HOME=\"$acct_dir\" codex login"
+}
+
+case "${1:-}" in
+  migrate)
+    [[ -n "${2:-}" ]] || { echo "usage: $0 migrate <name>" >&2; exit 1; }
+    migrate "$2"
+    ;;
+  ""|-h|--help)
+    echo "usage: $0 migrate <name> | $0 <name>"
+    exit 1
+    ;;
+  *)
+    add_account "$1"
+    ;;
+esac
