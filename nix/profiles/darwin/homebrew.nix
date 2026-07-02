@@ -21,6 +21,7 @@
 
     brews = [
       "brightness"
+      "herdr"
       "jundot/omlx/omlx"
       "rtk"
       "xcodegen"
