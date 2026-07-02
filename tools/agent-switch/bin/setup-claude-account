@@ -1,73 +1,75 @@
 #!/usr/bin/env bash
-# Claude Code マルチアカウントセットアップ
-# 使い方: ./setup-claude-account [アカウント番号]
-# 例:     ./setup-claude-account 2
+# Claude Code マルチアカウントセットアップ（名前制・ln -sf 収束型）
+# 使い方: ./setup-claude-account <name>
+# 例:     ./setup-claude-account personal
 #
-# AGSW_CLAUDE_ASSETS_DIR: dotfiles管理の settings.*.json 等を各アカウントdirへ
-# 直接symlinkしたい場合にそのディレクトリを指定する（未指定ならスキップ）。
+# デフォルトアカウント（labteam 相当）は CLAUDE_CONFIG_DIR 未設定の ~/.claude を
+# そのまま使うため、このスクリプトの対象外（何も作る必要がない）。
+# 認証は macOS Keychain に CLAUDE_CONFIG_DIR ごとのエントリで保存されるため、
+# 作成後にそのアカウントで一度 login が必要。
+#
+# AGSW_CLAUDE_ASSETS_DIR: dotfiles 管理の settings.*.json 等を各アカウント dir へ
+# 直接 symlink したい場合にそのディレクトリを指定する（未指定ならスキップ）。
 set -euo pipefail
 
-N=${1:-2}
+NAME="${1:?usage: setup-claude-account <name>}"
 BASE="$HOME/.claude"
-DIR="$HOME/.claude-$N"
+DIR="$HOME/.claude-$NAME"
 ASSETS_DIR="${AGSW_CLAUDE_ASSETS_DIR:-}"
 
 # assets dir から直接 symlink（各アカウント独立）
-DOTFILES_LINKS=(settings.api.json settings.subscription.json get_key.sh statusline.sh CLAUDE.md)
+ASSET_LINKS=(settings.api.json settings.subscription.json get_key.sh statusline.sh CLAUDE.md)
 
-# account 1 (~/.claude) から共有する項目
-SHARED_FROM_BASE=(projects skills todos plans history.jsonl)
+# デフォルトアカウント (~/.claude) から共有する項目
+SHARED_FROM_BASE=(projects skills todos plans history.jsonl CLAUDE.md)
 
 echo "Setting up: $DIR"
 mkdir -p "$DIR"
 
 if [[ -n "$ASSETS_DIR" ]]; then
-  for item in "${DOTFILES_LINKS[@]}"; do
-    src="$ASSETS_DIR/$item"
-    dst="$DIR/$item"
-    if [[ ! -e "$src" ]]; then
+  for item in "${ASSET_LINKS[@]}"; do
+    if [[ -e "$ASSETS_DIR/$item" ]]; then
+      ln -sfn "$ASSETS_DIR/$item" "$DIR/$item"
+      echo "  linked (assets): $item"
+    else
       echo "  skip (not in assets dir): $item"
-      continue
     fi
-    if [[ -e "$dst" || -L "$dst" ]]; then
-      echo "  skip (exists): $item"
-      continue
-    fi
-    ln -s "$src" "$dst"
-    echo "  linked (assets): $item"
   done
 else
-  echo "  (AGSW_CLAUDE_ASSETS_DIR 未指定のため dotfiles 管理ファイルのリンクはスキップ)"
+  echo "  (AGSW_CLAUDE_ASSETS_DIR 未指定のため settings.*.json 等のリンクはスキップ)"
 fi
 
 for item in "${SHARED_FROM_BASE[@]}"; do
-  src="$BASE/$item"
-  dst="$DIR/$item"
-  if [[ ! -e "$src" && ! -L "$src" ]]; then
+  if [[ -e "$BASE/$item" || -L "$BASE/$item" ]]; then
+    ln -sfn "$BASE/$item" "$DIR/$item"
+    echo "  linked (shared): $item"
+  else
     echo "  skip (not found): $item"
-    continue
   fi
-  if [[ -e "$dst" || -L "$dst" ]]; then
-    echo "  skip (exists): $item"
-    continue
-  fi
-  ln -s "$src" "$dst"
-  echo "  linked (shared): $item"
 done
 
-# settings.json → 同ディレクトリ内の subscription に向ける（連鎖しない）
+# settings.json のデフォルト（既存の選択は尊重）:
+# assets の settings.json（全アカウント共有の live 設定）があればそれを指す。
+# 無ければ同ディレクトリの subscription にフォールバック。
 if [[ ! -e "$DIR/settings.json" && ! -L "$DIR/settings.json" ]]; then
-  ln -s "$DIR/settings.subscription.json" "$DIR/settings.json"
-  echo "  linked: settings.json -> settings.subscription.json"
+  if [[ -n "$ASSETS_DIR" && -e "$ASSETS_DIR/settings.json" ]]; then
+    ln -s "$ASSETS_DIR/settings.json" "$DIR/settings.json"
+    echo "  linked: settings.json -> (assets) settings.json"
+  elif [[ -e "$DIR/settings.subscription.json" ]]; then
+    ln -s "$DIR/settings.subscription.json" "$DIR/settings.json"
+    echo "  linked: settings.json -> settings.subscription.json"
+  fi
 fi
 
 if [[ ! -f "$DIR/anthropic.env" ]]; then
   echo ""
   echo "  [INFO] API モードを使う場合は以下を作成:"
-  echo "  echo 'export ANTHROPIC_API_KEY=\"sk-ant-...\"' > $DIR/anthropic.env"
-  echo "  chmod 600 $DIR/anthropic.env"
+  echo "    echo 'export ANTHROPIC_API_KEY=\"sk-ant-...\"' > $DIR/anthropic.env && chmod 600 $DIR/anthropic.env"
 fi
 
 echo ""
-echo "Done. Next: log in with account $N"
-echo "  CLAUDE_CONFIG_DIR=$DIR claude /login"
+echo "Done. Next: このアカウントでログイン"
+echo "  CLAUDE_CONFIG_DIR=$DIR claude   # 起動後 /login"
+echo ""
+echo "旧ディレクトリ（~/.claude-2 等）から状態を引き継ぐ場合は login 前に:"
+echo "  mv ~/.claude-2/.claude.json ~/.claude-2/stats-cache.json $DIR/ 2>/dev/null || true"

@@ -27,7 +27,8 @@ _link_shared_items() {
   local item
   for item in "${LINKED_ITEMS[@]}"; do
     if [[ -e "$HOME_CODEX/$item" ]]; then
-      ln -sf "$HOME_CODEX/$item" "$acct_dir/$item"
+      # -n: リンク先がディレクトリでも辿らずリンク自体を置き換える（再実行で収束）
+      ln -sfn "$HOME_CODEX/$item" "$acct_dir/$item"
     fi
   done
 }
