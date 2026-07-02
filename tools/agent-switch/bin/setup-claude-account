@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 # Claude Code マルチアカウントセットアップ
-# 使い方: ./setup-account.sh [アカウント番号]
-# 例:     ./setup-account.sh 2
+# 使い方: ./setup-claude-account [アカウント番号]
+# 例:     ./setup-claude-account 2
+#
+# AGSW_CLAUDE_ASSETS_DIR: dotfiles管理の settings.*.json 等を各アカウントdirへ
+# 直接symlinkしたい場合にそのディレクトリを指定する（未指定ならスキップ）。
 set -euo pipefail
 
 N=${1:-2}
 BASE="$HOME/.claude"
 DIR="$HOME/.claude-$N"
-DOTFILES_CLAUDE="$HOME/workspace/github.com/YosukeIida/dotfiles/claude"
+ASSETS_DIR="${AGSW_CLAUDE_ASSETS_DIR:-}"
 
-# dotfiles から直接 symlink（各アカウント独立）
+# assets dir から直接 symlink（各アカウント独立）
 DOTFILES_LINKS=(settings.api.json settings.subscription.json get_key.sh statusline.sh CLAUDE.md)
 
 # account 1 (~/.claude) から共有する項目
@@ -18,20 +21,24 @@ SHARED_FROM_BASE=(projects skills todos plans history.jsonl)
 echo "Setting up: $DIR"
 mkdir -p "$DIR"
 
-for item in "${DOTFILES_LINKS[@]}"; do
-  src="$DOTFILES_CLAUDE/$item"
-  dst="$DIR/$item"
-  if [[ ! -e "$src" ]]; then
-    echo "  skip (not in dotfiles): $item"
-    continue
-  fi
-  if [[ -e "$dst" || -L "$dst" ]]; then
-    echo "  skip (exists): $item"
-    continue
-  fi
-  ln -s "$src" "$dst"
-  echo "  linked (dotfiles): $item"
-done
+if [[ -n "$ASSETS_DIR" ]]; then
+  for item in "${DOTFILES_LINKS[@]}"; do
+    src="$ASSETS_DIR/$item"
+    dst="$DIR/$item"
+    if [[ ! -e "$src" ]]; then
+      echo "  skip (not in assets dir): $item"
+      continue
+    fi
+    if [[ -e "$dst" || -L "$dst" ]]; then
+      echo "  skip (exists): $item"
+      continue
+    fi
+    ln -s "$src" "$dst"
+    echo "  linked (assets): $item"
+  done
+else
+  echo "  (AGSW_CLAUDE_ASSETS_DIR 未指定のため dotfiles 管理ファイルのリンクはスキップ)"
+fi
 
 for item in "${SHARED_FROM_BASE[@]}"; do
   src="$BASE/$item"
