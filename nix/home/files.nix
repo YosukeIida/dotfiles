@@ -30,6 +30,11 @@ in
     ".config/zed/settings.json".source = lnk "zed/settings.json";
     ".config/zed/keymap.json".source = lnk "zed/keymap.json";
     ".config/zed/tasks.json".source = lnk "zed/tasks.json";
+    # Zed Dev (RaTeX unofficial) は zedd() が --user-data-dir でデータを分離する。
+    # config はその data dir 配下（<data>/config/）を読むため、同じ実体を張って設定だけ共有する。
+    "Library/Application Support/ZedDevRaTeX/config/settings.json".source = lnk "zed/settings.json";
+    "Library/Application Support/ZedDevRaTeX/config/keymap.json".source = lnk "zed/keymap.json";
+    "Library/Application Support/ZedDevRaTeX/config/tasks.json".source = lnk "zed/tasks.json";
     ".config/cmux/settings.json".source = lnk "cmux/settings.json";
     ".docker/daemon.json".source = lnk "docker/daemon.json";
     ".config/gh/config.yml".source = lnk "gh/config.yml";

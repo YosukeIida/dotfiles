@@ -129,6 +129,20 @@ alias cleanspace='pbpaste | sed -E "s/^ {1,2}//" | pbcopy && pbpaste'
 alias cs='cleanspace'
 
 # =====================================================================
+# ==== Zed Dev (RaTeX unofficial) 起動 =================================
+# =====================================================================
+# dev ビルドには通常版のような cli バイナリが同梱されないため open -b で開く
+#   zedd .        カレントディレクトリを Zed Dev で開く
+# --user-data-dir で通常の Zed とデータ（DB/拡張/セッション）を分離する。
+# config はその data dir 配下を読むが、files.nix が dotfiles/zed/ の実体へ
+# symlink しているため設定・keymap・tasks は通常の Zed と共有される。
+# 注意: --args は初回起動時のみ有効（既に起動中なら open はファイルを渡すだけ）。
+zedd() {
+  open -b dev.yosukeiida.zed-dev-ratex "$@" --args \
+    --user-data-dir "$HOME/Library/Application Support/ZedDevRaTeX"
+}
+
+# =====================================================================
 # ==== cmux Markdown+KaTeX プレビュー ==================================
 # =====================================================================
 # .md ファイルを cmux のブラウザペインで数式込みプレビュー（VSCode 相当）。
