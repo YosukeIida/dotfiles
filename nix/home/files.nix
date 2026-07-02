@@ -14,6 +14,7 @@ in
     # zsh-syntax-highlighting / fzf は per-user profile に自動統合されないため直接リンク
     ".config/zsh/plugins/zsh-syntax-highlighting".source =
       "${pkgs.zsh-syntax-highlighting}/share/zsh-syntax-highlighting";
+    ".config/zsh/plugins/agent-switch".source = lnk "tools/agent-switch";
     ".config/zsh/fzf/key-bindings.zsh".source =
       "${pkgs.fzf}/share/fzf/key-bindings.zsh";
     ".gitconfig".source = lnk "git/gitconfig";
