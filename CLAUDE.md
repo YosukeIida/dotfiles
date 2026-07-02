@@ -30,8 +30,15 @@ dotfiles/
 ├── nix/             # nix 設定（hosts・profiles・home-manager）
 ├── secrets/         # agenix 暗号化シークレット（*.age）
 ├── flake.nix        # 本体 flake（darwinConfigurations を定義）
-└── templates/       # devshell テンプレート（python-uv・node）
+├── templates/       # devshell テンプレート（python-uv・node）
+└── tools/agent-switch/  # cc/cx アカウント切替（自己完結・将来独立repo化予定）
 ```
+
+## マルチアカウント切り替え（cc / cx）
+
+Claude Code / Codex のアカウント切替は `tools/agent-switch/` 参照（zshrc から source される
+zsh プラグイン）。設計・検証記録は `tools/agent-switch/README.md`、ツール固有の事情は
+`claude/README.md`・`codex/README.md`。
 
 ## Symlink の仕組み
 

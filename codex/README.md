@@ -41,7 +41,7 @@ Codexの認証保存方式（`AuthCredentialsStoreMode`）は現在デフォル�
 ### 1. 初回移行（既存 `~/.codex` の auth.json だけ分離）
 
 ```bash
-bash ~/workspace/github.com/YosukeIida/dotfiles/codex/setup-account.sh migrate labteam
+bash ~/workspace/github.com/YosukeIida/dotfiles/tools/agent-switch/bin/setup-codex-account migrate labteam
 ```
 
 `~/.codex/auth.json`を`~/.codex-labteam/auth.json`にmvし、symlinkを張り直すだけ。sessions/history等は一切動かさないので、データ量に関係なく即時完了する。
@@ -49,7 +49,7 @@ bash ~/workspace/github.com/YosukeIida/dotfiles/codex/setup-account.sh migrate l
 ### 2. 2アカウント目の追加
 
 ```bash
-bash ~/workspace/github.com/YosukeIida/dotfiles/codex/setup-account.sh personal
+bash ~/workspace/github.com/YosukeIida/dotfiles/tools/agent-switch/bin/setup-codex-account personal
 CODEX_HOME="$HOME/.codex-personal" codex login
 ```
 
@@ -92,7 +92,7 @@ cx personal && codex
 
 | ファイル | 役割 |
 |---|---|
-| `setup-account.sh` | 初回移行 + アカウント追加 |
+| [tools/agent-switch/bin/setup-codex-account](../tools/agent-switch/bin/setup-codex-account) | 初回移行 + アカウント追加（cc/cx本体は [tools/agent-switch/](../tools/agent-switch/README.md)） |
 | `config.toml` | system layer（`/etc/codex/config.toml`）の安定設定（dotfiles管理） |
 | `migrate-user-config.sh` | user layerに紛れ込んだ管理対象キーを除去する冪等スクリプト |
 | `install-plugins.sh` / `plugins.txt` | Codexプラグインの冪等インストール |

@@ -26,6 +26,9 @@ if [[ -z "${CODEX_HOME:-}" && -d "${HOME}/.codex-labteam" ]]; then
   export CODEX_HOME="${HOME}/.codex-labteam"
 fi
 
+# agent-switch の setup-claude-account が settings.*.json 等を直リンクする元
+export AGSW_CLAUDE_ASSETS_DIR="${HOME}/workspace/github.com/YosukeIida/dotfiles/claude"
+
 # Load direnv in non-interactive shells (for Claude Code)
 if ! [[ -o interactive ]] && [[ -f "$PWD/.envrc" ]] && command -v direnv >/dev/null 2>&1; then
   eval "$(direnv export zsh 2>/dev/null)"

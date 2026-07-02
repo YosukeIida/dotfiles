@@ -11,10 +11,18 @@ Claude Code と OpenAI Codex のマルチアカウントを、**再ログイン�
 
 **認証だけをアカウントごとに分離し、会話履歴・skills・設定は共有する。**
 
-- 各ツールの標準ホーム（`~/.claude`, `~/.codex`）が実体を持ち続け、アカウントディレクトリ（`~/.codex-<name>` 等）は認証ファイルだけ実体を持ち、他は標準ホームへの symlink。
+- 各ツールの標準ホーム（`~/.claude`, `~/.codex`）が実体を持ち続け、アカウントディレクトリ（`~/.codex-<name>` 等）は認証・アカウント固有ファイルだけ実体を持ち、他は標準ホームへの symlink。
 - ターミナルごとの切替は環境変数（`CLAUDE_CONFIG_DIR` / `CODEX_HOME`）の export のみ。ターミナル間は独立。
 - GUI アプリ（Codex Desktop App 等、環境変数を継承しないプロセス）向けには、標準ホーム側の認証ファイルを symlink 差替で切り替える（`cx app <name>`）。
 - Codex の `auth.json` はトークンリフレッシュ時に symlink をフォローして in-place 書き込みされるため（codex-rs ソースで確認済み）、symlink 共有はリフレッシュで壊れない。
+
+### Claude と Codex の非対称（重要）
+
+Claude Code の OAuth トークンはファイルではなく **macOS Keychain に `CLAUDE_CONFIG_DIR` ごとのエントリ**で保存される。このため：
+
+- `cc <name>` のシェル切替 = 本物の認証分離（各アカウント dir で一度 `/login` が必要）。
+- **`cc app` に相当する機能は存在しない**。トークンが symlink 差替できるファイルではないため、Desktop App / VS Code 拡張（`CLAUDE_CONFIG_DIR` を無視して常にデフォルトを見る）は、常に「`CLAUDE_CONFIG_DIR` 未設定で `/login` したアカウント」で動く。
+- デフォルトアカウント（既定名 `labteam`、`AGSW_CLAUDE_DEFAULT_NAME` で変更可）は `unset CLAUDE_CONFIG_DIR` に対応する。`export CLAUDE_CONFIG_DIR=~/.claude` にすると Keychain エントリがデフォルトと別になってしまうため、必ず unset を使う（cc が面倒を見る）。
 
 ## インストール
 
@@ -55,9 +63,11 @@ CODEX_HOME="$HOME/.codex-personal" codex login
 
 ### Claude Code
 
+デフォルトアカウント（labteam）は `~/.claude` をそのまま使うためセットアップ不要。2つ目以降：
+
 ```bash
-./bin/setup-claude-account 2
-CLAUDE_CONFIG_DIR="$HOME/.claude-2" claude   # 起動後 /login
+./bin/setup-claude-account personal
+CLAUDE_CONFIG_DIR="$HOME/.claude-personal" claude   # 起動後 /login
 ```
 
 ## 日常の使い方
@@ -68,9 +78,10 @@ cx work           # このターミナルを work に切替
 cx app personal   # Codex App 用の認証を personal に切替（App再起動で反映）
 
 cc                # 状態表示
-cc 2              # アカウント2に切替
+cc personal       # このターミナルを personal に切替
+cc labteam        # デフォルトに戻す（= unset。App/拡張と同じ認証）
 cc api            # API keyモードに切替
-cc sub 2          # アカウント2 + subscriptionモード
+cc personal sub   # personal + subscriptionモード
 ```
 
 ### Codex の注意: app-server デーモンの認証キャッシュ
@@ -85,6 +96,14 @@ pkill -f 'codex app-server'
 
 - zsh（bash/fish は未対応。独立リポジトリ化の際に eval-init 方式への移行を検討）
 - デーモン警告と email/org 表示は macOS + python3 前提（無い環境では自動スキップ）
+
+## 検証記録（2026-07-02 実測）
+
+設計の根拠となった実測。将来のバージョンで挙動が変わった場合はここを更新する。
+
+1. **Claude の Keychain は dir 単位分離**: 認証情報を持たないテスト用 `CLAUDE_CONFIG_DIR` で `claude -p` を実行 → `Not logged in`（デフォルトの Keychain エントリは流用されない）。Keychain には `Claude Code-credentials`（デフォルト用）のエントリを確認。
+2. **Claude の identity ファイルの所在**: `CLAUDE_CONFIG_DIR` 未設定時は `~/.claude.json`（ホーム直下）が実体（mtime 実測）。`~/.claude/.claude.json` は更新されない旧位置。設定時は `$CLAUDE_CONFIG_DIR/.claude.json`。
+3. **Codex の auth.json 書き込み**: `codex-rs/login/src/auth/storage.rs` の `FileAuthStorage::save()` は truncate+in-place 書き込みで symlink をフォローする。config.toml 書き込みは `resolve_symlink_write_paths` で symlink 解決後に atomic write（symlink は壊れない）。
 
 ## ファイル構成
 
