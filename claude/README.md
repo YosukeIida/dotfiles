@@ -68,14 +68,18 @@ CLAUDE_CONFIG_DIR=~/.claude-2 claude
 
 ## 日常の使い方
 
-`cc` コマンドでアカウントを切り替える（zshrc に定義済み）:
+`cc` コマンドでアカウント・モードを切り替える（zshrc に定義済み）:
 
 ```bash
-cc      # account 1 に戻す（デフォルト）
-cc 1    # account 1
-cc 2    # account 2
+cc            # 現在状態表示
+cc 1          # account 1 に戻す（後方互換、subscription固定）
+cc 2          # account 2 に切り替え（後方互換、subscription固定）
+cc sub        # subscription モードに切り替え
+cc api        # API モードに切り替え
+cc sub 2      # account 2 + subscription
+cc api 2      # account 2 + API
 
-claude  # 現在のアカウントで起動
+claude        # 現在のアカウント・モードで起動
 ```
 
 ### レート制限が来たら
@@ -98,10 +102,8 @@ cc 2 && claude
 | `get_key.sh` | API key 取得ヘルパー |
 | `statusline.sh` | ステータスライン表示スクリプト |
 
-`settings.api.json` / `settings.subscription.json` の切り替えは `claude-mode` コマンド（zshrc に定義）:
+`settings.api.json` / `settings.subscription.json` の切り替えは `cc sub` / `cc api`（上記の`cc`コマンドに統合済み）。
 
-```bash
-claude-mode api   # API key モードに切り替え
-claude-mode sub   # サブスクリプションモードに切り替え
-claude-mode       # 現在のモードを表示
-```
+---
+
+Codexのマルチアカウント設定は[../codex/README.md](../codex/README.md)を参照（GUIアプリが絡む分、設計がやや異なる）。

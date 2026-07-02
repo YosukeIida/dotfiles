@@ -12,6 +12,7 @@ model_auto_compact_token_limit = 900000
 approval_policy = "never"
 sandbox_mode = "danger-full-access"
 mcp_oauth_credentials_store = "file"
+cli_auth_credentials_store = "file"
 
 [features]
 multi_agent = true

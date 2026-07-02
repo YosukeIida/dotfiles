@@ -9,6 +9,10 @@ if [ ! -f "$config" ]; then
   exit 0
 fi
 
+# マルチアカウント運用では ~/.codex-<name>/config.toml は ~/.codex/config.toml への
+# symlink。末尾の mv が symlink を実ファイルで置き換えて共有を壊さないよう、実体を解決する。
+config="$(readlink -f "$config")"
+
 tmp="$(mktemp)"
 trap 'rm -f "$tmp"' EXIT
 
@@ -35,7 +39,7 @@ awk '
   }
 
   current_table == "" &&
-  /^(model|model_reasoning_effort|personality|web_search|model_context_window|model_auto_compact_token_limit|approval_policy|sandbox_mode)[[:space:]]*=/ {
+  /^(model|model_reasoning_effort|personality|web_search|model_context_window|model_auto_compact_token_limit|approval_policy|sandbox_mode|cli_auth_credentials_store|mcp_oauth_credentials_store)[[:space:]]*=/ {
     next
   }
 
