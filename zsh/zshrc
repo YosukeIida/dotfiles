@@ -131,15 +131,16 @@ alias cs='cleanspace'
 # =====================================================================
 # ==== Zed Dev (RaTeX unofficial) 起動 =================================
 # =====================================================================
-# dev ビルドには通常版のような cli バイナリが同梱されないため open -b で開く
 #   zedd .        カレントディレクトリを Zed Dev で開く
 # --user-data-dir で通常の Zed とデータ（DB/拡張/セッション）を分離する。
 # config はその data dir 配下を読むが、files.nix が dotfiles/zed/ の実体へ
 # symlink しているため設定・keymap・tasks は通常の Zed と共有される。
-# 注意: --args は初回起動時のみ有効（既に起動中なら open はファイルを渡すだけ）。
+# 同梱の cli バイナリを使う（1.10 以降は dev ビルドにも同梱される）。
+# open -b（Apple イベント）経路だと cli_default_open_behavior が参照されず、
+# 既存 window の multi-workspace サイドバーに追加されてしまうため cli 経由が必須。
 zedd() {
-  open -b dev.yosukeiida.zed-dev-ratex "$@" --args \
-    --user-data-dir "$HOME/Library/Application Support/ZedDevRaTeX"
+  "/Applications/Zed Dev RaTeX(unofficial).app/Contents/MacOS/cli" \
+    --user-data-dir "$HOME/Library/Application Support/ZedDevRaTeX" "$@"
 }
 
 # =====================================================================
