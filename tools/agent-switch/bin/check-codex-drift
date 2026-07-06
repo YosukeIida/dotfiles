@@ -15,7 +15,11 @@ PREFIX="${AGSW_CODEX_HOME_PREFIX:-$HOME/.codex-}"
 
 # プロファイル固有（auth）・揮発性（ログ/履歴/ランタイムキャッシュ/バックアップ）のため
 # 無視する項目。「設定・状態として共有すべきもの」だけが警告に残るように保つ。
-IGNORE_RE='^(auth\.json|\.credentials\.json|history\.jsonl|logs?(_[0-9]+)?\.sqlite([-.].*)?|goals_[0-9]+\.sqlite([-.].*)?|log|\.DS_Store|version\.json|\.personality_snapshot.*|\.app-server-state-reconciled.*|config\.toml\.bak.*|ambient-suggestions|app-server-control|app-server-daemon|attachments|browser|chrome-native-hosts.*\.json|computer-use|generated_images|keybindings\.json|node_repl|pets|process_manager|rules|sqlite|vendor_imports|worktrees)$'
+#
+# .codex-global-state.json: アプリが頻繁に書き換える状態ファイル。この種のファイルは
+# 一時ファイル + rename で更新されるため symlink 共有が最初の書き込みで壊れる。
+# プロファイル固有（per-instance 状態、history.jsonl と同類）と判断（2026-07-06）。
+IGNORE_RE='^(auth\.json|\.credentials\.json|\.codex-global-state\.json(\.bak)?|history\.jsonl|logs?(_[0-9]+)?\.sqlite([-.].*)?|goals_[0-9]+\.sqlite([-.].*)?|log|\.DS_Store|version\.json|\.personality_snapshot.*|\.app-server-state-reconciled.*|config\.toml\.bak.*|ambient-suggestions|app-server-control|app-server-daemon|attachments|browser|chrome-native-hosts.*\.json|computer-use|generated_images|keybindings\.json|node_repl|pets|process_manager|rules|sqlite|vendor_imports|worktrees)$'
 
 found=0
 for dir in "$PREFIX"*; do
