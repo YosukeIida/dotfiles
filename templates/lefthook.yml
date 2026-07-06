@@ -1,0 +1,24 @@
+# lefthook 雛形（コミット前チェック + conventional commits 検査）
+# 使い方: <repo>/lefthook.yml にコピーして `lefthook install`
+#   （lefthook は nix devshell か Homebrew で導入: brew install lefthook）
+# Python 以外の repo は pre-commit の commands を差し替える。
+
+pre-commit:
+  parallel: true
+  commands:
+    ruff-check:
+      glob: "*.py"
+      run: uv run ruff check {staged_files}
+    ruff-format:
+      glob: "*.py"
+      run: uv run ruff format --check {staged_files}
+
+commit-msg:
+  commands:
+    conventional:
+      run: |
+        head -1 {1} | grep -qE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([^)]+\))?!?: .+' || {
+          echo "✗ conventional commits 形式ではありません: type(scope): 要旨" >&2
+          echo "  例: feat(api): add extraction endpoint" >&2
+          exit 1
+        }
