@@ -41,7 +41,7 @@
 
 | 現在 | 移動先 |
 |---|---|
-| `workspace/RaTeX/` | `workspace/github.com/erweixin/RaTeX/`（fork して push するなら YosukeIida/） |
+| ~~`workspace/RaTeX/`~~ | ✅ 済（2026-07-06）: `workspace/github.com/erweixin/RaTeX/` へ移動 |
 | `workspace/overleaf-projects/` | `workspace/overleaf/`（+ git 化） |
 | `Documents/Documents/` | 中身を `tax/` `archives/` `scans/` へ解体して解消 |
 | `Documents/ScanSnap Receipts/` | `Documents/scans/receipts/<year>/` |
