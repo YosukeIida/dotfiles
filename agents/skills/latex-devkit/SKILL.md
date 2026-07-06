@@ -4,6 +4,8 @@ description: >
   latex-devkit を使って LaTeX を Docker でビルドする操作スキル。
   「PDFをビルドして」「latexでコンパイルして」「ビルドして」などの表現がトリガー。
   外部リポジトリの papers/ 以下のプロジェクトのビルドにも対応。
+  ※既存 LaTeX プロジェクトのビルド専用。サーベイ論文の執筆工程一式（文献収集〜章ドラフト〜PDF 化）は academic-survey-paper が担当。
+allowed-tools: Bash(make:*), Bash(docker:*)
 ---
 
 # latex-devkit 操作スキル

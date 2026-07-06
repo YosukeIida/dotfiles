@@ -5,6 +5,7 @@ description: >
   「devshell 追加して」「.envrc 作って」「direnv 設定して」「devshell が効いていない」
   「nix の python / uv が使われているか確認して」「nixpkgs にパッケージがあるか確認して」
   「nix GC して」などの場面で使う。テンプレートは dotfiles/templates/（python-uv / node）。
+allowed-tools: Bash(cp:*), Bash(mkdir:*), Bash(direnv:*), Bash(which:*), Bash(echo:*)
 ---
 
 # Nix devshell のセットアップと確認
