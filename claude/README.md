@@ -57,11 +57,18 @@ cc personal && claude
 
 | ファイル | 役割 |
 |---|---|
-| `settings.json` | live 設定（plugin install 等の書き込みが symlink 経由でここに反映される。**必ず git commit**） |
-| `settings.api.json` | API key モード用 settings（⚠ live 設定からドリフト中 — 別タスクで解消予定） |
-| `settings.subscription.json` | サブスクモード用 settings（同上） |
+| `settings.json` | live 設定＝サブスクモードの実体（plugin install 等の書き込みが symlink 経由でここに反映される。**必ず git commit**） |
+| `api-mode-overlay.json` | API モードで live から意図的に変える差分だけを書く（apiKeyHelper、絞った enabledPlugins）。**API モードの設定変更はここを編集** |
+| `settings.api.json` | **生成物**（`gen-api-settings.sh` が live + overlay から darwin-switch 時に生成）。手で編集しない |
+| `gen-api-settings.sh` | settings.api.json の生成スクリプト（overlay のトップレベルキーで live を置換） |
 | `get_key.sh` | API key 取得ヘルパー（`$CLAUDE_CONFIG_DIR/anthropic.env` を読む） |
 | `statusline.sh` | ステータスライン表示スクリプト |
+
+> モード切替の仕組み: `cc api` は `settings.json` symlink を `settings.api.json`（生成物）へ、
+> `cc sub` は live の `settings.json` へ差し替える。サブスク専用ファイルは存在しない。
+> enabledPlugins はスコープ間で加算マージしかできない（上位で false 無効化は不可）ため、
+> plugin を絞る API モードは「ファイル差し替え」方式が唯一の実現手段。
+> ドリフトは生成方式により恒久解消（2026-07-06）。
 
 ---
 

@@ -1,5 +1,54 @@
 {
-  "apiKeyHelper": "~/.claude/get_key.sh",
+  "permissions": {
+    "allow": [
+      "WebSearch"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Read(~/.claude/anthropic.env)",
+      "Edit(~/.claude/anthropic.env)",
+      "Write(~/.claude/anthropic.env)",
+      "Read(~/.ssh/id_*)",
+      "Edit(~/.ssh/**)",
+      "Write(~/.ssh/**)"
+    ],
+    "defaultMode": "auto"
+  },
+  "model": "sonnet",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/yosuke/workspace/github.com/YosukeIida/dotfiles/claude/hooks/check-dotfiles-dirty.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "worktree": {
+    "baseRef": "fresh"
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline.sh",
+    "padding": 0
+  },
   "enabledPlugins": {
     "document-skills@anthropic-agent-skills": true,
     "codex@openai-codex": true
@@ -10,12 +59,65 @@
         "source": "github",
         "repo": "openai/codex-plugin-cc"
       }
+    },
+    "daymade-skills": {
+      "source": {
+        "source": "github",
+        "repo": "daymade/claude-code-skills"
+      }
+    },
+    "ecc": {
+      "source": {
+        "source": "github",
+        "repo": "affaan-m/everything-claude-code"
+      }
+    },
+    "YosukeIida": {
+      "source": {
+        "source": "github",
+        "repo": "YosukeIida/claude-lualatex-pdf"
+      },
+      "autoUpdate": true
+    },
+    "academic-research-skills": {
+      "source": {
+        "source": "github",
+        "repo": "Imbad0202/academic-research-skills"
+      }
+    },
+    "claude-paper": {
+      "source": {
+        "source": "github",
+        "repo": "alaliqing/claude-paper"
+      }
+    },
+    "fujibee-agmsg": {
+      "source": {
+        "source": "github",
+        "repo": "fujibee/agmsg"
+      }
+    }
+  },
+  "language": "Japanese",
+  "sandbox": {
+    "filesystem": {
+      "allowWrite": [
+        "~/.agents/skills/agmsg/"
+      ]
     }
   },
   "effortLevel": "high",
-  "statusLine": {
-    "type": "command",
-    "command": "bash ~/.claude/statusline.sh",
-    "padding": 0
-  }
+  "tui": "fullscreen",
+  "skipWorkflowUsageWarning": true,
+  "theme": "dark",
+  "verbose": false,
+  "preferredNotifChannel": "auto",
+  "autoCompactEnabled": true,
+  "fileCheckpointingEnabled": true,
+  "remoteControlAtStartup": true,
+  "inputNeededNotifEnabled": true,
+  "agentPushNotifEnabled": true,
+  "skipAutoPermissionPrompt": true,
+  "voiceEnabled": true,
+  "apiKeyHelper": "~/.claude/get_key.sh"
 }

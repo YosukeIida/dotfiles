@@ -70,16 +70,18 @@
 
     # Claude Code
     # settings.json は「実ファイルなら dotfiles に取り込んで symlink 化」を初回だけ行う。
-    # 既に symlink なら張り替えない: cc sub/api が settings.{subscription,api}.json へ
-    # 差し替えたモード選択を darwin-switch が巻き戻さないようにするため。
+    # 既に symlink なら張り替えない: cc api が settings.api.json へ差し替えた
+    # モード選択を darwin-switch が巻き戻さないようにするため。
     if [ -f "$home/.claude/settings.json" ] && [ ! -L "$home/.claude/settings.json" ]; then
       cp "$home/.claude/settings.json" "$pub/claude/settings.json"
     fi
     if [ ! -L "$home/.claude/settings.json" ]; then
       _link "$pub/claude/settings.json"            "$home/.claude/settings.json"
     fi
+    # settings.api.json は生成物（live settings.json + api-mode-overlay.json）。
+    # 編集は api-mode-overlay.json 側へ。サブスクは live をそのまま使う（複製しない）。
+    su - ${username} -c "bash $pub/claude/gen-api-settings.sh" || true
     _link "$pub/claude/settings.api.json"          "$home/.claude/settings.api.json"
-    _link "$pub/claude/settings.subscription.json" "$home/.claude/settings.subscription.json"
     _link "$pub/claude/get_key.sh"                 "$home/.claude/get_key.sh"
     _link "$pub/claude/statusline.sh"              "$home/.claude/statusline.sh"
     _link "$pub/agents/AGENTS.md"                  "$home/.claude/CLAUDE.md"

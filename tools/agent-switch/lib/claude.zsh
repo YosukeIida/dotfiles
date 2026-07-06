@@ -55,13 +55,24 @@ cc() {
   fi
 
   # モード切り替え（ln -sf でシンボリックリンクのまま切り替え）
+  # - api: settings.api.json（live + api-mode-overlay.json からの生成物）に差し替え
+  # - sub: live の settings.json（settings.api.json の実体と同じディレクトリ）に戻す。
+  #   サブスク専用ファイルは持たない（live そのものがサブスク設定）。
   if [[ -n "$mode" ]]; then
     local config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
     local dst="$config_dir/settings.json"
     local src
     case "$mode" in
-      api)              src="$config_dir/settings.api.json" ;;
-      sub|subscription) src="$config_dir/settings.subscription.json" ;;
+      api) src="$config_dir/settings.api.json" ;;
+      sub|subscription)
+        local api_real
+        api_real="$(readlink -f "$config_dir/settings.api.json" 2>/dev/null || true)"
+        if [[ -z "$api_real" || "${api_real%/*}/settings.json" == "$dst" ]]; then
+          echo "Error: live settings の場所を解決できません（$config_dir/settings.api.json を確認。darwin-switch で再生成できます）" >&2
+          return 1
+        fi
+        src="${api_real%/*}/settings.json"
+        ;;
     esac
     if [[ ! -e "$src" ]]; then
       echo "Error: missing $src" >&2

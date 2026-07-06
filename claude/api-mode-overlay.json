@@ -1,0 +1,7 @@
+{
+  "apiKeyHelper": "~/.claude/get_key.sh",
+  "enabledPlugins": {
+    "document-skills@anthropic-agent-skills": true,
+    "codex@openai-codex": true
+  }
+}

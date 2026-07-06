@@ -18,7 +18,8 @@ DIR="$HOME/.claude-$NAME"
 ASSETS_DIR="${AGSW_CLAUDE_ASSETS_DIR:-}"
 
 # assets dir から直接 symlink（各アカウント独立）
-ASSET_LINKS=(settings.api.json settings.subscription.json get_key.sh statusline.sh CLAUDE.md)
+# settings.api.json は生成物（gen-api-settings.sh が live + overlay から生成）
+ASSET_LINKS=(settings.api.json get_key.sh statusline.sh CLAUDE.md)
 
 # デフォルトアカウント (~/.claude) から共有する項目
 SHARED_FROM_BASE=(projects skills todos plans history.jsonl CLAUDE.md)
@@ -49,15 +50,11 @@ for item in "${SHARED_FROM_BASE[@]}"; do
 done
 
 # settings.json のデフォルト（既存の選択は尊重）:
-# assets の settings.json（全アカウント共有の live 設定）があればそれを指す。
-# 無ければ同ディレクトリの subscription にフォールバック。
+# assets の settings.json（全アカウント共有の live 設定 = サブスクモード）を指す。
 if [[ ! -e "$DIR/settings.json" && ! -L "$DIR/settings.json" ]]; then
   if [[ -n "$ASSETS_DIR" && -e "$ASSETS_DIR/settings.json" ]]; then
     ln -s "$ASSETS_DIR/settings.json" "$DIR/settings.json"
     echo "  linked: settings.json -> (assets) settings.json"
-  elif [[ -e "$DIR/settings.subscription.json" ]]; then
-    ln -s "$DIR/settings.subscription.json" "$DIR/settings.json"
-    echo "  linked: settings.json -> settings.subscription.json"
   fi
 fi
 
