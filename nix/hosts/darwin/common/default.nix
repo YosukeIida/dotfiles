@@ -105,6 +105,13 @@
       _link "$d" "$home/.codex/skills/$(basename "$d")"
     done
 
+    # subagents を ~/.claude/agents/ に展開
+    mkdir -p "$home/.claude/agents"
+    for f in "$pub/agents/subagents"/*.md; do
+      [ -f "$f" ] || continue
+      _link "$f" "$home/.claude/agents/$(basename "$f")"
+    done
+
     # Codex の安定設定は system layer で管理する。
     # ~/.codex/config.toml は projects/trust/UI 等のローカル状態として Codex に所有させる。
     _link "$pub/codex/config.toml" "/etc/codex/config.toml"
