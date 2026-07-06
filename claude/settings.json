@@ -1,14 +1,11 @@
 {
-  "env": {
-    "CLAUDE_CODE_NO_FLICKER": "1"
-  },
   "permissions": {
     "allow": [
       "WebSearch"
     ],
     "defaultMode": "auto"
   },
-  "model": "sonnet[1m]",
+  "model": "claude-fable-5[1m]",
   "hooks": {
     "PreToolUse": [
       {
@@ -39,7 +36,8 @@
     "swift-lsp@claude-plugins-official": true,
     "academic-research-skills@academic-research-skills": true,
     "frontend-design@claude-plugins-official": true,
-    "figma@claude-plugins-official": true
+    "figma@claude-plugins-official": true,
+    "rust-analyzer-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "openai-codex": {
@@ -75,6 +73,13 @@
     }
   },
   "language": "Japanese",
+  "sandbox": {
+    "filesystem": {
+      "allowWrite": [
+        "~/.agents/skills/agmsg/"
+      ]
+    }
+  },
   "effortLevel": "high",
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
