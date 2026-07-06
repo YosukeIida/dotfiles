@@ -1,7 +1,66 @@
 {
-  "agentPushNotifEnabled": true,
-  "autoCompactEnabled": true,
-  "effortLevel": "high",
+  "permissions": {
+    "allow": [
+      "WebSearch"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Read(~/.claude/anthropic.env)",
+      "Edit(~/.claude/anthropic.env)",
+      "Write(~/.claude/anthropic.env)",
+      "Read(~/.ssh/id_*)",
+      "Edit(~/.ssh/**)",
+      "Write(~/.ssh/**)"
+    ],
+    "defaultMode": "auto"
+  },
+  "model": "opus[1m]",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/yosuke/.claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/yosuke/workspace/github.com/YosukeIida/dotfiles/claude/hooks/check-dotfiles-dirty.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "worktree": {
+    "baseRef": "fresh"
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline.sh",
+    "padding": 0
+  },
   "enabledPlugins": {
     "agmsg@fujibee-agmsg": true,
     "claude-paper@claude-paper": true,
@@ -17,108 +76,50 @@
   },
   "extraKnownMarketplaces": {
     "YosukeIida": {
-      "autoUpdate": true,
       "source": {
-        "repo": "YosukeIida/claude-lualatex-pdf",
-        "source": "github"
-      }
+        "source": "github",
+        "repo": "YosukeIida/claude-lualatex-pdf"
+      },
+      "autoUpdate": true
     },
     "academic-research-skills": {
       "source": {
-        "repo": "Imbad0202/academic-research-skills",
-        "source": "github"
+        "source": "github",
+        "repo": "Imbad0202/academic-research-skills"
       }
     },
     "claude-paper": {
       "source": {
-        "repo": "alaliqing/claude-paper",
-        "source": "github"
+        "source": "github",
+        "repo": "alaliqing/claude-paper"
       }
     },
     "daymade-skills": {
       "source": {
-        "repo": "daymade/claude-code-skills",
-        "source": "github"
+        "source": "github",
+        "repo": "daymade/claude-code-skills"
       }
     },
     "ecc": {
       "source": {
-        "repo": "affaan-m/everything-claude-code",
-        "source": "github"
+        "source": "github",
+        "repo": "affaan-m/everything-claude-code"
       }
     },
     "fujibee-agmsg": {
       "source": {
-        "repo": "fujibee/agmsg",
-        "source": "github"
+        "source": "github",
+        "repo": "fujibee/agmsg"
       }
     },
     "openai-codex": {
       "source": {
-        "repo": "openai/codex-plugin-cc",
-        "source": "github"
+        "source": "github",
+        "repo": "openai/codex-plugin-cc"
       }
     }
   },
-  "fileCheckpointingEnabled": true,
-  "hooks": {
-    "PreToolUse": [
-      {
-        "hooks": [
-          {
-            "command": "rtk hook claude",
-            "type": "command"
-          }
-        ],
-        "matcher": "Bash"
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "command": "bash '/Users/yosuke/.claude/hooks/herdr-agent-state.sh' session",
-            "timeout": 10,
-            "type": "command"
-          }
-        ],
-        "matcher": "*"
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "command": "bash /Users/yosuke/workspace/github.com/YosukeIida/dotfiles/claude/hooks/check-dotfiles-dirty.sh",
-            "type": "command"
-          }
-        ],
-        "matcher": ""
-      }
-    ]
-  },
-  "inputNeededNotifEnabled": true,
   "language": "Japanese",
-  "model": "sonnet",
-  "permissions": {
-    "allow": [
-      "WebSearch"
-    ],
-    "defaultMode": "auto",
-    "deny": [
-      "Bash(rm -rf *)",
-      "Bash(git push --force*)",
-      "Bash(git push -f*)",
-      "Read(~/.claude/anthropic.env)",
-      "Edit(~/.claude/anthropic.env)",
-      "Write(~/.claude/anthropic.env)",
-      "Read(~/.ssh/id_*)",
-      "Edit(~/.ssh/**)",
-      "Write(~/.ssh/**)"
-    ]
-  },
-  "preferredNotifChannel": "auto",
-  "remoteControlAtStartup": true,
   "sandbox": {
     "filesystem": {
       "allowWrite": [
@@ -126,18 +127,17 @@
       ]
     }
   },
-  "skipAutoPermissionPrompt": true,
-  "skipWorkflowUsageWarning": true,
-  "statusLine": {
-    "command": "bash ~/.claude/statusline.sh",
-    "padding": 0,
-    "type": "command"
-  },
-  "theme": "dark",
+  "effortLevel": "high",
   "tui": "fullscreen",
+  "skipWorkflowUsageWarning": true,
+  "theme": "dark",
   "verbose": false,
-  "voiceEnabled": true,
-  "worktree": {
-    "baseRef": "fresh"
-  }
+  "preferredNotifChannel": "auto",
+  "autoCompactEnabled": true,
+  "fileCheckpointingEnabled": true,
+  "remoteControlAtStartup": true,
+  "inputNeededNotifEnabled": true,
+  "agentPushNotifEnabled": true,
+  "skipAutoPermissionPrompt": true,
+  "voiceEnabled": true
 }
