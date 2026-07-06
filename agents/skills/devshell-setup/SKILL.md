@@ -87,3 +87,12 @@ devshell が起動していない状態でパッケージが必要な場合は `
 
 Nix GC（世代の掃除）と nixpkgs にパッケージが存在するかの確認方法は
 [references/nix-maintenance.md](references/nix-maintenance.md) を参照。
+
+## CI / pre-commit の雛形
+
+新規リポジトリに CI やコミット前チェックを入れる場合は dotfiles のテンプレートを使う:
+
+- GitHub Actions（lint + test 最小構成）:
+  `dotfiles/templates/github-workflows/ci-python-uv.yml` → `<repo>/.github/workflows/ci.yml`
+- lefthook（ruff チェック + conventional commits 検査）:
+  `dotfiles/templates/lefthook.yml` → `<repo>/lefthook.yml` にコピーして `lefthook install`
