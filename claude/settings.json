@@ -3,9 +3,20 @@
     "allow": [
       "WebSearch"
     ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Read(~/.claude/anthropic.env)",
+      "Edit(~/.claude/anthropic.env)",
+      "Write(~/.claude/anthropic.env)",
+      "Read(~/.ssh/id_*)",
+      "Edit(~/.ssh/**)",
+      "Write(~/.ssh/**)"
+    ],
     "defaultMode": "auto"
   },
-  "model": "claude-fable-5[1m]",
+  "model": "sonnet",
   "hooks": {
     "PreToolUse": [
       {
@@ -14,6 +25,17 @@
           {
             "type": "command",
             "command": "rtk hook claude"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/yosuke/workspace/github.com/YosukeIida/dotfiles/claude/hooks/check-dotfiles-dirty.sh"
           }
         ]
       }
@@ -34,10 +56,11 @@
     "lualatex-pdf@YosukeIida": true,
     "exa@claude-plugins-official": true,
     "swift-lsp@claude-plugins-official": true,
-    "academic-research-skills@academic-research-skills": true,
     "frontend-design@claude-plugins-official": true,
     "figma@claude-plugins-official": true,
-    "rust-analyzer-lsp@claude-plugins-official": true
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "claude-paper@claude-paper": true,
+    "agmsg@fujibee-agmsg": true
   },
   "extraKnownMarketplaces": {
     "openai-codex": {
@@ -69,6 +92,18 @@
       "source": {
         "source": "github",
         "repo": "Imbad0202/academic-research-skills"
+      }
+    },
+    "claude-paper": {
+      "source": {
+        "source": "github",
+        "repo": "alaliqing/claude-paper"
+      }
+    },
+    "fujibee-agmsg": {
+      "source": {
+        "source": "github",
+        "repo": "fujibee/agmsg"
       }
     }
   },
