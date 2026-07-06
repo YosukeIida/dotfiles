@@ -11,11 +11,6 @@ updates:
       interval: "monthly"
 
   - package-ecosystem: "nix"
-    directory: "/templates/python-uv-office/nix"
-    schedule:
-      interval: "monthly"
-
-  - package-ecosystem: "nix"
     directory: "/templates/node/nix"
     schedule:
       interval: "monthly"
