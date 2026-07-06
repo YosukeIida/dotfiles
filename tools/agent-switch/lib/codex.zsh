@@ -75,4 +75,7 @@ cx_status() {
   if [[ -n "$mismatch" ]]; then
     echo "warning: 現在のshellと異なるアカウントのapp-serverデーモンが起動中。TUIがそちらにRemote接続すると別アカウントで動くことがある。確実に切り替えるには: pkill -f 'codex app-server'"
   fi
+
+  # プロファイル間の symlink 漏れ検出（新しい Codex が追加したトップレベル項目の共有漏れ）
+  [[ -x "$_AGSW_DIR/bin/check-codex-drift" ]] && "$_AGSW_DIR/bin/check-codex-drift"
 }
