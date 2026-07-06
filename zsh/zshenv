@@ -18,14 +18,6 @@ export PATH
 # Figma PAT for figma-console-mcp (expires 2026-09-21; managed by agenix)
 [[ -r "${HOME}/.config/figma/pat" ]] && export FIGMA_ACCESS_TOKEN="$(<"${HOME}/.config/figma/pat")"
 
-# デフォルトのCodexアカウント（agent-switch: cx で切替）。
-# zshenv に置くことで非interactiveシェル（su - / launchd / エディタのタスク実行）にも効く。
-# 存在ガード付き: アカウント未セットアップの新マシンでは ~/.codex にフォールバックし、
-# setup-codex-account migrate の実行を妨げない。
-if [[ -z "${CODEX_HOME:-}" && -d "${HOME}/.codex-labteam" ]]; then
-  export CODEX_HOME="${HOME}/.codex-labteam"
-fi
-
 # agent-switch の setup-claude-account が settings.*.json 等を直リンクする元
 export AGSW_CLAUDE_ASSETS_DIR="${HOME}/workspace/github.com/YosukeIida/dotfiles/claude"
 
