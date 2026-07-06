@@ -5,6 +5,7 @@ description: >
   twscrape は Nix でグローバルにインストール済み（darwin-switch 後）。
   「X を検索して」「ツイートを集めて」「ユーザーのタイムラインを取得して」などの場面で発動。
   アカウント登録が必要なため、初回は setup セクションを確認すること。
+allowed-tools: Bash(twscrape:*), Bash(python3:*)
 ---
 
 # twscrape スキル

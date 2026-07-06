@@ -1,6 +1,7 @@
 ---
 name: install-skill
-description: Install a Claude Code .skill file into dotfiles. Usage: /install-skill <path-to-file.skill>
+description: "Install a Claude Code .skill file into dotfiles. Usage: /install-skill <path-to-file.skill>"
+allowed-tools: Bash(mkdir:*), Bash(unzip:*), Read, Write
 ---
 
 Install a `.skill` file into the dotfiles-managed skills directory so it becomes available globally in Claude Code.

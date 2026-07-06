@@ -1,6 +1,7 @@
 ---
 name: grant-figure-assets
 description: Create reusable monochrome figure assets for Japanese academic grant proposals such as JSPS DC1. Use when Codex needs to generate an overview/reference figure or icon set with imagegen, save raw PNGs, tight-crop them by bounding box, make contact sheets, or prepare black-and-white assets for HTML/CSS/SVG reconstruction of proposal figures.
+allowed-tools: Bash(uv:*), Read, Write
 ---
 
 # Grant Figure Assets
