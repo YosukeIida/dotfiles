@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "figma-console": {
+      "type": "stdio",
+      "command": "figma-console-mcp",
+      "args": [],
+      "env": {}
+    }
+  }
+}
