@@ -12,7 +12,7 @@ cx() {
   local sub="${1:-}"
   case "$sub" in
     "")
-      _cx_status
+      cx_status
       ;;
     app)
       local name="${2:-}"
@@ -31,7 +31,7 @@ cx() {
       fi
       ln -sf "$dir/auth.json" "$app_auth"
       echo "(Codex App は再起動後に反映。確実に切り替えるなら: pkill -f 'codex app-server')"
-      _cx_status
+      cx_status
       ;;
     *)
       local dir="${AGSW_CODEX_HOME_PREFIX:-$HOME/.codex-}$sub"
@@ -40,12 +40,12 @@ cx() {
         return 1
       fi
       export CODEX_HOME="$dir"
-      _cx_status
+      cx_status
       ;;
   esac
 }
 
-_cx_status() {
+cx_status() {
   local shell_home="${CODEX_HOME:-$HOME/.codex}"
   local app_auth="${AGSW_CODEX_APP_AUTH:-$HOME/.codex/auth.json}"
   local app_target

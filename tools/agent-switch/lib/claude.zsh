@@ -20,7 +20,7 @@ cc() {
   local arg account="" mode=""
 
   if [[ $# -eq 0 ]]; then
-    _cc_status; return 0
+    cc_status; return 0
   fi
 
   for arg in "$@"; do
@@ -70,10 +70,10 @@ cc() {
     ln -sf "$src" "$dst"
   fi
 
-  _cc_status
+  cc_status
 }
 
-_cc_status() {
+cc_status() {
   local default_name="${AGSW_CLAUDE_DEFAULT_NAME:-labteam}"
   local config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
   local name json
