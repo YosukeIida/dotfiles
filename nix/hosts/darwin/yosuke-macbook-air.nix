@@ -331,8 +331,29 @@ in
       ];
       RunAtLoad = true;
       StartInterval = 1800;
-      StandardOutPath = "/tmp/vpn-coexistence-apply.log";
-      StandardErrorPath = "/tmp/vpn-coexistence-apply.log";
+      # /tmp は再起動で消えるため、永続する ~/Library/Logs に出力する
+      StandardOutPath = "${homedir}/Library/Logs/vpn-coexistence-apply.log";
+      StandardErrorPath = "${homedir}/Library/Logs/vpn-coexistence-apply.log";
+    };
+  };
+
+  # figma-pat.age の失効前チェック（週次月曜 10:00）。期限はスクリプト内の定数で管理。
+  launchd.user.agents.figmaPatExpiryCheck = {
+    serviceConfig = {
+      Label = "com.yosuke.figma-pat-expiry-check";
+      ProgramArguments = [
+        "/bin/bash"
+        "${publicDir}/scripts/check-figma-pat-expiry.sh"
+      ];
+      StartCalendarInterval = [
+        {
+          Weekday = 1;
+          Hour = 10;
+          Minute = 0;
+        }
+      ];
+      StandardOutPath = "${homedir}/Library/Logs/figma-pat-expiry-check.log";
+      StandardErrorPath = "${homedir}/Library/Logs/figma-pat-expiry-check.log";
     };
   };
 
