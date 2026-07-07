@@ -1,0 +1,107 @@
+// 既定値を上書きするには、このファイル内にキー バインドを挿入します
+[
+  // ===== Chat: 送信/改行 =====
+  {
+    "key": "cmd+enter",
+    "command": "workbench.action.chat.submit",
+    "when": "chatInputHasText && inChatInput && !chatSessionRequestInProgress && chatLocation != 'editing-session' || chatInstructionsAttached && inChatInput && !chatSessionRequestInProgress && chatLocation != 'editing-session'"
+  },
+  {
+    "key": "enter",
+    "command": "-workbench.action.chat.submit",
+    "when": "chatInputHasText && inChatInput && !chatSessionRequestInProgress && chatLocation != 'editing-session' || chatInstructionsAttached && inChatInput && !chatSessionRequestInProgress && chatLocation != 'editing-session'"
+  },
+  // --- Editモード（editing-session）でも ⌘+Enter = 送信 ---
+  {
+    "key": "cmd+enter",
+    "command": "workbench.action.edits.submit",
+    "when": "inChatInput && chatLocation == 'editing-session' && !chatSessionRequestInProgress"
+  },
+  {
+    "key": "enter",
+    "command": "-workbench.action.edits.submit",
+    "when": "inChatInput && chatLocation == 'editing-session' && !chatSessionRequestInProgress"
+  },
+  // ===== Suggest（候補リスト）=====
+  // Enter/Tab では確定しない（保険）
+  {
+    "key": "enter",
+    "command": "-acceptSelectedSuggestion",
+    "when": "suggestWidgetVisible && textInputFocus"
+  },
+  {
+    "key": "tab",
+    "command": "-acceptSelectedSuggestion",
+    "when": "suggestWidgetVisible && textInputFocus"
+  },
+
+  // 確定: Ctrl+L、移動: Ctrl+N / Ctrl+P（ターミナルには効かせない）
+  {
+    "key": "ctrl+l",
+    "command": "acceptSelectedSuggestion",
+    "when": "suggestWidgetVisible && textInputFocus && !terminalFocus"
+  },
+  {
+    "key": "ctrl+n",
+    "command": "selectNextSuggestion",
+    "when": "suggestWidgetVisible && textInputFocus && !terminalFocus"
+  },
+  {
+    "key": "ctrl+p",
+    "command": "selectPrevSuggestion",
+    "when": "suggestWidgetVisible && textInputFocus && !terminalFocus"
+  },
+
+  // ===== Inline Suggest（灰色ゴースト）=====
+  // 全文受け入れ: Ctrl+Enter、部分受け入れ（次の語）: Ctrl+L
+  {
+    "key": "ctrl+enter",
+    "command": "editor.action.inlineSuggest.commit",
+    "when": "inlineSuggestionVisible && textInputFocus && !terminalFocus"
+  },
+  {
+    "key": "ctrl+l",
+    "command": "editor.action.inlineSuggest.acceptNextWord",
+    "when": "inlineSuggestionVisible && textInputFocus && !terminalFocus"
+  },
+
+  // ===== 明示の素動作（Enter）=====
+  // Enter を明示的に改行（ターミナルは除外）
+  {
+    "key": "enter",
+    "command": "type",
+    "args": { "text": "\n" },
+    "when": "textInputFocus && !suggestWidgetVisible && !terminalFocus"
+  },
+
+  // --- Disable TAB = commit for inline suggestions (built-in) ---
+  {
+    "key": "tab",
+    "command": "-editor.action.inlineSuggest.commit",
+    "when": "inlineSuggestionVisible && textInputFocus"
+  },
+
+  // --- Disable TAB = commit for Copilot (extensions may add these) ---
+  {
+    "key": "tab",
+    "command": "-github.copilot.acceptSuggestion",
+    "when": "editorTextFocus && inlineSuggestionVisible && !editorReadOnly"
+  },
+  {
+    "key": "tab",
+    "command": "-github.copilot.acceptWord",
+    "when": "editorTextFocus && inlineSuggestionVisible && !editorReadOnly"
+  },
+  {
+    "key": "tab",
+    "command": "-github.copilot.acceptLine",
+    "when": "editorTextFocus && inlineSuggestionVisible && !editorReadOnly"
+  },
+
+  // --- Ensure TAB stays as indent even when inlineSuggestionVisible ---
+  {
+    "key": "tab",
+    "command": "tab",
+    "when": "textInputFocus && !suggestWidgetVisible && !terminalFocus"
+  }
+]
