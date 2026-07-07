@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   pkgs,
   darwinPublicConfigDir,
   ...
@@ -7,6 +8,25 @@
 
 let
   lnk = path: config.lib.file.mkOutOfStoreSymlink "${darwinPublicConfigDir}/${path}";
+
+  # Homebrew (6.x+) が `brew trust` / `brew bundle cleanup --force` 実行時に
+  # ~/.homebrew/trust.json 自体へ書き込みを試みるため、symlink（nix store 所有 = root/nixbld）
+  # ではなく通常ファイルとして配置する必要がある。home.activation で switch ごとに
+  # nix 由来の内容をコピーし直す（symlink だと "not owned by the current user" で拒否される）。
+  homebrewTrustJson = pkgs.writeText "homebrew-trust.json" (
+    builtins.toJSON {
+      trustedtaps = [
+        "https://github.com/jundot/omlx"
+        "solarphlare/airmute"
+        "steipete/tap"
+        "yosukeiida/nimbus"
+        "yosukeiida/pindrop"
+        # clone_target がローカルパス（custom remote）のため、tap の実 remote と
+        # 完全一致する値でないと Tap#matches_reference? が通らない（短い名前では不可）。
+        "/Users/yosuke/workspace/github.com/YosukeIida/homebrew-powerglance"
+      ];
+    }
+  );
 in
 
 {
@@ -40,14 +60,11 @@ in
     ".config/gh/config.yml".source = lnk "gh/config.yml";
     ".zshenv".source = lnk "zsh/zshenv";
     ".zshrc".source = lnk "zsh/zshrc";
-    ".homebrew/trust.json".text = builtins.toJSON {
-      trustedtaps = [
-        "https://github.com/jundot/omlx"
-        "solarphlare/airmute"
-        "steipete/tap"
-        "yosukeiida/nimbus"
-        "yosukeiida/pindrop"
-      ];
-    };
   };
+
+  home.activation.homebrewTrustJson = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run mkdir -p "$HOME/.homebrew"
+    run rm -f "$HOME/.homebrew/trust.json"
+    run install -m 0600 ${homebrewTrustJson} "$HOME/.homebrew/trust.json"
+  '';
 }
