@@ -10,13 +10,16 @@ let
   yosukeMacBookAir = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINstqhN9Z1f6A/AE5l5OjqN5i8EObp4f2RaQAVNS5FP7";
   backupBitwarden = "age1ljc2ucyfu8af9ahr6rg8er9d2x8gvgem28wfvv22vw32khky05vqvzm7qa";
 
-  all = [ yosukeMacBookAir backupBitwarden ];
+  all = [
+    yosukeMacBookAir
+    backupBitwarden
+  ];
 in
 {
-  "ssh-config.age".publicKeys   = all;
-  "raycast-pw.age".publicKeys   = all;
-  "cf-token.age".publicKeys     = all;
+  "ssh-config.age".publicKeys = all;
+  "raycast-pw.age".publicKeys = all;
+  "cf-token.age".publicKeys = all;
   "headscale-ip.age".publicKeys = all;
-  "printers.age".publicKeys     = all;
-  "figma-pat.age".publicKeys    = all;  # expires 2026-09-21
+  "printers.age".publicKeys = all;
+  "figma-pat.age".publicKeys = all; # expires 2026-09-21
 }
