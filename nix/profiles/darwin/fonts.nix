@@ -9,11 +9,11 @@ let
     version = "1.2.2";
     src = pkgs.fetchFromGitHub {
       owner = "franktisellano";
-      repo  = "datatype";
-      rev   = "v1.2.2";
+      repo = "datatype";
+      rev = "v1.2.2";
       # 正しいハッシュ取得方法（初回 darwin-switch 時にエラーで表示される）:
       #   nix-prefetch-github franktisellano datatype --rev v1.2.2
-      hash  = "sha256-ny48VQ7etHSna4mMWEJDyztlbuI6Stuld1J6cPIeQ0c=";
+      hash = "sha256-ny48VQ7etHSna4mMWEJDyztlbuI6Stuld1J6cPIeQ0c=";
     };
     dontBuild = true;
     installPhase = ''
@@ -24,8 +24,8 @@ let
     '';
     meta = {
       description = "Variable font that turns text into inline charts";
-      homepage    = "https://github.com/franktisellano/datatype";
-      license     = lib.licenses.ofl;
+      homepage = "https://github.com/franktisellano/datatype";
+      license = lib.licenses.ofl;
     };
   };
 in
