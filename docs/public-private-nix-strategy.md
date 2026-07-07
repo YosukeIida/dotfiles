@@ -1,5 +1,12 @@
 # Public/private dotfiles strategy
 
+> **⚠️ DEPRECATED / 歴史的文書（2026-07-08）**
+> これは移行を検討していた時点の設計案であり、**現行の実装とは異なる**。実際には
+> 「public 単一 flake（`darwinConfigurations` を public 側に定義）＋ agenix で秘密値を暗号化、
+> private overlay は個人 skills を symlink で取り込むだけ」という形で完了した。
+> private overlay は flake input **ではない**。現行の正しい構成は [`../CLAUDE.md`](../CLAUDE.md)、
+> [`../README.md`](../README.md)、`nix/hosts/darwin/` を参照。本文書は経緯の記録として残す。
+
 This repository is moving toward a two-stage Nix-based dotfiles setup:
 
 1. `YosukeIida/dotfiles` is the public core.
