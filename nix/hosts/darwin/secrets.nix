@@ -9,12 +9,18 @@
 { ... }:
 
 {
-  age.identityPaths = [ "/Users/yosuke/.ssh/id_ed25519" ];
+  # 復号 identity は上から順に試される（存在しない鍵は agenix がスキップ）。
+  # id_ed25519 が無い新マシンでも、Bitwarden 保管の共通鍵を ~/.config/agenix/key.txt に
+  # 置けば単独で復旧できる（bootstrap.sh の選択肢(c)）。key.txt は agenix 用の age 秘密鍵。
+  age.identityPaths = [
+    "/Users/yosuke/.ssh/id_ed25519"
+    "/Users/yosuke/.config/agenix/key.txt"
+  ];
 
-  age.secrets."ssh-config".file   = ../../../secrets/ssh-config.age;
-  age.secrets."raycast-pw".file   = ../../../secrets/raycast-pw.age;
-  age.secrets."cf-token".file     = ../../../secrets/cf-token.age;
+  age.secrets."ssh-config".file = ../../../secrets/ssh-config.age;
+  age.secrets."raycast-pw".file = ../../../secrets/raycast-pw.age;
+  age.secrets."cf-token".file = ../../../secrets/cf-token.age;
   age.secrets."headscale-ip".file = ../../../secrets/headscale-ip.age;
-  age.secrets."printers".file     = ../../../secrets/printers.age;
-  age.secrets."figma-pat".file    = ../../../secrets/figma-pat.age;  # expires 2026-09-21
+  age.secrets."printers".file = ../../../secrets/printers.age;
+  age.secrets."figma-pat".file = ../../../secrets/figma-pat.age; # expires 2026-09-21
 }
