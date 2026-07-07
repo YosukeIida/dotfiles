@@ -63,12 +63,20 @@ cc personal && claude
 | `gen-api-settings.sh` | settings.api.json の生成スクリプト（overlay のトップレベルキーで live を置換） |
 | `get_key.sh` | API key 取得ヘルパー（`$CLAUDE_CONFIG_DIR/anthropic.env` を読む） |
 | `statusline.sh` | ステータスライン表示スクリプト |
+| `git-filters/strip-model-clean.py` | git clean filter 本体（`model` キーを除去） |
 
 > モード切替の仕組み: `cc api` は `settings.json` symlink を `settings.api.json`（生成物）へ、
 > `cc sub` は live の `settings.json` へ差し替える。サブスク専用ファイルは存在しない。
 > enabledPlugins はスコープ間で加算マージしかできない（上位で false 無効化は不可）ため、
 > plugin を絞る API モードは「ファイル差し替え」方式が唯一の実現手段。
 > ドリフトは生成方式により恒久解消（2026-07-06）。
+
+> `model` キーは git 管理から除外している: `/model` コマンドで頻繁にローカル書き換えされ、
+> commit するたびに無関係な diff が出るため。`.gitattributes`（`filter=strip-model`）+
+> `git-filters/strip-model-clean.py` の clean filter で、worktree の実ファイルには実際の値を
+> 残したまま、git 上（diff/status/commit）では常に `model` キーが無い状態に正規化する。
+> filter の登録自体（`git config filter.strip-model.*`）は clone ごとに必要なローカル設定
+> なので darwin-switch の postActivation で自動セットアップする（2026-07-07）。
 
 ---
 
