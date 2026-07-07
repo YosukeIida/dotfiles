@@ -5,7 +5,13 @@
     onActivation = {
       autoUpdate = true;
       upgrade = false;
-      cleanup = "none"; # Homebrew 5.x で --cleanup に --force が必要になったため無効化
+      cleanup = "zap";
+      # cleanup は --force なしだと削除対象がある限り exit 1 になるだけで実際には削除しない
+      # （Homebrew Bundle の既知の制限）ため、--force を明示して宣言的クリーンアップを機能させる。
+      # ~/.homebrew/trust.json を symlink ではなく copy 管理にしている（nix/home/files.nix の
+      # homebrewTrustJson activation）のは、--force 実行時に Homebrew 自身がこのファイルへ
+      # 書き込みを試み、symlink 先が nix store（root/nixbld 所有）だと拒否されるため。
+      extraFlags = [ "--force" ];
     };
 
     taps = [
@@ -17,11 +23,17 @@
       "steipete/tap"
       "yosukeiida/nimbus"
       "yosukeiida/pindrop"
+      {
+        name = "yosukeiida/powerglance";
+        clone_target = "/Users/yosuke/workspace/github.com/YosukeIida/homebrew-powerglance";
+      }
     ];
 
     brews = [
       "brightness"
+      "ffmpeg"
       "herdr"
+      "hermes-agent"
       "jundot/omlx/omlx"
       "rtk"
       "xcodegen"
@@ -44,7 +56,7 @@
       "discord"
       "figma@beta"
       "fujitsu-scansnap-home"
-      "ghostty"
+      "ghostty@tip"
       "google-chrome@canary"
       "google-drive"
       "hammerspoon"
@@ -65,6 +77,7 @@
       "onlyoffice"
       "orbstack"
       "pindrop"
+      "yosukeiida/powerglance/powerglance"
       "raycast"
       "shottr"
       "skim"
