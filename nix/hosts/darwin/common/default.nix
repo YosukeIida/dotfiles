@@ -117,13 +117,9 @@
       _link "$f" "$home/.claude/agents/$(basename "$f")"
     done
 
-    # Codex の安定設定は system layer で管理する。
-    # ~/.codex/config.toml は projects/trust/UI 等のローカル状態として Codex に所有させる。
-    _link "$pub/codex/config.toml" "/etc/codex/config.toml"
-
-    # 旧 activation が ~/.codex/config.toml にコピーした安定設定を除去する。
-    # user layer は system layer より優先されるため、残すと新しい system 設定が無視される。
-    su - ${username} -c "bash $pub/codex/migrate-user-config.sh" || true
+    # Codex の安定設定（/etc/codex/config.toml）は approval_policy=never・
+    # sandbox_mode=danger-full-access という個人の合意前提の危険設定を含むため、
+    # common（example にも波及）ではなく host 固有（yosuke-macbook-air.nix）で配備する。
 
     # Claude Code プラグインを自動インストール（ユーザー権限で実行）
     su - ${username} -c "bash $pub/claude/install-plugins.sh" || true

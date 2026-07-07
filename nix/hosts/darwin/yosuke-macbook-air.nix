@@ -13,6 +13,19 @@ let
   privateDir = "/Users/yosuke/workspace/github.com/YosukeIida/dotfiles-private";
   darwinHost = "Yosukes-MacBook-Air";
 
+  # git identity + lab 固有 safe.directory。public の git/gitconfig は [include] するだけで、
+  # 実体はここで生成する（他者環境ではこのファイルが無く、その人自身の identity が使われる）。
+  # identity は秘密ではない（コミットに載る公開情報）ため agenix ではなく通常ファイルで扱う。
+  gitconfigLocal = pkgs.writeText "gitconfig-local" ''
+    [user]
+    name = i2
+    email = 95607264+YosukeIida@users.noreply.github.com
+    [safe]
+    directory = /Users/yosuke/workspace/github.com/TMLlaboratory/llm-kie-sorimachi
+    directory = /Users/yosuke/workspace/github.com/TMLlaboratory/llm-kie
+    directory = /Users/yosuke/workspace/github.com/TMLlaboratory/s-code
+  '';
+
   darwinSwitch = pkgs.writeShellScriptBin "darwin-switch" ''
     exec sudo darwin-rebuild switch --flake ${publicDir}#${darwinHost} "$@"
   '';
@@ -422,6 +435,18 @@ in
     # cf_proxy.sh（public）を ~/.ssh に配置
     _link "$pub/ssh/cf_proxy.sh" "$home/.ssh/cf_proxy.sh"
 
+    # git identity を ~/.gitconfig.local に生成（public gitconfig が include する）。
+    install -m 644 -o ${username} -g staff ${gitconfigLocal} "$home/.gitconfig.local"
+
+    # Codex の安定設定を system layer（/etc/codex/config.toml）で管理する。
+    # approval_policy=never・sandbox_mode=danger-full-access を含むため common ではなく
+    # ここ（host 固有）で配備し、example を使う他者には渡さない。
+    # ~/.codex/config.toml は projects/trust/UI 等のローカル状態として Codex に所有させる。
+    _link "$pub/codex/config.toml" "/etc/codex/config.toml"
+    # 旧 activation が ~/.codex/config.toml にコピーした安定設定を除去する
+    # （user layer は system layer より優先されるため、残すと新しい system 設定が無視される）。
+    su - ${username} -c "bash $pub/codex/migrate-user-config.sh" || true
+
     # Stats 設定を dotfiles（public）から毎回インポート
     if [ -f "$pub/config/Stats-current.plist" ]; then
       launchctl asuser "$(id -u -- ${username})" \
@@ -432,5 +457,8 @@ in
     # stats-export スクリプトを ~/.local/bin に配置
     sudo -u ${username} mkdir -p "$home/.local/bin"
     _link "$pub/scripts/stats-export" "$home/.local/bin/stats-export"
+
+    # delegate-browser も同様に配置（従来は手動 symlink 依存だった）
+    _link "$pub/scripts/delegate-browser" "$home/.local/bin/delegate-browser"
   '';
 }

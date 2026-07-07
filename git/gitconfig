@@ -1,13 +1,12 @@
-[user]
-	email = 95607264+YosukeIida@users.noreply.github.com
-	name = i2
+# 個人 identity（user.name/email）と lab 固有の safe.directory は host 側で
+# ~/.gitconfig.local に生成する（yosuke-macbook-air.nix の postActivation）。
+# public にはここで include するだけ。他者環境ではこのファイルが無く git は無視するので、
+# その人自身の identity が使われる（この dotfiles を流用しても Yosuke 名義にならない）。
+[include]
+	path = ~/.gitconfig.local
 [credential]
 	helper = osxkeychain
 [ghq]
 	root = ~/workspace/
 [fetch]
 	prune = true
-[safe]
-	directory = /Users/yosuke/workspace/github.com/TMLlaboratory/llm-kie-sorimachi
-	directory = /Users/yosuke/workspace/github.com/TMLlaboratory/llm-kie
-	directory = /Users/yosuke/workspace/github.com/TMLlaboratory/s-code
