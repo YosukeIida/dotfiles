@@ -1,101 +1,8 @@
 {
-  "agentPushNotifEnabled": true,
-  "autoCompactEnabled": true,
-  "effortLevel": "high",
-  "enabledPlugins": {
-    "document-skills@anthropic-agent-skills": true,
-    "codex@openai-codex": true
-  },
-  "extraKnownMarketplaces": {
-    "YosukeIida": {
-      "autoUpdate": true,
-      "source": {
-        "repo": "YosukeIida/claude-lualatex-pdf",
-        "source": "github"
-      }
-    },
-    "academic-research-skills": {
-      "source": {
-        "repo": "Imbad0202/academic-research-skills",
-        "source": "github"
-      }
-    },
-    "claude-paper": {
-      "source": {
-        "repo": "alaliqing/claude-paper",
-        "source": "github"
-      }
-    },
-    "daymade-skills": {
-      "source": {
-        "repo": "daymade/claude-code-skills",
-        "source": "github"
-      }
-    },
-    "ecc": {
-      "source": {
-        "repo": "affaan-m/everything-claude-code",
-        "source": "github"
-      }
-    },
-    "fujibee-agmsg": {
-      "source": {
-        "repo": "fujibee/agmsg",
-        "source": "github"
-      }
-    },
-    "openai-codex": {
-      "source": {
-        "repo": "openai/codex-plugin-cc",
-        "source": "github"
-      }
-    }
-  },
-  "fileCheckpointingEnabled": true,
-  "hooks": {
-    "PreToolUse": [
-      {
-        "hooks": [
-          {
-            "command": "rtk hook claude",
-            "type": "command"
-          }
-        ],
-        "matcher": "Bash"
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "command": "bash '/Users/yosuke/.claude/hooks/herdr-agent-state.sh' session",
-            "timeout": 10,
-            "type": "command"
-          }
-        ],
-        "matcher": "*"
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "command": "bash /Users/yosuke/workspace/github.com/YosukeIida/dotfiles/claude/hooks/check-dotfiles-dirty.sh",
-            "type": "command"
-          }
-        ],
-        "matcher": ""
-      }
-    ]
-  },
-  "inputNeededNotifEnabled": true,
-  "language": "Japanese",
-  "model": "sonnet",
   "permissions": {
     "allow": [
       "WebSearch"
     ],
-    "defaultMode": "auto",
     "deny": [
       "Bash(rm -rf *)",
       "Bash(git push --force*)",
@@ -106,10 +13,103 @@
       "Read(~/.ssh/id_*)",
       "Edit(~/.ssh/**)",
       "Write(~/.ssh/**)"
+    ],
+    "defaultMode": "auto"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/yosuke/.claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/yosuke/workspace/github.com/YosukeIida/dotfiles/claude/hooks/check-dotfiles-dirty.sh"
+          }
+        ]
+      }
     ]
   },
-  "preferredNotifChannel": "auto",
-  "remoteControlAtStartup": true,
+  "worktree": {
+    "baseRef": "fresh"
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline.sh",
+    "padding": 0
+  },
+  "enabledPlugins": {
+    "document-skills@anthropic-agent-skills": true,
+    "codex@openai-codex": true
+  },
+  "extraKnownMarketplaces": {
+    "YosukeIida": {
+      "source": {
+        "source": "github",
+        "repo": "YosukeIida/claude-lualatex-pdf"
+      },
+      "autoUpdate": true
+    },
+    "academic-research-skills": {
+      "source": {
+        "source": "github",
+        "repo": "Imbad0202/academic-research-skills"
+      }
+    },
+    "claude-paper": {
+      "source": {
+        "source": "github",
+        "repo": "alaliqing/claude-paper"
+      }
+    },
+    "daymade-skills": {
+      "source": {
+        "source": "github",
+        "repo": "daymade/claude-code-skills"
+      }
+    },
+    "ecc": {
+      "source": {
+        "source": "github",
+        "repo": "affaan-m/everything-claude-code"
+      }
+    },
+    "fujibee-agmsg": {
+      "source": {
+        "source": "github",
+        "repo": "fujibee/agmsg"
+      }
+    },
+    "openai-codex": {
+      "source": {
+        "source": "github",
+        "repo": "openai/codex-plugin-cc"
+      }
+    }
+  },
+  "language": "Japanese",
   "sandbox": {
     "filesystem": {
       "allowWrite": [
@@ -117,19 +117,18 @@
       ]
     }
   },
-  "skipAutoPermissionPrompt": true,
-  "skipWorkflowUsageWarning": true,
-  "statusLine": {
-    "command": "bash ~/.claude/statusline.sh",
-    "padding": 0,
-    "type": "command"
-  },
-  "theme": "dark",
+  "effortLevel": "high",
   "tui": "fullscreen",
+  "skipWorkflowUsageWarning": true,
+  "theme": "dark",
   "verbose": false,
+  "preferredNotifChannel": "auto",
+  "autoCompactEnabled": true,
+  "fileCheckpointingEnabled": true,
+  "remoteControlAtStartup": true,
+  "inputNeededNotifEnabled": true,
+  "agentPushNotifEnabled": true,
+  "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
-  "worktree": {
-    "baseRef": "fresh"
-  },
   "apiKeyHelper": "~/.claude/get_key.sh"
 }

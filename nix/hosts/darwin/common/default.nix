@@ -81,6 +81,11 @@
     # settings.api.json は生成物（live settings.json + api-mode-overlay.json）。
     # 編集は api-mode-overlay.json 側へ。サブスクは live をそのまま使う（複製しない）。
     su - ${username} -c "bash $pub/claude/gen-api-settings.sh" || true
+
+    # settings.json / settings.api.json の "model" キーは /model コマンドで頻繁に
+    # ローカル書き換えされるため、git の管理対象から外す（clean filter で常に除去）。
+    # .gitattributes で filter=strip-model が指定されているファイルにのみ効く。
+    su - ${username} -c "cd $pub && git config filter.strip-model.clean '/usr/bin/python3 \"\$(git rev-parse --show-toplevel)/claude/git-filters/strip-model-clean.py\"' && git config filter.strip-model.smudge cat" || true
     _link "$pub/claude/settings.api.json"          "$home/.claude/settings.api.json"
     _link "$pub/claude/get_key.sh"                 "$home/.claude/get_key.sh"
     _link "$pub/claude/statusline.sh"              "$home/.claude/statusline.sh"

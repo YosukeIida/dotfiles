@@ -16,7 +16,6 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "opus[1m]",
   "hooks": {
     "PreToolUse": [
       {
