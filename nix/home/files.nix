@@ -21,9 +21,7 @@ let
         "steipete/tap"
         "yosukeiida/nimbus"
         "yosukeiida/pindrop"
-        # clone_target がローカルパス（custom remote）のため、tap の実 remote と
-        # 完全一致する値でないと Tap#matches_reference? が通らない（短い名前では不可）。
-        "/Users/yosuke/workspace/github.com/YosukeIida/homebrew-powerglance"
+        "yosukeiida/powerglance"
       ];
     }
   );

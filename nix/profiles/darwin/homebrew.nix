@@ -23,10 +23,7 @@
       "steipete/tap"
       "yosukeiida/nimbus"
       "yosukeiida/pindrop"
-      {
-        name = "yosukeiida/powerglance";
-        clone_target = "/Users/yosuke/workspace/github.com/YosukeIida/homebrew-powerglance";
-      }
+      "yosukeiida/powerglance"
     ];
 
     brews = [
@@ -35,9 +32,16 @@
       "herdr"
       "hermes-agent"
       "jundot/omlx/omlx"
+      "mas"
       "rtk"
       "xcodegen"
     ];
+
+    # Mac App Store アプリ（mas 経由）。Bitwarden は agenix バックアップ鍵の回収に必要なため
+    # flake から再現する（App Store へのサインインのみ手動。README 参照）。
+    masApps = {
+      Bitwarden = 1352778147;
+    };
 
     casks = [
       "adobe-acrobat-reader"
