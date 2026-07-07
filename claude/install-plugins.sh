@@ -5,6 +5,13 @@ set -euo pipefail
 
 SETTINGS="$HOME/.claude/settings.json"
 
+# claude CLI 未導入時（新マシンの初回 darwin-switch では cask がまだ入っていない）は
+# 何もせず終了する。codex/install-plugins.sh と同じガード。導入後の再 switch で入る。
+if ! command -v claude >/dev/null 2>&1; then
+  echo "claude command not found, skipping plugin installation (re-run darwin-switch after install)" >&2
+  exit 0
+fi
+
 if [ ! -f "$SETTINGS" ]; then
   echo "settings.json not found, skipping"
   exit 0

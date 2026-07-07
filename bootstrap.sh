@@ -3,6 +3,9 @@
 #
 # 前提: このリポジトリ（public）は HTTPS で clone 済み:
 #   git clone https://github.com/YosukeIida/dotfiles ~/workspace/github.com/YosukeIida/dotfiles
+#   （git clone には Xcode Command Line Tools が必要: xcode-select --install）
+#
+# Step 0 が Nix / Homebrew 本体の有無を確認する。詳細な前提・移行手順は README.md 参照。
 #
 # 実行方法:
 #   bash ~/workspace/github.com/YosukeIida/dotfiles/bootstrap.sh
@@ -32,6 +35,46 @@ step() {
 ok()   { echo "  ✓ $*"; }
 skip() { echo "  – skip: $*"; }
 warn() { echo "  ! $*"; }
+
+# ── Step 0: 前提レイヤ（Xcode CLT / Nix / Homebrew / git filter）────────
+# bootstrap 自体は clone 済みが前提だが、その先の darwin-switch には Nix 本体と、
+# cask 導入のため Homebrew 本体が必要。工場出荷 Mac では未導入なのでここで確認する。
+step 0 "前提レイヤの確認（Xcode CLT / Nix / Homebrew）"
+
+if xcode-select -p &>/dev/null; then
+  ok "Xcode Command Line Tools は導入済み"
+else
+  warn "Xcode CLT が未導入。次を実行してから再実行してください: xcode-select --install"
+fi
+
+if command -v nix &>/dev/null; then
+  ok "Nix は導入済み（$(nix --version 2>/dev/null)）"
+else
+  warn "Nix が未導入です。Determinate Systems installer を推奨:"
+  warn "  curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install"
+  warn "  導入後、新しいシェルを開いてから bootstrap を再実行してください。"
+fi
+
+# nix-darwin の homebrew モジュールは brew 本体を入れないため、ここで導入する。
+if command -v brew &>/dev/null || [ -x /opt/homebrew/bin/brew ]; then
+  ok "Homebrew は導入済み"
+elif ask "Homebrew を公式インストーラで導入しますか？（全 cask/brew に必須）"; then
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" \
+    && ok "Homebrew を導入しました" || warn "Homebrew 導入に失敗（続行します）"
+else
+  skip "Homebrew 導入（darwin-switch で cask/brew が入りません）"
+fi
+
+# strip-model の git clean filter を darwin-switch より前に設定する。
+# これが無いと初回 switch 前の commit で settings.json の model キーが素通りする
+# （通常は common/default.nix の activation が設定するが、それは初回 switch 後）。
+if command -v git &>/dev/null; then
+  git -C "$DOTFILES_DIR" config filter.strip-model.clean \
+    "/usr/bin/python3 \"\$(git rev-parse --show-toplevel)/claude/git-filters/strip-model-clean.py\"" \
+    && git -C "$DOTFILES_DIR" config filter.strip-model.smudge cat \
+    && ok "git clean filter (strip-model) を設定" \
+    || warn "git filter 設定に失敗"
+fi
 
 # ── Step 1: agenix identity の用意（darwin-switch より前に必須）─────────
 # 新構成では秘密値（SSH config / cf token / Raycast PW / Headscale IP / プリンタ）を
@@ -80,12 +123,31 @@ if command -v darwin-rebuild &>/dev/null; then
     skip "nix-darwin"
   fi
 else
-  warn "darwin-rebuild が見つかりません"
-  warn "  → https://github.com/nix-darwin/nix-darwin でインストールしてください"
+  warn "darwin-rebuild が未導入です（初回はこれが正常）。"
+  if command -v nix &>/dev/null && ask "初回の nix-darwin 適用を実行しますか？（nix run 経由・初回のみ）"; then
+    sudo nix run nix-darwin/nix-darwin-25.11#darwin-rebuild -- switch --flake "$DOTFILES_DIR#$DARWIN_HOST" \
+      && ok "初回 nix-darwin 適用が完了（以後は darwin-switch コマンドが使えます）" \
+      || warn "初回 nix-darwin 適用に失敗（Nix 導入・agenix 鍵・Homebrew を確認して再実行）"
+  else
+    skip "初回 nix-darwin 適用（Nix 未導入 or スキップ）"
+  fi
 fi
 
 # ── Step 3: private overlay（個人 skills）の clone ────────────────────
 step 3 "private overlay（dotfiles-private）の取得"
+# gh は darwin-switch（Step 2）でしか入らないため、初回はここで未導入 or 未認証のことがある。
+# Step 3/4 は gh を使うので、認証だけ先に済ませる。
+if command -v gh &>/dev/null; then
+  if gh auth status &>/dev/null; then
+    ok "gh は認証済み"
+  elif ask "gh auth login を実行しますか？（Step 3/4 と GitHub 操作に必要）"; then
+    gh auth login || warn "gh auth login に失敗（後で手動実行してください）"
+  else
+    warn "gh 未認証のまま続行（private clone / SSH 鍵登録は後で再実行が必要）"
+  fi
+else
+  warn "gh が未導入（Step 2 完了後に再実行すると使えます）"
+fi
 if [[ -d "$PRIVATE_DIR/.git" ]]; then
   ok "$PRIVATE_DIR は既に存在します"
 elif command -v gh &>/dev/null && ask "gh で dotfiles-private を clone しますか？（HTTPS）"; then
@@ -114,12 +176,15 @@ else
 fi
 
 # ── Step 5: Raycast 設定のインポート（手動）──────────────────────────
+# .rayconfig はローカル履歴・デバイス固有データを含むため public では .gitignore 済み。
+# 実体は dotfiles-private に置くので、Step 3 の private clone 後にここが成立する。
 step 5 "Raycast 設定のインポート"
-RAYCAST_RAYCONFIG=$(ls -t "$DOTFILES_DIR/raycast/"*.rayconfig 2>/dev/null | head -1)
+RAYCAST_RAYCONFIG=$(ls -t "$PRIVATE_DIR/raycast/"*.rayconfig 2>/dev/null | head -1)
 if ! open -Ra "Raycast" &>/dev/null; then
   warn "Raycast 未インストール（Step 2 完了後に再実行してください）"
 elif [[ -z "$RAYCAST_RAYCONFIG" ]]; then
-  warn ".rayconfig が見つかりません: $DOTFILES_DIR/raycast/"
+  warn ".rayconfig が見つかりません: $PRIVATE_DIR/raycast/"
+  warn "  → dotfiles-private を clone（Step 3）済みか、既存マシンで Raycast を export したか確認してください"
 else
   ok "Raycast を開き、Settings → Advanced → Import で次のファイルを読み込んでください:"
   echo "      $RAYCAST_RAYCONFIG"
@@ -130,8 +195,20 @@ fi
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  bootstrap 完了"
+echo ""
+echo "  初回の推奨順序（各ステップは前段の完了を前提とする）:"
+echo "    Step 0 → Nix / Homebrew を導入 → 新しいシェルを開く"
+echo "    Step 2 → 初回 nix-darwin 適用（darwin-rebuild が使えるようになる）"
+echo "    → gh auth login → Step 3（private clone）→ Step 4（SSH 化）"
+echo "    → Raycast 導入後に Step 5（.rayconfig import）を再実行"
+echo ""
 echo "  個別に再実行できます:"
 echo "    Step 2: darwin-switch"
 echo "    Step 3: gh repo clone YosukeIida/dotfiles-private $PRIVATE_DIR && darwin-switch"
 echo "    Step 4: gh ssh-key add ~/.ssh/id_ed25519.pub && git remote set-url ..."
+echo ""
+echo "  darwin-switch 後の手動ステップ（詳細は README.md の移行チェックリスト）:"
+echo "    - TCC 権限付与（Hammerspoon / Karabiner / Raycast 等）"
+echo "    - Claude/Codex/gh の再ログイン、Tailscale(headscale) 再認証"
+echo "    - App Store にサインイン（Bitwarden 導入のため）"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
