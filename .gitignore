@@ -8,3 +8,9 @@ result-*
 
 # Raycast raw exports contain local history and device-specific data.
 raycast/*.rayconfig
+
+# Karabiner writes runtime files into ~/.config/karabiner (= symlinked repo/karabiner).
+# Track only karabiner.json and assets/complex_modifications/*.json; ignore the noise.
+karabiner/automatic_backups/
+karabiner/*.bak.*
+karabiner/assets/**/*.bak.*

@@ -1,0 +1,4 @@
+[whitelist]
+# TMLlaboratory 配下の worktree を全て自動信頼する
+# git worktree で作成したディレクトリで direnv allow が不要になる
+prefix = ["/Users/yosuke/workspace/github.com/TMLlaboratory/"]
