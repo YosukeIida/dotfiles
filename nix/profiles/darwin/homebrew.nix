@@ -32,6 +32,7 @@
       "ffmpeg"
       "herdr"
       "hermes-agent"
+      "hunk"
       "jundot/omlx/omlx"
       "mas"
       "rtk"
