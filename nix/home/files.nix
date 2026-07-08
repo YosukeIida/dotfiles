@@ -22,6 +22,7 @@ let
         "yosukeiida/nimbus"
         "yosukeiida/pindrop"
         "yosukeiida/powerglance"
+        "yosukeiida/zed-dev-ratex"
       ];
     }
   );

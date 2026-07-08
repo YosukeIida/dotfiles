@@ -24,6 +24,7 @@
       "yosukeiida/nimbus"
       "yosukeiida/pindrop"
       "yosukeiida/powerglance"
+      "yosukeiida/zed-dev-ratex"
     ];
 
     brews = [
@@ -92,6 +93,7 @@
       "visual-studio-code"
       "wezterm@nightly"
       "zed"
+      "yosukeiida/zed-dev-ratex/zed-dev-ratex"
     ];
   };
 }
