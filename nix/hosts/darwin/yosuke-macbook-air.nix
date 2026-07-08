@@ -25,6 +25,7 @@ let
   quarantineAllowlist = [
     "/Applications/Zed Dev RaTeX(unofficial).app"
     "/Applications/PowerGlance.app"
+    "/Applications/Pindrop.app"
   ];
 
   # git identity + lab 固有 safe.directory。public の git/gitconfig は [include] するだけで、
