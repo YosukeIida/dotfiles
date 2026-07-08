@@ -19,10 +19,7 @@ let
         "https://github.com/jundot/omlx"
         "solarphlare/airmute"
         "steipete/tap"
-        "yosukeiida/nimbus"
-        "yosukeiida/pindrop"
-        "yosukeiida/powerglance"
-        "yosukeiida/zed-dev-ratex"
+        "yosukeiida/casks-personal"
       ];
     }
   );

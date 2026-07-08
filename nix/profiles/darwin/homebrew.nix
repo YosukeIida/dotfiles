@@ -21,10 +21,7 @@
       }
       "solarphlare/airmute"
       "steipete/tap"
-      "yosukeiida/nimbus"
-      "yosukeiida/pindrop"
-      "yosukeiida/powerglance"
-      "yosukeiida/zed-dev-ratex"
+      "yosukeiida/casks-personal"
     ];
 
     brews = [
@@ -54,6 +51,7 @@
       "chrome-remote-desktop-host"
       "claude"
       "claude-code@latest"
+      "yosukeiida/casks-personal/claude-science"
       "cloudflare-warp@beta"
       "cmux"
       "codex"
@@ -76,14 +74,14 @@
       "microsoft-teams"
       "microsoft-word"
       "nani"
-      "yosukeiida/nimbus/nimbus"
+      "yosukeiida/casks-personal/nimbus"
       "notion"
       "notion-calendar"
       "obsidian"
       "onlyoffice"
       "orbstack"
-      "pindrop"
-      "yosukeiida/powerglance/powerglance"
+      "yosukeiida/casks-personal/pindrop"
+      "yosukeiida/casks-personal/powerglance"
       "raycast"
       "shottr"
       "skim"
@@ -94,7 +92,7 @@
       "visual-studio-code"
       "wezterm@nightly"
       "zed"
-      "yosukeiida/zed-dev-ratex/zed-dev-ratex"
+      "yosukeiida/casks-personal/zed-dev-ratex"
     ];
   };
 }

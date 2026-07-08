@@ -24,6 +24,7 @@ let
   # リストに無いものには一切触れない（全アプリ一律の解除はしない）。
   quarantineAllowlist = [
     "/Applications/Zed Dev RaTeX(unofficial).app"
+    "/Applications/PowerGlance.app"
   ];
 
   # git identity + lab 固有 safe.directory。public の git/gitconfig は [include] するだけで、
