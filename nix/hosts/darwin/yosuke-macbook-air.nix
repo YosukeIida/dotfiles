@@ -4,7 +4,12 @@
 # - 秘密値（ssh config / cf token / headscale ip / printers / raycast pw）は
 #   agenix で暗号化され、postActivation が ~/.config 以下へ復号配置する
 # - private skills は private overlay（dotfiles-private）のローカルパスから symlink
-{ config, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   username = "yosuke";
@@ -12,6 +17,14 @@ let
   publicDir = "/Users/yosuke/workspace/github.com/YosukeIida/dotfiles";
   privateDir = "/Users/yosuke/workspace/github.com/YosukeIida/dotfiles-private";
   darwinHost = "Yosukes-MacBook-Air";
+
+  # ad-hoc 署名／notarize なしの個人アプリは Gatekeeper の
+  # "could not verify... free of malware" で毎回ブロックされる。
+  # ここに明示的に追加したパスだけ switch のたびに quarantine 属性を剥がす。
+  # リストに無いものには一切触れない（全アプリ一律の解除はしない）。
+  quarantineAllowlist = [
+    "/Applications/Zed Dev RaTeX(unofficial).app"
+  ];
 
   # git identity + lab 固有 safe.directory。public の git/gitconfig は [include] するだけで、
   # 実体はここで生成する（他者環境ではこのファイルが無く、その人自身の identity が使われる）。
@@ -460,5 +473,14 @@ in
 
     # delegate-browser も同様に配置（従来は手動 symlink 依存だった）
     _link "$pub/scripts/delegate-browser" "$home/.local/bin/delegate-browser"
+
+    # 明示的に許可したアプリだけ quarantine 属性を解除する（quarantineAllowlist 参照）。
+    # 再インストール／更新でダウンロードするたびに quarantine が再付与されるため毎 switch 実行する。
+    # shellcheck disable=SC2043  # リストが1件でも将来増える前提の for ループ
+    for app in ${lib.concatMapStringsSep " " (p: ''"${p}"'') quarantineAllowlist}; do
+      if [ -e "$app" ]; then
+        xattr -dr com.apple.quarantine "$app" 2>/dev/null || true
+      fi
+    done
   '';
 }
