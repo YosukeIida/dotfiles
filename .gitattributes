@@ -1,2 +1,3 @@
 claude/settings.json filter=strip-model
 claude/settings.api.json filter=strip-model
+karabiner/karabiner.json filter=strip-selected

@@ -86,6 +86,11 @@
     # ローカル書き換えされるため、git の管理対象から外す（clean filter で常に除去）。
     # .gitattributes で filter=strip-model が指定されているファイルにのみ効く。
     su - ${username} -c "cd $pub && git config filter.strip-model.clean '/usr/bin/python3 \"\$(git rev-parse --show-toplevel)/claude/git-filters/strip-model-clean.py\"' && git config filter.strip-model.smudge cat" || true
+
+    # karabiner.json の "selected" プロファイルは GUI 切替で頻繁に書き換わるため、
+    # git の管理対象から外す（clean filter で常に "Default profile" に固定）。
+    # .gitattributes で filter=strip-selected が指定されているファイルにのみ効く。
+    su - ${username} -c "cd $pub && git config filter.strip-selected.clean '/usr/bin/python3 \"\$(git rev-parse --show-toplevel)/karabiner/git-filters/strip-selected-clean.py\"' && git config filter.strip-selected.smudge cat" || true
     _link "$pub/claude/settings.api.json"          "$home/.claude/settings.api.json"
     _link "$pub/claude/get_key.sh"                 "$home/.claude/get_key.sh"
     _link "$pub/claude/statusline.sh"              "$home/.claude/statusline.sh"
