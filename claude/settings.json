@@ -127,6 +127,7 @@
     }
   },
   "effortLevel": "high",
+  "advisorModel": "fable",
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
   "theme": "dark",
