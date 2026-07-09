@@ -84,13 +84,11 @@ cc api            # API keyモードに切替
 cc personal sub   # personal + subscriptionモード
 ```
 
-### Codex の注意: app-server デーモンの認証キャッシュ
+### Codex の注意: app-server の control socket は CODEX_HOME ごとに分離される
 
-`codex app-server` デーモンは起動時の認証をメモリにキャッシュし、TUI が `CODEX_HOME` をまたいで Remote 接続することがある。`cx` は起動中デーモンとそのアカウントを一覧表示し、現在のシェルと異なる場合に警告する。確実に切り替えるには：
+`codex doctor --json` で確認できる通り、managed daemon の control socket / state dir（`$CODEX_HOME/app-server-control/`, `$CODEX_HOME/app-server-daemon/`）は `$CODEX_HOME` ごとに別物であり、他のツール・プロジェクトが起動した無関係な `codex app-server` プロセス（例: agmsg が別プロジェクト用に起動したもの、Codex Desktop App 自身のプロセス）が動いていても現在のシェルのアカウント切替には影響しない（2026-07-09 実測: `cx` での切替 → `codex` TUI 起動 → `/status` でアカウントが毎回正しく一致することを確認）。
 
-```bash
-pkill -f 'codex app-server'
-```
+以前 `cx` は `pgrep -f 'codex app-server'` でシステム上の全プロセスを走査し、CODEX_HOME が異なれば警告していたが、これは上記の理由で無関係なプロセスまで拾う誤検知だったため削除した。`cx` は現在、自分の `$CODEX_HOME` に紐づく managed daemon の pid file だけを見る。
 
 ## 動作要件
 
