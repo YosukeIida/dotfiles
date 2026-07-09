@@ -54,28 +54,17 @@ cx_status() {
   echo "shell CODEX_HOME : $shell_home"
   echo "app auth.json -> : $app_target"
 
-  # app-server デーモンは起動時の CODEX_HOME の auth をキャッシュし、TUI が
-  # CODEX_HOME をまたいで Remote 接続することがある（/statusのRemote行で確認可）。
-  # 現在の shell と実体 auth が異なるデーモンがいたら警告する。
-  # ps の環境変数表示は macOS (BSD ps) 前提のため、他OSではスキップする。
-  [[ "$OSTYPE" == darwin* ]] || return 0
-
-  local shell_auth_path="$shell_home/auth.json"
-  local shell_auth="${shell_auth_path:A}"
-  local pid line dhome daemon_auth_path daemon_auth mismatch=""
-  for pid in $(pgrep -f 'codex app-server' 2>/dev/null); do
-    line="$(ps eww -p "$pid" -o command= 2>/dev/null | tr ' ' '\n' | grep '^CODEX_HOME=' | head -1)"
-    dhome="${line#CODEX_HOME=}"
-    [[ -n "$dhome" ]] || dhome="$HOME/.codex"
-    daemon_auth_path="$dhome/auth.json"
-    daemon_auth="${daemon_auth_path:A}"
-    echo "daemon PID $pid  : CODEX_HOME=$dhome"
-    [[ "$daemon_auth" != "$shell_auth" ]] && mismatch=1
-  done
-  if [[ -n "$mismatch" ]]; then
-    echo "warning: 現在のshellと異なるアカウントのapp-serverデーモンが起動中。TUIがそちらにRemote接続すると別アカウントで動くことがある。確実に切り替えるには: pkill -f 'codex app-server'"
+  # 自分の CODEX_HOME 用 managed daemon が動いていれば情報表示のみ行う。
+  # 他ツール・他プロジェクトが起動した無関係な codex app-server プロセス
+  # （$CODEX_HOME ごとに control socket が分離されているため接続対象にならない）
+  # を pgrep で拾って警告していたのは誤検知だったため削除済み（2026-07-09）。
+  local pid_file="$shell_home/app-server-daemon/app-server.pid"
+  if [[ -f "$pid_file" ]]; then
+    local pid
+    pid="$(<"$pid_file")"
+    [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null && echo "managed daemon   : PID $pid (this CODEX_HOME)"
   fi
 
-  # プロファイル間の symlink 漏れ検出（新しい Codex が追加したトップレベル項目の共有漏れ）
-  [[ -x "$_AGSW_DIR/bin/check-codex-drift" ]] && "$_AGSW_DIR/bin/check-codex-drift"
+  # プロファイル間の symlink 漏れ検出＆自動修復（新しい Codex が追加したトップレベル項目の共有漏れ）
+  [[ -x "$_AGSW_DIR/bin/check-codex-drift" ]] && "$_AGSW_DIR/bin/check-codex-drift" --fix
 }
