@@ -55,7 +55,6 @@
       "cloudflare-warp@beta"
       "cmux"
       "codex"
-      "codex-app"
       "codexbar"
       "discord"
       "figma@beta"
