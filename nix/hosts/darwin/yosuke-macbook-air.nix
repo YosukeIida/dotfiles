@@ -28,6 +28,17 @@ let
     "/Applications/Pindrop.app"
   ];
 
+  # 上と同じ目的だが、Homebrew cask のバージョン番号を含むパス
+  # （更新のたびにディレクトリ名が変わる）向け。glob展開させるため要素は
+  # double-quote しない（= 各要素にスペースを含めないこと）。
+  #
+  # codex cask が同梱する rg（ripgrep）バイナリに quarantine が付き、Codex実行時に
+  # 毎回 Gatekeeper でブロックされる事例（2026-07-10）。brew install ripgrep の
+  # /opt/homebrew/bin/rg とは別物。
+  quarantineGlobAllowlist = [
+    "/opt/homebrew/Caskroom/codex/*/codex-path/rg"
+  ];
+
   # git identity + lab 固有 safe.directory。public の git/gitconfig は [include] するだけで、
   # 実体はここで生成する（他者環境ではこのファイルが無く、その人自身の identity が使われる）。
   # identity は秘密ではない（コミットに載る公開情報）ため agenix ではなく通常ファイルで扱う。
@@ -483,6 +494,15 @@ in
       if [ -e "$app" ]; then
         xattr -dr com.apple.quarantine "$app" 2>/dev/null || true
       fi
+    done
+
+    # 上と同じだが glob 対応（quarantineGlobAllowlist 参照）。
+    for pattern in ${lib.concatStringsSep " " quarantineGlobAllowlist}; do
+      for app in $pattern; do
+        if [ -e "$app" ]; then
+          xattr -dr com.apple.quarantine "$app" 2>/dev/null || true
+        fi
+      done
     done
   '';
 }
