@@ -4,7 +4,7 @@
 # 操作で live 側だけが書き換わる。「変更後は必ず commit」原則の再発防止用。
 # ブロックはしない（systemMessage を表示するだけで exit 0）。
 #
-# claude/settings.json・settings.api.json の "model" は /model のたびに書き換わる。
+# claude/settings.json の "model" は /model のたびに書き換わる。
 # git の clean filter（.gitattributes の filter=strip-model）は commit 内容から
 # model を除外するが、`git status` の dirty 判定は clean filter を通さない生バイト
 # 比較なので、model だけ変えても modified 扱いのまま残る（`git add` するまで消えない）。
@@ -13,9 +13,11 @@
 # HEAD と worktree の内容を model 抜き・キー順無視で比較し、実質差分の有無だけを見る。
 # Claude Code 自身が /model や /plugin のたびにキー順を変えて書き込むため、キー順は
 # 無視しないと model 以外の理由で誤警告が出る。
+#
+# settings.api.json は生成物のためgit管理から除外（untracked）。dirty判定の対象外。
 
 DOTFILES="$HOME/workspace/github.com/YosukeIida/dotfiles"
-MODEL_FILES=(claude/settings.json claude/settings.api.json)
+MODEL_FILES=(claude/settings.json)
 
 normalize_json() {
   python3 -c '

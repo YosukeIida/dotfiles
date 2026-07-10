@@ -59,7 +59,7 @@ cc personal && claude
 |---|---|
 | `settings.json` | live 設定＝サブスクモードの実体（plugin install 等の書き込みが symlink 経由でここに反映される。**必ず git commit**） |
 | `api-mode-overlay.json` | API モードで live から意図的に変える差分だけを書く（apiKeyHelper、絞った enabledPlugins）。**API モードの設定変更はここを編集** |
-| `settings.api.json` | **生成物**（`gen-api-settings.sh` が live + overlay から darwin-switch 時に生成）。手で編集しない |
+| `settings.api.json` | **生成物・git管理外**（`gen-api-settings.sh` が live + overlay から darwin-switch 時に生成）。手で編集しない |
 | `gen-api-settings.sh` | settings.api.json の生成スクリプト（overlay のトップレベルキーで live を置換） |
 | `get_key.sh` | API key 取得ヘルパー（`$CLAUDE_CONFIG_DIR/anthropic.env` を読む） |
 | `statusline.sh` | ステータスライン表示スクリプト |
