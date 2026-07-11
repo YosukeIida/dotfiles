@@ -69,6 +69,11 @@ in
     ".config/gh/config.yml".source = lnk "gh/config.yml";
     ".zshenv".source = lnk "zsh/zshenv";
     ".zshrc".source = lnk "zsh/zshrc";
+
+    # codex プラグイン（sites 等）の MCP サーバが `command: "node"` で起動されるための node。
+    # 通常の PATH には載せない（node は devshell のみの方針）。agent-switch の codex()
+    # ラッパーが codex 起動時だけこの dir を PATH 先頭に注入する。
+    ".local/share/codex-runtime/bin/node".source = "${pkgs.nodejs}/bin/node";
   };
 
   home.activation.homebrewTrustJson = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
