@@ -8,21 +8,6 @@
 
 let
   lnk = path: config.lib.file.mkOutOfStoreSymlink "${darwinPublicConfigDir}/${path}";
-
-  # Homebrew (6.x+) が `brew trust` / `brew bundle cleanup --force` 実行時に
-  # ~/.homebrew/trust.json 自体へ書き込みを試みるため、symlink（nix store 所有 = root/nixbld）
-  # ではなく通常ファイルとして配置する必要がある。home.activation で switch ごとに
-  # nix 由来の内容をコピーし直す（symlink だと "not owned by the current user" で拒否される）。
-  homebrewTrustJson = pkgs.writeText "homebrew-trust.json" (
-    builtins.toJSON {
-      trustedtaps = [
-        "https://github.com/jundot/omlx"
-        "solarphlare/airmute"
-        "steipete/tap"
-        "yosukeiida/casks-personal"
-      ];
-    }
-  );
 in
 
 {
@@ -75,10 +60,4 @@ in
     # ラッパーが codex 起動時だけこの dir を PATH 先頭に注入する。
     ".local/share/codex-runtime/bin/node".source = "${pkgs.nodejs}/bin/node";
   };
-
-  home.activation.homebrewTrustJson = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    run mkdir -p "$HOME/.homebrew"
-    run rm -f "$HOME/.homebrew/trust.json"
-    run install -m 0600 ${homebrewTrustJson} "$HOME/.homebrew/trust.json"
-  '';
 }
