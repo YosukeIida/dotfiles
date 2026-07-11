@@ -32,6 +32,7 @@ in
     rclone
     tmux
     tree
+    uv
     zsh-autosuggestions
     zsh-syntax-highlighting
     figma-console-mcp
