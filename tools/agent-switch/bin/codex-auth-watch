@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Codex App 用 auth.json の実ファイル化を launchd(WatchPaths) から検知して macOS 通知する。
+#
+# CODEX_HOME 未指定の生 `codex login` が共有 symlink（~/.codex/auth.json）を別アカウントの
+# 実ファイルで上書きすると気づきにくい。WatchPaths で当該ファイルの変更を監視し、実ファイル化
+# していたら通知だけ出す（修復はしない — 明示的な cx 実行時に codex-auth-doctor が行う）。
+#
+# 正常な symlink・不在のときは何もしない。ファイルを書き換える副作用は一切持たない。
+set -uo pipefail
+
+APP_AUTH="${AGSW_CODEX_APP_AUTH:-$HOME/.codex/auth.json}"
+
+# symlink でも不在でもなく「存在する実ファイル」のときだけ通知
+if [[ -e "$APP_AUTH" && ! -L "$APP_AUTH" ]]; then
+  osascript -e 'display notification "codex login が共有 symlink を上書きした可能性があります。cx を実行すると自動修復されます。" with title "Codex auth" sound name "Basso"' >/dev/null 2>&1 || true
+fi
+
+exit 0

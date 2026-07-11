@@ -65,6 +65,78 @@ cx_status() {
     [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null && echo "managed daemon   : PID $pid (this CODEX_HOME)"
   fi
 
+  # App 用 auth.json の3状態（正常symlink / 実ファイル(事故) / 不在・リンク切れ）を検査し、
+  # 既知アカウントへの実ファイル化は自動修復する（codex-auth-doctor 参照）。
+  # 直接 `codex login`（CODEX_HOME 未指定）が symlink を上書きした事故（2026-07-11 発生）の復旧を担う。
+  [[ -x "$_AGSW_DIR/bin/codex-auth-doctor" ]] && "$_AGSW_DIR/bin/codex-auth-doctor" --fix
+
   # プロファイル間の symlink 漏れ検出＆自動修復（新しい Codex が追加したトップレベル項目の共有漏れ）
   [[ -x "$_AGSW_DIR/bin/check-codex-drift" ]] && "$_AGSW_DIR/bin/check-codex-drift" --fix
 }
+
+# codex() ラッパー: CODEX_HOME 未指定のまま `codex login`/`codex logout` を実行すると、
+# 共有 symlink（~/.codex/auth.json）が実ファイルで上書きされ、別アカウントの認証を破壊する
+# （2026-07-11 に実際に発生）。書き込み先が共有 symlink になるときだけ警告し確認を挟む。
+# `cx <name>` で CODEX_HOME を明示アカウントへ向けてから login するのが正しい手順。
+# AGSW_ALLOW_RAW_LOGIN=1 でこのガードを完全にバイパスできる。
+codex() {
+  if [[ "${AGSW_ALLOW_RAW_LOGIN:-}" != "1" ]]; then
+    local arg has_login=0 has_logout=0 has_status=0
+    for arg in "$@"; do
+      case "$arg" in
+        login)  has_login=1 ;;
+        logout) has_logout=1 ;;
+        status) has_status=1 ;;
+      esac
+    done
+
+    # `codex login status` は認証を書き換えない（トークン表示のみ）ため除外する。
+    local risky=0
+    [[ "$has_login" == 1 && "$has_status" != 1 ]] && risky=1
+    [[ "$has_logout" == 1 ]] && risky=1
+
+    if [[ "$risky" == 1 ]]; then
+      # 書き込み先が共有 ~/.codex（App と共有する symlink）になるときだけ発動。
+      # CODEX_HOME が明示アカウント dir を指していれば実体が分離されているので安全。
+      local codex_home="${CODEX_HOME:-$HOME/.codex}"
+      if [[ -z "${CODEX_HOME:-}" || "$codex_home" == "$HOME/.codex" ]]; then
+        echo "⚠ 警告: CODEX_HOME が未設定/共有の ~/.codex を指しています。" >&2
+        echo "  このまま login/logout すると共有 symlink（${AGSW_CODEX_APP_AUTH:-$HOME/.codex/auth.json}）が" >&2
+        echo "  実ファイルで上書きされ、別アカウントの認証を破壊する恐れがあります。" >&2
+        echo "  正しい手順: 先に 'cx <name>' でアカウントを選んでから login してください。" >&2
+        echo "  （このガードを無効化するには AGSW_ALLOW_RAW_LOGIN=1）" >&2
+        if [[ -o interactive ]]; then
+          if ! read -q "?それでも続行しますか? [y/N] "; then
+            echo "" >&2
+            echo "中断しました。" >&2
+            return 1
+          fi
+          echo ""
+        else
+          echo "非インタラクティブシェルのため拒否しました（AGSW_ALLOW_RAW_LOGIN=1 で許可）。" >&2
+          return 1
+        fi
+      fi
+    fi
+  fi
+
+  command codex "$@"
+}
+
+# シェル起動時チェック（インタラクティブのみ・警告表示のみ・ファイル変更なし）。
+# 正常な symlink のときは lstat 1〜2 回で早期に抜け、doctor を起動しない。
+# App 用 auth.json が「実ファイル(事故)」または「リンク切れ symlink」のときだけ、
+# --fix 無しで doctor を呼んで警告を出す（修復は明示的な cx 実行時のみ）。
+if [[ -o interactive ]]; then
+  _agsw_app_auth="${AGSW_CODEX_APP_AUTH:-$HOME/.codex/auth.json}"
+  if [[ -L "$_agsw_app_auth" ]]; then
+    # symlink: リンク切れ（-e で辿れない）のときだけ doctor
+    [[ -e "$_agsw_app_auth" ]] || {
+      [[ -x "$_AGSW_DIR/bin/codex-auth-doctor" ]] && "$_AGSW_DIR/bin/codex-auth-doctor"
+    }
+  elif [[ -e "$_agsw_app_auth" ]]; then
+    # 実ファイル（事故）→ 警告のみ
+    [[ -x "$_AGSW_DIR/bin/codex-auth-doctor" ]] && "$_AGSW_DIR/bin/codex-auth-doctor"
+  fi
+  unset _agsw_app_auth
+fi

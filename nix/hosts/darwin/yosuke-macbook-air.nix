@@ -376,6 +376,27 @@ in
     };
   };
 
+  # Codex App 用 auth.json（~/.codex/auth.json）の実ファイル化を監視して通知する。
+  # CODEX_HOME 未指定の生 `codex login` が共有 symlink を上書きする事故（2026-07-11 発生）
+  # を早期に気づけるようにする。修復はしない（cx 実行時に codex-auth-doctor が担当）。
+  # スクリプト本体は agent-switch 配下に置き（自己完結・将来独立repo化予定）、nix はそれを叩くだけ。
+  launchd.user.agents."codex-auth-watch" = {
+    serviceConfig = {
+      Label = "com.yosuke.codex-auth-watch";
+      ProgramArguments = [
+        "/bin/bash"
+        "${publicDir}/tools/agent-switch/bin/codex-auth-watch"
+      ];
+      WatchPaths = [
+        "${homedir}/.codex/auth.json"
+      ];
+      RunAtLoad = true;
+      ThrottleInterval = 60;
+      StandardOutPath = "${homedir}/Library/Logs/codex-auth-watch.log";
+      StandardErrorPath = "${homedir}/Library/Logs/codex-auth-watch.log";
+    };
+  };
+
   # figma-pat.age の失効前チェック（週次月曜 10:00）。期限はスクリプト内の定数で管理。
   launchd.user.agents.figmaPatExpiryCheck = {
     serviceConfig = {

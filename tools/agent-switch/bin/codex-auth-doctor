@@ -1,0 +1,170 @@
+#!/usr/bin/env bash
+# Codex App 用 auth.json（共有 symlink）の健全性チェック・自動修復。
+#
+# ~/.codex/auth.json は「今アクティブなアカウント」への symlink であるべきだが、
+# CODEX_HOME 未指定のまま生の `codex login` を実行すると symlink が別アカウントの
+# 実ファイルで上書きされる事故が起きる（2026-07-11 に実際に発生）。この状態を放置すると
+# 別アカウントの認証情報がそのまま残り、以後の cx app 切替も拒否される。
+#
+# $app_auth は3状態を取りうる:
+#   (a) 正常な symlink（リンク先実在）        → 正常。何も出力せず exit 0。
+#   (b) 実ファイル（事故）                     → account_id を照合して修復を試みる。
+#   (c) 不在 or リンク切れ symlink            → App 用認証が無い旨を案内。
+#
+# --fix を渡すと (b) で「既知アカウント（account_id が一致するプロファイルが唯一）」の
+# 場合だけ、そのプロファイルへ mv（同一アカウントの新しいトークンなので上書きで安全）＋
+# symlink 復元を行う。--fix 無しなら実行すべきコマンドを表示するのみ。未知アカウントや
+# account_id 判定不能の場合は自動では触らず手動対処を案内する。
+#
+# account_id の読み取りは python3 前提（無い環境では照合をスキップして手動案内のみ）。
+# API-key 認証（tokens が null）では account_id が取れないため照合しない。
+set -uo pipefail
+
+APP_AUTH="${AGSW_CODEX_APP_AUTH:-$HOME/.codex/auth.json}"
+PREFIX="${AGSW_CODEX_HOME_PREFIX:-$HOME/.codex-}"
+FIX=0
+[[ "${1:-}" == "--fix" ]] && FIX=1
+
+# auth.json の .tokens.account_id を取り出す（取れなければ非ゼロ終了・無出力）。
+_account_id() {
+  command -v python3 >/dev/null 2>&1 || return 1
+  python3 - "$1" <<'PY' 2>/dev/null
+import json, sys
+try:
+    with open(sys.argv[1]) as f:
+        data = json.load(f)
+except Exception:
+    sys.exit(1)
+tokens = data.get("tokens")
+if not isinstance(tokens, dict):
+    sys.exit(1)
+aid = tokens.get("account_id")
+if not aid:
+    sys.exit(1)
+print(aid)
+PY
+}
+
+# auth.json の last_refresh を取り出す（取れなければ無出力）。
+# 実物では top-level フィールド（2026-07-11 実ファイルで確認）。念のため tokens 内もフォールバック。
+_last_refresh() {
+  command -v python3 >/dev/null 2>&1 || return 1
+  python3 - "$1" <<'PY' 2>/dev/null
+import json, sys
+try:
+    with open(sys.argv[1]) as f:
+        data = json.load(f)
+except Exception:
+    sys.exit(1)
+tokens = data.get("tokens")
+lr = data.get("last_refresh") or (tokens.get("last_refresh") if isinstance(tokens, dict) else None)
+if lr:
+    print(lr)
+PY
+}
+
+# 利用可能なプロファイル名を1行1件で列挙する。
+_list_profiles() {
+  local dir name
+  for dir in "$PREFIX"*; do
+    [[ -d "$dir" ]] || continue
+    name="${dir#"$PREFIX"}"
+    echo "$name"
+  done
+}
+
+# 案内: App 用認証が無い（不在 or リンク切れ）
+_warn_missing() {
+  echo "⚠ codex-auth: $APP_AUTH に App 用の認証がありません（不在 or リンク切れ）。"
+  local profiles
+  profiles="$(_list_profiles)"
+  if [[ -n "$profiles" ]]; then
+    echo "  利用可能なプロファイル:"
+    echo "$profiles" | sed 's/^/    - /'
+    echo "  いずれかを App 用に有効化するには:"
+    echo "$profiles" | sed 's/^/    cx app /'
+  else
+    echo "  プロファイルが見つかりません。まず作成してください:"
+    echo "    $(dirname "$0")/setup-codex-account migrate <name>"
+  fi
+}
+
+main() {
+  # (a) 正常な symlink（リンク先実在）→ 何もしない
+  if [[ -L "$APP_AUTH" ]]; then
+    if [[ -e "$APP_AUTH" ]]; then
+      exit 0
+    fi
+    # (c) リンク切れ symlink
+    _warn_missing
+    exit 0
+  fi
+
+  # (c) 不在
+  if [[ ! -e "$APP_AUTH" ]]; then
+    _warn_missing
+    exit 0
+  fi
+
+  # ここから (b) 実ファイル（事故）
+  local src_id
+  if ! src_id="$(_account_id "$APP_AUTH")" || [[ -z "$src_id" ]]; then
+    # python3 不在 / JSON パース失敗 / account_id null（API-key 認証等）→ 手動案内のみ
+    echo "⚠ codex-auth: $APP_AUTH が symlink ではなく実ファイルです。"
+    echo "  CODEX_HOME 未指定で 'codex login' を実行すると共有 symlink が上書きされます。"
+    echo "  account_id を判定できませんでした（python3 不在 or API-key 認証の可能性）。"
+    echo "  中身を確認し、意図しないアカウントなら手動で対処してください:"
+    echo "    $(dirname "$0")/setup-codex-account adopt <name>   # 新規/既存アカウントへ取り込む"
+    exit 0
+  fi
+
+  # 各プロファイルの実ファイル auth.json と account_id を照合
+  local dir name pid matched_dir="" matched_name="" match_count=0
+  for dir in "$PREFIX"*; do
+    [[ -d "$dir" ]] || continue
+    [[ -f "$dir/auth.json" && ! -L "$dir/auth.json" ]] || continue
+    pid="$(_account_id "$dir/auth.json")" || continue
+    [[ -n "$pid" ]] || continue
+    if [[ "$pid" == "$src_id" ]]; then
+      match_count=$((match_count + 1))
+      matched_dir="$dir"
+      matched_name="${dir#"$PREFIX"}"
+    fi
+  done
+
+  if [[ "$match_count" -eq 1 ]]; then
+    # 既知アカウント（唯一一致）→ 同一アカウントの新しいトークンなので上書きで安全
+    if [[ "$FIX" -eq 1 ]]; then
+      mv "$APP_AUTH" "$matched_dir/auth.json"
+      ln -sf "$matched_dir/auth.json" "$APP_AUTH"
+      echo "✓ codex-auth: 実ファイル化した $APP_AUTH をプロファイル '$matched_name' に取り込み、symlink を復元しました。"
+    else
+      echo "⚠ codex-auth: $APP_AUTH が実ファイル化しています（account_id=${src_id}、プロファイル '$matched_name' と一致）。"
+      echo "  同一アカウントの新しいトークンです。以下で復元できます:"
+      echo "    mv \"$APP_AUTH\" \"$matched_dir/auth.json\""
+      echo "    ln -sf \"$matched_dir/auth.json\" \"$APP_AUTH\""
+      echo "  または: $(basename "$0") --fix"
+    fi
+    exit 0
+  fi
+
+  if [[ "$match_count" -gt 1 ]]; then
+    # 複数プロファイルが同一 account_id → どれに戻すか一意でないため自動修復しない
+    echo "⚠ codex-auth: $APP_AUTH の account_id=$src_id が複数のプロファイルと一致します。"
+    echo "  自動修復しません。手動で正しいプロファイルへ mv し symlink を復元してください。"
+    exit 0
+  fi
+
+  # 一致なし（未知アカウント）→ 自動では触らない
+  local last_refresh
+  last_refresh="$(_last_refresh "$APP_AUTH")" || true
+  echo "⚠ codex-auth: $APP_AUTH が実ファイル化していますが、既存プロファイルに一致しません（未知アカウント）。"
+  echo "  account_id  : $src_id"
+  [[ -n "$last_refresh" ]] && echo "  last_refresh: $last_refresh"
+  echo "  新規アカウントとして取り込むには:"
+  echo "    $(dirname "$0")/setup-codex-account adopt <name>"
+  exit 0
+}
+
+main
+exit 0
