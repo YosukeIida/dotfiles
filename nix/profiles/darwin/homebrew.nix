@@ -30,6 +30,7 @@
     '';
 
     brews = [
+      "backlog-md"
       "brightness"
       "ffmpeg"
       "herdr"
