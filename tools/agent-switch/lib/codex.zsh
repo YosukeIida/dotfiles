@@ -81,19 +81,23 @@ cx_status() {
 # AGSW_ALLOW_RAW_LOGIN=1 でこのガードを完全にバイパスできる。
 codex() {
   if [[ "${AGSW_ALLOW_RAW_LOGIN:-}" != "1" ]]; then
-    local arg has_login=0 has_logout=0 has_status=0
+    local arg has_login=0 has_logout=0 has_status=0 has_mcp=0
     for arg in "$@"; do
       case "$arg" in
         login)  has_login=1 ;;
         logout) has_logout=1 ;;
         status) has_status=1 ;;
+        mcp)    has_mcp=1 ;;
       esac
     done
 
     # `codex login status` は認証を書き換えない（トークン表示のみ）ため除外する。
+    # `codex mcp login/logout <server>` は MCP サーバの OAuth（Keychain /
+    # .credentials.json）の操作で auth.json には触れないため対象外。
     local risky=0
     [[ "$has_login" == 1 && "$has_status" != 1 ]] && risky=1
     [[ "$has_logout" == 1 ]] && risky=1
+    [[ "$has_mcp" == 1 ]] && risky=0
 
     if [[ "$risky" == 1 ]]; then
       # 書き込み先が共有 ~/.codex（App と共有する symlink）になるときだけ発動。
@@ -120,7 +124,15 @@ codex() {
     fi
   fi
 
-  command codex "$@"
+  # codex プラグイン（sites 等）の MCP サーバ用 node を codex 起動時だけ PATH に注入する。
+  # node は devshell のみの方針のため、通常の PATH には置かず nix が
+  # ~/.local/share/codex-runtime/bin に配置したものを使う（nix/home/files.nix 参照）。
+  local _codex_rt="$HOME/.local/share/codex-runtime/bin"
+  if [[ -d "$_codex_rt" ]]; then
+    PATH="$_codex_rt:$PATH" command codex "$@"
+  else
+    command codex "$@"
+  fi
 }
 
 # シェル起動時チェック（インタラクティブのみ・警告表示のみ・ファイル変更なし）。
