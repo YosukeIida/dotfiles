@@ -1,0 +1,16 @@
+{
+  "id": "impl-refactor-email",
+  "kind": "edit",
+  "allowed_tools": [
+    "Read",
+    "Edit",
+    "Write",
+    "Glob",
+    "Grep",
+    "Bash(python3 *)"
+  ],
+  "grader": {
+    "type": "script",
+    "script": "grade.sh"
+  }
+}

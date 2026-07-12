@@ -1,0 +1,6 @@
+{
+  "id": "review-mutable-default",
+  "kind": "review",
+  "allowed_tools": ["Read", "Glob", "Grep"],
+  "grader": { "type": "script", "script": "grade.sh" }
+}
