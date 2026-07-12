@@ -1,0 +1,16 @@
+{
+  "id": "split-import",
+  "kind": "edit",
+  "allowed_tools": [
+    "Read",
+    "Edit",
+    "Write",
+    "Glob",
+    "Grep",
+    "Bash(nix *)"
+  ],
+  "grader": {
+    "type": "script",
+    "script": "grade.sh"
+  }
+}

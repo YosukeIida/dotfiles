@@ -1,0 +1,7 @@
+{
+  "xdgConfigDir": "/Users/yosuke/.config",
+  "yabaiConfig": "/Users/yosuke/.config/yabai/yabairc",
+  "skhdConfig": "/Users/yosuke/.config/skhd/skhdrc",
+  "starshipConfig": "/Users/yosuke/.config/starship.toml",
+  "ghosttyConfig": "/Users/yosuke/.config/ghostty/config"
+}
