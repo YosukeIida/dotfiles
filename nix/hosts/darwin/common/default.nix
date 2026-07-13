@@ -94,6 +94,7 @@
     _link "$pub/claude/settings.api.json"          "$home/.claude/settings.api.json"
     _link "$pub/claude/get_key.sh"                 "$home/.claude/get_key.sh"
     _link "$pub/claude/statusline.sh"              "$home/.claude/statusline.sh"
+    _link "$pub/claude/subagent-statusline.sh"     "$home/.claude/subagent-statusline.sh"
     _link "$pub/agents/AGENTS.md"                  "$home/.claude/CLAUDE.md"
     _link "$pub/agents/AGENTS.md"                  "$home/.codex/AGENTS.md"
 
