@@ -53,6 +53,7 @@ let
   '';
 
   darwinSwitch = pkgs.writeShellScriptBin "darwin-switch" ''
+    ${builtins.readFile ./scripts/check-node-deps.sh}
     exec sudo darwin-rebuild switch --flake ${publicDir}#${darwinHost} "$@"
   '';
 

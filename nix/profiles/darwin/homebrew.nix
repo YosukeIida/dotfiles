@@ -30,7 +30,10 @@
     '';
 
     brews = [
-      "backlog-md"
+      # homebrew-core 版は node 依存（scripts/cli.cjs の薄い dispatcher のためだけ）。
+      # yosukeiida/casks-personal 版は upstream が npm optionalDependency で配布している
+      # プリコンパイル済みネイティブバイナリ（darwin-arm64）を直接installし、node依存ゼロ。
+      "yosukeiida/casks-personal/backlog-md"
       "brightness"
       "ffmpeg"
       "herdr"
