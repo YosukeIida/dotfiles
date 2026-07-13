@@ -20,24 +20,35 @@ rst() { printf '\033[0m'; }
 bld() { printf '\033[1m'; }
 
 # resolved model ID (例: claude-sonnet-5, claude-opus-4-8, claude-haiku-4-5-20251001)
-# → 表示名。未知のIDはそのまま表示（将来の新モデルにも安全に対応）
+# → "Sonnet 5" / "Opus 4.8" / "Haiku 4.5" のようにバージョン込みの表示名に組み立てる。
+# 日付サフィックス（8桁数字）は捨てる。未知のfamilyはIDをそのまま表示。
 model_label() {
-  case "$1" in
-    *opus*)   echo "Opus" ;;
-    *sonnet*) echo "Sonnet" ;;
-    *haiku*)  echo "Haiku" ;;
-    *fable*)  echo "Fable" ;;
-    *)        echo "$1" ;;
+  local rest="${1#*claude-}"
+  IFS='-' read -ra parts <<< "$rest"
+  local family="${parts[0]:-}"
+  local fam_disp
+  case "$family" in
+    opus)   fam_disp="Opus" ;;
+    sonnet) fam_disp="Sonnet" ;;
+    haiku)  fam_disp="Haiku" ;;
+    fable)  fam_disp="Fable" ;;
+    *)      echo "$1"; return ;;
   esac
-}
 
-status_icon() {
-  case "$1" in
-    running)   echo "▸" ;;
-    completed) echo "✓" ;;
-    failed)    echo "✗" ;;
-    *)         echo "•" ;;
-  esac
+  local ver=() i p
+  for ((i = 1; i < ${#parts[@]}; i++)); do
+    p="${parts[$i]}"
+    [[ "$p" =~ ^[0-9]{8}$ ]] && continue   # 日付サフィックスは除外
+    ver+=("$p")
+  done
+
+  if [ "${#ver[@]}" -gt 0 ]; then
+    local ver_str
+    ver_str=$(IFS=.; echo "${ver[*]}")
+    echo "${fam_disp} ${ver_str}"
+  else
+    echo "$fam_disp"
+  fi
 }
 
 echo "$input" | jq -c '.tasks // [] | .[]' | while IFS= read -r task; do
@@ -46,19 +57,18 @@ echo "$input" | jq -c '.tasks // [] | .[]' | while IFS= read -r task; do
   [ -z "$MODEL" ] && continue   # 未解決なら行を出力せずデフォルト表示に委ねる
 
   NAME=$(echo "$task"   | jq -r '.name // "agent"')
-  STATUS=$(echo "$task" | jq -r '.status // ""')
   TOKENS=$(echo "$task" | jq -r '.tokenCount // 0')
   CTXSZ=$(echo "$task"  | jq -r '.contextWindowSize // 0')
 
   DISP=$(model_label "$MODEL")
-  ICON=$(status_icon "$STATUS")
 
   PCT=""
   if [ "$CTXSZ" -gt 0 ] 2>/dev/null; then
     PCT=$(( TOKENS * 100 / CTXSZ ))
   fi
 
-  LINE="$(fg 245)${ICON}$(rst) $(bld)${NAME}$(rst) $(fg 183)[${DISP}]$(rst)"
+  # 本体側が既に status アイコン（○/●等）を表示しているので、ここでは重複させない
+  LINE="$(bld)${NAME}$(rst) $(fg 183)[${DISP}]$(rst)"
   [ -n "$PCT" ] && LINE+="$(fg 245) ctx ${PCT}%$(rst)"
 
   jq -nc --arg id "$ID" --arg content "$LINE" '{id: $id, content: $content}'
