@@ -70,7 +70,6 @@
       "fujitsu-scansnap-home"
       "ghostty@tip"
       "google-chrome@canary"
-      "google-drive"
       "hammerspoon"
       "karabiner-elements"
       "lens"
