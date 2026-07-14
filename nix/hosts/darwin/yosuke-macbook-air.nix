@@ -418,6 +418,25 @@ in
     };
   };
 
+  # cctag spoke（tmllab Slack workspace 向け）常時稼働。ログイン時に自動起動し、
+  # クラッシュしたら KeepAlive で自動再起動する。複数 workspace を足すときは
+  # 同じパターンで launchd.user.agents に追加する（Label / EnvironmentVariables を変える）。
+  launchd.user.agents.cctagSpokeTmllab = {
+    serviceConfig = {
+      Label = "com.yosuke.cctag-spoke-tmllab";
+      ProgramArguments = [
+        "${homedir}/.local/bin/cctag-spoke"
+      ];
+      EnvironmentVariables = {
+        CCTAG_ENV_FILE = "${homedir}/.config/cctag/slack_tmllab_workspace.env";
+      };
+      RunAtLoad = true;
+      KeepAlive = true;
+      StandardOutPath = "${homedir}/Library/Logs/cctag-spoke-tmllab.log";
+      StandardErrorPath = "${homedir}/Library/Logs/cctag-spoke-tmllab.log";
+    };
+  };
+
   # Route *.ts.net DNS queries to Tailscale's resolver (MagicDNS with --accept-dns=false).
   environment.etc."resolver/ts.net" = {
     text = ''
@@ -479,6 +498,7 @@ in
     _place "${config.age.secrets."printers".path}"      "$home/.config/printers/printers.env"
     _place "${config.age.secrets."raycast-pw".path}"    "$home/.config/raycast/export.env"
     _place "${config.age.secrets."figma-pat".path}"     "$home/.config/figma/pat"
+    _place "${config.age.secrets."cctag-slack_tmllab_workspace".path}" "$home/.config/cctag/slack_tmllab_workspace.env"
 
     # cf_proxy.sh（public）を ~/.ssh に配置
     _link "$pub/ssh/cf_proxy.sh" "$home/.ssh/cf_proxy.sh"
