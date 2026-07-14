@@ -22,4 +22,5 @@ in
   "headscale-ip.age".publicKeys = all;
   "printers.age".publicKeys = all;
   "figma-pat.age".publicKeys = all; # expires 2026-09-21
+  "cctag-slack_tmllab_workspace.age".publicKeys = all;
 }

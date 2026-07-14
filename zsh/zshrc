@@ -153,6 +153,15 @@ mdkatex() {
   "$HOME/workspace/github.com/YosukeIida/dotfiles/cmux/md-katex/cmux-md-katex" "$@"
 }
 
+# =====================================================================
+# ==== cctag spoke 起動 ================================================
+# =====================================================================
+# tmllab Slack workspace 用の CCTAG_ENV_FILE を自動指定して起動する。
+# 複数 workspace を使うようになったら workspace ごとに同様の関数を増やす。
+cctag-spoke() {
+  CCTAG_ENV_FILE="$HOME/.config/cctag/slack_tmllab_workspace.env" command cctag-spoke "$@"
+}
+
 # ~/.agents/bin を PATH 先頭に確保（Homebrew の初期化より後に実行する必要がある）
 path=("${path[@]:#${HOME}/.agents/bin}")
 path=("${HOME}/.agents/bin" "${path[@]}")
