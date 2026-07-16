@@ -16,6 +16,7 @@ let
   homedir = "/Users/${username}";
   publicDir = "/Users/yosuke/workspace/github.com/YosukeIida/dotfiles";
   privateDir = "/Users/yosuke/workspace/github.com/YosukeIida/dotfiles-private";
+  skillsPubDir = "/Users/yosuke/workspace/github.com/YosukeIida/personal-agent-skills";
   darwinHost = "Yosukes-MacBook-Air";
 
   # ad-hoc 署名／notarize なしの個人アプリは Gatekeeper の
@@ -502,6 +503,7 @@ in
   system.activationScripts.postActivation.text = ''
     priv="${privateDir}"
     pub="${publicDir}"
+    skillsPub="${skillsPubDir}"
     home="${homedir}"
 
     _link() {
@@ -530,6 +532,17 @@ in
     # private skills を ~/.claude/skills, ~/.codex/skills に追加（private overlay が無ければ skip）
     if [ -d "$priv/agents/skills" ]; then
       for d in "$priv/agents/skills"/*/; do
+        [ -d "$d" ] || continue
+        _link "$d" "$home/.claude/skills/$(basename "$d")"
+        _link "$d" "$home/.codex/skills/$(basename "$d")"
+      done
+    fi
+
+    # public skills（personal-agent-skills repo）を ~/.claude/skills, ~/.codex/skills に追加
+    # （clone が無ければ skip）。root-level レイアウト（<skill>/SKILL.md）なので
+    # README.md 等のファイルは */ glob で自然に除外される。
+    if [ -d "$skillsPub" ]; then
+      for d in "$skillsPub"/*/; do
         [ -d "$d" ] || continue
         _link "$d" "$home/.claude/skills/$(basename "$d")"
         _link "$d" "$home/.codex/skills/$(basename "$d")"
