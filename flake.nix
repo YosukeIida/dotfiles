@@ -9,26 +9,10 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     agenix.url = "github:ryantm/agenix";
     agenix.inputs.nixpkgs.follows = "nixpkgs";
-
-    # 宣言的な外部 skill 管理（flake-pin した source から SKILL.md を束ねる）
-    agent-skills-nix = {
-      url = "github:Kyure-A/agent-skills-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # 外部 skill の source（いずれも flake ではないので flake = false）
-    gist-cognitive-rhythm = {
-      url = "git+https://gist.github.com/k16shikano/eb2929f13ed19c97188393d297be8432";
-      flake = false;
-    };
-    gist-japanese-tech-writing = {
-      url = "git+https://gist.github.com/k16shikano/fd287c3133457c4fd8f5601d34aa817d";
-      flake = false;
-    };
   };
 
   outputs =
-    inputs@{
+    {
       nix-darwin,
       nixpkgs,
       home-manager,
@@ -70,7 +54,6 @@
         modules = [
           home-manager.darwinModules.home-manager
           (import ./nix/hosts/darwin/common {
-            inherit inputs;
             username = "example";
             homedir = "/Users/example";
           })
@@ -82,7 +65,6 @@
         modules = [
           home-manager.darwinModules.home-manager
           (import ./nix/hosts/darwin/common {
-            inherit inputs;
             username = "yosuke";
             homedir = "/Users/yosuke";
           })
