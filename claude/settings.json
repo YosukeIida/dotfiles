@@ -9,10 +9,8 @@
       "Bash(git push -f*)",
       "Read(~/.claude/anthropic.env)",
       "Edit(~/.claude/anthropic.env)",
-      "Write(~/.claude/anthropic.env)",
       "Read(~/.ssh/id_*)",
-      "Edit(~/.ssh/**)",
-      "Write(~/.ssh/**)"
+      "Edit(~/.ssh/**)"
     ],
     "defaultMode": "auto"
   },
