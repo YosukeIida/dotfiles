@@ -117,6 +117,17 @@
       _link "$d" "$home/.codex/skills/$(basename "$d")"
     done
 
+    # skill を削除・移動したあとに残るリンク切れ symlink を掃除する。
+    # 有効な symlink・実ディレクトリ（home-manager 管理の per-file link 等）には触れない。
+    for skdir in "$home/.claude/skills" "$home/.codex/skills"; do
+      [ -d "$skdir" ] || continue
+      for l in "$skdir"/*; do
+        if [ -L "$l" ] && [ ! -e "$l" ]; then
+          rm "$l"
+        fi
+      done
+    done
+
     # subagents を ~/.claude/agents/ に展開
     mkdir -p "$home/.claude/agents"
     for f in "$pub/agents/subagents"/*.md; do
