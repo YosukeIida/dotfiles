@@ -11,23 +11,33 @@ private overlay が手元にある場合はそちらのコンテキストも読�
 
 @../dotfiles-private/CLAUDE.md
 
-## skill の置き場所
+## skill の置き場所（4層アーキテクチャ、2026-07 移行）
 
-新しい skill を追加するときは以下で判断する：
+新しい skill を追加・取り込むときは以下で判断する：
 
-| 種類 | 置き場所 |
-|---|---|
-| 汎用・他人にも役立つ・公開できる | `agents/skills/`（このリポジトリ） |
-| 個人ワークフロー・公開したくない | `dotfiles-private/agents/skills/` |
+| 種類 | 置き場所 | 配備 / 更新 |
+|---|---|---|
+| 自作・公開できる | `YosukeIida/personal-agent-skills`（別repo、root-level `<skill>/SKILL.md`） | postActivation `_link`（編集即時反映）。他者は `gh skill install` で利用可 |
+| 自作・公開したくない | `dotfiles-private/agents/skills/` | 同上 |
+| 外部・研究室（private repo 由来） | `dotfiles-private/agents/skills/tmllab-*`（vendored） | `dotfiles-private/sync-lab-skills.sh`（rev pin・パッチ内蔵）→ git diff 目視 → commit |
+| 外部・公開 repo/gist 由来 | flake input + `nix/home/agent-skills.nix`（agent-skills-nix） | `nix flake update <input>` → diff 目視 → darwin-switch |
 
 判断に迷ったら **private 側に置く**（後で public に昇格させることはできる）。
+
+**原則：public flake は private アクセスなしで評価できること。** private なソースを
+flake input にしない（公開 CI が壊れる）。private なものは実行時の存在チェックで任意化する。
+
+外部 skill の取り込み・更新時は内容の目視 diff を必須とする（外部 skill の
+プロンプトインジェクション対策）。取り込み前の検査には `gh skill preview <owner/repo> <skill>`
+が使える。`gh skill install/update` は命令型で Nix 管理と競合するため使わない。
 
 ## ディレクトリ構成（主要部分）
 
 ```
 dotfiles/
-├── agents/skills/   # 汎用 skills（Claude Code / Codex）
+├── agents/subagents/  # サブエージェント定義（skills 本体は personal-agent-skills repo へ分離済み）
 ├── nix/             # nix 設定（hosts・profiles・home-manager）
+│   └── home/agent-skills.nix  # 外部公開 skill（gist 等）の宣言管理
 ├── secrets/         # agenix 暗号化シークレット（*.age）
 ├── flake.nix        # 本体 flake（darwinConfigurations を定義）
 ├── templates/       # devshell テンプレート（python-uv・node）
@@ -52,7 +62,12 @@ symlink の定義はコードが正。参照先：
 
 - `~/.claude/settings.json` は symlink のため、`/plugin install` 等による書き換えは
   自動で dotfiles 側（`claude/settings.json`）に反映される。変更後は必ず `git commit` する。
-- skills は per-directory symlink。ディレクトリを新規追加したら `darwin-switch` が必要。
+- 自作 skills は per-directory symlink（public は personal-agent-skills repo、private は
+  dotfiles-private から）。ディレクトリを新規追加したら `darwin-switch` が必要。
+  リンク切れ symlink は switch 時に自動掃除される。
+- 外部 gist/repo 由来 skills は home-manager（agent-skills-nix、structure = "link"）が
+  `~/.claude/skills/` と `~/.codex/skills/` に per-file symlink で配備する。
+  `structure = "symlink-tree"` は rsync --delete が `_link` 管理 skill を消すため使用禁止。
 - plugins は `claude/install-plugins.sh` が `darwin-switch` 時に冪等インストールする。
   `settings.json` の `enabledPlugins` が source of truth。
 
@@ -62,8 +77,16 @@ symlink の定義はコードが正。参照先：
 # nix 設定・homebrew を変更したあと
 darwin-switch
 
-# 汎用 skill を追加（新規ディレクトリを足したら darwin-switch が必要）
-mkdir agents/skills/<name>
-# SKILL.md を書く
+# 自作の公開 skill を追加（新規ディレクトリを足したら darwin-switch が必要）
+mkdir ~/workspace/github.com/YosukeIida/personal-agent-skills/<name>
+# SKILL.md を書く → personal-agent-skills 側で commit
 darwin-switch
+
+# 外部の公開 skill（gist/repo）を宣言的に取り込む
+# flake.nix に input 追加 + nix/home/agent-skills.nix に source/explicit を追記
+darwin-switch
+
+# 研究室 skill（tmllab-*）の更新確認と取り込み
+~/workspace/github.com/YosukeIida/dotfiles-private/sync-lab-skills.sh --check
+# REV を更新して実行 → dotfiles-private で git diff を目視 → commit
 ```
