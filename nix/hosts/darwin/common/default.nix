@@ -1,5 +1,4 @@
 {
-  inputs,
   username ? "user",
   homedir ? "/Users/${username}",
   darwinPublicConfigDir ? "/Users/${username}/workspace/github.com/YosukeIida/dotfiles",
@@ -46,7 +45,7 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    extraSpecialArgs = { inherit darwinPublicConfigDir inputs; };
+    extraSpecialArgs = { inherit darwinPublicConfigDir; };
     users.${username} = import ../../../home/default.nix;
     backupFileExtension = "bak";
   };
