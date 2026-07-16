@@ -538,6 +538,13 @@ in
       done
     fi
 
+    # 研究室 skill（tmllab-*）の更新有無を通知のみ表示する（brew outdated 相当）。
+    # 内容は一切書き換えない（読み取り専用）。TMLlabメンバーでない・アクセス不可でも
+    # 正常終了するようスクリプト側で担保済み。switch自体は失敗させない。
+    if [ -x "$priv/sync-lab-skills.sh" ]; then
+      su - ${username} -c "bash $priv/sync-lab-skills.sh --check" || true
+    fi
+
     # public skills（personal-agent-skills repo）を ~/.claude/skills, ~/.codex/skills に追加
     # （clone が無ければ skip）。root-level レイアウト（<skill>/SKILL.md）なので
     # README.md 等のファイルは */ glob で自然に除外される。
