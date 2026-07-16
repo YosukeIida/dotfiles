@@ -38,6 +38,17 @@ flake input にしない（公開 CI が壊れる）。private なものは実�
 が使える。`gh skill install/update` は命令型でNix/gitのdiffレビュー運用と競合するため
 （自分のマシンへの配備には）使わない。`gh skill search/preview/publish` のみ使う。
 
+**更新の自動検知（brew outdated 相当）**：`darwin-switch` のたびに
+`sync-gist-skills.sh --check` / `sync-lab-skills.sh --check` が自動実行され、
+upstream に更新があれば通知する（内容は一切書き換えない、読み取り専用）。
+`sync-lab-skills.sh` は各 SKILL.md の frontmatter に
+`metadata.github-repo/github-ref/github-path/github-tree-sha` を自前で注入しており
+（`gh skill install`の出力そのものは使わない — YAML再シリアライズが改行入り
+descriptionを1行に畳んでパッチのアンカーを壊すため）、この metadata を使って
+`gh skill update --dir ... --dry-run` が skillごとに正確な差分検知を行う
+（whole-repoのcommit数ではなく、skill単位のtree-sha比較）。実際に取り込むときは
+今まで通り手動でスクリプト本体を実行して diff を見てから commit する。
+
 ## ディレクトリ構成（主要部分）
 
 ```
