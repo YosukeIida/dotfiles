@@ -105,6 +105,10 @@
       rm "$home/.claude/skills"
     fi
     mkdir -p "$home/.claude/skills"
+    # postActivation は root で走るため mkdir がディレクトリを root 所有にしてしまう。
+    # home-manager の linkGeneration はユーザー権限で同じディレクトリに書くので、
+    # 所有者をユーザーに戻さないと activation が Permission denied で失敗する。
+    chown ${username}:staff "$home/.claude/skills"
     for d in "$pub/agents/skills"/*/; do
       [ -d "$d" ] || continue
       _link "$d" "$home/.claude/skills/$(basename "$d")"
@@ -112,6 +116,7 @@
 
     # public skills を ~/.codex/skills/ にも展開
     mkdir -p "$home/.codex/skills"
+    chown ${username}:staff "$home/.codex/skills"
     for d in "$pub/agents/skills"/*/; do
       [ -d "$d" ] || continue
       _link "$d" "$home/.codex/skills/$(basename "$d")"
