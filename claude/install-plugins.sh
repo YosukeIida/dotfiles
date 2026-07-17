@@ -18,6 +18,9 @@ if [ ! -f "$SETTINGS" ]; then
 fi
 
 # extraKnownMarketplaces を登録
+# `claude plugin marketplace add` は <source> 一つだけを取り、marketplace名は
+# 相手の marketplace.json の name フィールドから自動的に決まる(この dict の
+# key は決定に関与しない、あくまで人間向けのラベル)。
 python3 - "$SETTINGS" <<'PYEOF'
 import json, sys, subprocess
 with open(sys.argv[1]) as f:
@@ -26,7 +29,7 @@ for name, config in s.get("extraKnownMarketplaces", {}).items():
     src = config.get("source", {})
     if src.get("source") == "github":
         subprocess.run(
-            ["claude", "plugins", "marketplace", "add", name, f"github:{src['repo']}"],
+            ["claude", "plugins", "marketplace", "add", src["repo"]],
             capture_output=True
         )
 PYEOF
