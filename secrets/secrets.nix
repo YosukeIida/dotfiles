@@ -23,4 +23,5 @@ in
   "printers.age".publicKeys = all;
   "figma-pat.age".publicKeys = all; # expires 2026-09-21
   "cctag-slack_tmllab_workspace.age".publicKeys = all;
+  "gh-lab-skills-pat.age".publicKeys = all; # fine-grained PAT, read-only Contents on TMLlaboratory/lab-claude-skills
 }

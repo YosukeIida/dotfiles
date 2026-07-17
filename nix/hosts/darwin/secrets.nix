@@ -24,4 +24,10 @@
   age.secrets."printers".file = ../../../secrets/printers.age;
   age.secrets."figma-pat".file = ../../../secrets/figma-pat.age; # expires 2026-09-21
   age.secrets."cctag-slack_tmllab_workspace".file = ../../../secrets/cctag-slack_tmllab_workspace.age;
+
+  # sync-lab-skills.sh --check を darwin-switch から非対話的に実行するための PAT。
+  # gh CLI 通常の keyring 認証は su - 経由の非対話 activation スクリプトからは
+  # 見えない（ログインキーチェーンを開けない）ため、GH_TOKEN 環境変数で明示的に渡す。
+  # fine-grained PAT、TMLlaboratory/lab-claude-skills のみへの読み取り専用スコープ。
+  age.secrets."gh-lab-skills-pat".file = ../../../secrets/gh-lab-skills-pat.age;
 }
