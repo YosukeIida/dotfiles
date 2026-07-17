@@ -538,21 +538,6 @@ in
       done
     fi
 
-    # 研究室 skill（tmllab-*）の更新有無を通知のみ表示する（brew outdated 相当）。
-    # 内容は一切書き換えない（読み取り専用）。gh の keyring 認証は su - 経由の
-    # 非対話 activation からは見えない（ログインキーチェーンを開けない）ため、
-    # agenix 管理の fine-grained PAT を GH_TOKEN として明示的に渡す
-    # （このPATは TMLlaboratory/lab-claude-skills への読み取り専用スコープのみ）。
-    # TMLlabメンバーでない・アクセス不可・PAT未配備でも正常終了するようスクリプト側・
-    # ここのフォールバックで担保済み。switch自体は失敗させない。
-    if [ -x "$priv/sync-lab-skills.sh" ]; then
-      if [ -r "$home/.config/gh/lab-skills-pat" ]; then
-        su - ${username} -c "GH_TOKEN=\"\$(cat '$home/.config/gh/lab-skills-pat')\" bash $priv/sync-lab-skills.sh --check" || true
-      else
-        su - ${username} -c "bash $priv/sync-lab-skills.sh --check" || true
-      fi
-    fi
-
     # public skills（personal-agent-skills repo）を ~/.claude/skills, ~/.codex/skills に追加
     # （clone が無ければ skip）。root-level レイアウト（<skill>/SKILL.md）なので
     # README.md 等のファイルは */ glob で自然に除外される。
@@ -583,6 +568,22 @@ in
     _place "${config.age.secrets."figma-pat".path}"     "$home/.config/figma/pat"
     _place "${config.age.secrets."cctag-slack_tmllab_workspace".path}" "$home/.config/cctag/slack_tmllab_workspace.env"
     _place "${config.age.secrets."gh-lab-skills-pat".path}" "$home/.config/gh/lab-skills-pat"
+
+    # 研究室 skill（tmllab-*）の更新有無を通知のみ表示する（brew outdated 相当）。
+    # 内容は一切書き換えない（読み取り専用）。gh の keyring 認証は su - 経由の
+    # 非対話 activation からは見えない（ログインキーチェーンを開けない）ため、
+    # agenix 管理の fine-grained PAT を GH_TOKEN として明示的に渡す
+    # （このPATは TMLlaboratory/lab-claude-skills への読み取り専用スコープのみ）。
+    # 上の _place より後に置くこと（secret配置前だとファイルが無くフォールバックする）。
+    # TMLlabメンバーでない・アクセス不可・PAT未配備でも正常終了するようスクリプト側・
+    # ここのフォールバックで担保済み。switch自体は失敗させない。
+    if [ -x "$priv/sync-lab-skills.sh" ]; then
+      if [ -r "$home/.config/gh/lab-skills-pat" ]; then
+        su - ${username} -c "GH_TOKEN=\"\$(cat '$home/.config/gh/lab-skills-pat')\" bash $priv/sync-lab-skills.sh --check" || true
+      else
+        su - ${username} -c "bash $priv/sync-lab-skills.sh --check" || true
+      fi
+    fi
 
     # cf_proxy.sh（public）を ~/.ssh に配置
     _link "$pub/ssh/cf_proxy.sh" "$home/.ssh/cf_proxy.sh"
