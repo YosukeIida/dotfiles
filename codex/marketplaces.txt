@@ -1,0 +1,5 @@
+# One third-party marketplace source (owner/repo) per line.
+# Blank lines and comments are ignored.
+# Codex built-in marketplaces (openai-curated, openai-primary-runtime,
+# openai-bundled) need no entry here.
+pbakaus/impeccable

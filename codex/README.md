@@ -95,4 +95,4 @@ cx personal && codex
 | [tools/agent-switch/bin/setup-codex-account](../tools/agent-switch/bin/setup-codex-account) | 初回移行 + アカウント追加（cc/cx本体は [tools/agent-switch/](../tools/agent-switch/README.md)） |
 | `config.toml` | system layer（`/etc/codex/config.toml`）の安定設定（dotfiles管理） |
 | `migrate-user-config.sh` | user layerに紛れ込んだ管理対象キーを除去する冪等スクリプト |
-| `install-plugins.sh` / `plugins.txt` | Codexプラグインの冪等インストール |
+| `install-plugins.sh` / `marketplaces.txt` / `plugins.txt` | Codexプラグインの冪等インストール（サードパーティmarketplaceの登録＋plugin導入） |
