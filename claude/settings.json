@@ -1,7 +1,27 @@
 {
   "permissions": {
     "allow": [
-      "WebSearch"
+      "WebSearch",
+      "Bash(rtk grep*)",
+      "Bash(rtk rg*)",
+      "Bash(rtk find*)",
+      "Bash(rtk ls*)",
+      "Bash(rtk tree*)",
+      "Bash(rtk read*)",
+      "Bash(rtk wc*)",
+      "Bash(rtk json*)",
+      "Bash(rtk deps*)",
+      "Bash(rtk env*)",
+      "Bash(rtk diff*)",
+      "Bash(rtk log*)",
+      "Bash(rtk gain*)",
+      "Bash(rtk cc-economics*)",
+      "Bash(rtk config*)",
+      "Bash(rtk discover*)",
+      "Bash(rtk smart*)",
+      "Bash(rtk git log*)",
+      "Bash(rtk git diff*)",
+      "Bash(rtk git status*)"
     ],
     "deny": [
       "Bash(rm -rf *)",
