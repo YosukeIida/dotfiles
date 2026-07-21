@@ -140,7 +140,7 @@ else
     if [ -z "$_cfg_dir" ]; then
       _keychain_svc="Claude Code-credentials"
     else
-      _suffix=$(python3 -c "import hashlib,sys; print(hashlib.sha256(sys.argv[1].encode()).hexdigest()[:8])" "$_cfg_dir" 2>/dev/null)
+      _suffix=$(printf '%s' "$_cfg_dir" | shasum -a 256 | cut -c1-8)
       _keychain_svc="Claude Code-credentials-${_suffix}"
     fi
 
@@ -192,17 +192,7 @@ _cfg_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 _claude_json="$_cfg_dir/.claude.json"
 ORG=""
 if [ -f "$_claude_json" ]; then
-  ORG=$(python3 - "$_claude_json" <<'PY'
-import json, sys
-try:
-    d = json.load(open(sys.argv[1]))
-    oa = d.get("oauthAccount") or {}
-    name = oa.get("organizationName") or oa.get("emailAddress") or ""
-    print(name)
-except Exception:
-    pass
-PY
-2>/dev/null)
+  ORG=$(jq -r '(.oauthAccount.organizationName // "") as $o | if $o != "" then $o else (.oauthAccount.emailAddress // "") end' "$_claude_json" 2>/dev/null)
 fi
 
 # ═══════════════════════════════════════════════════════════════
@@ -216,17 +206,6 @@ L1+="$(bg $BG1)$(fg 245) ctx "
 L1+="$(bar_fine "$CTX")$(rst)"
 L1+="$(bg $BG1)$(gradient "$CTX")$(bld) ${CTX}%$(rst)"
 L1+="$(bg $BG1) $(rst)"
-
-# ═══════════════════════════════════════════════════════════════
-# Terminal width — statusline は pipe 経由なので stty/tput は信頼できない。
-# CLAUDE_STATUS_COLS 環境変数で上限を明示指定する（settings.json で設定）。
-# ═══════════════════════════════════════════════════════════════
-TERM_W="${CLAUDE_STATUS_COLS:-}"
-[ -z "$TERM_W" ] || [ "$TERM_W" = "0" ] && TERM_W="$(tput cols 2>/dev/null || true)"
-[ -z "$TERM_W" ] || [ "$TERM_W" = "0" ] && TERM_W="${COLUMNS:-}"
-[ -z "$TERM_W" ] || [ "$TERM_W" = "0" ] && TERM_W=100
-TERM_W=$(( TERM_W - 2 ))
-[ "$TERM_W" -lt 40 ] && TERM_W=40
 
 # ═══════════════════════════════════════════════════════════════
 # Line 2 —  5h [bar] XX% ↻HH:MM:SS  │  7d [bar] XX% ↻HH:MM:SS
@@ -275,31 +254,8 @@ fi
 L3+="$(bg $BG3) $(rst)"
 
 # ═══════════════════════════════════════════════════════════════
-# 出力: \033[?7l で auto-wrap 無効 + Python で TERM_W 列クリップ
-# （全角・結合文字を unicodedata で正確に計算）
-_py=$(cat <<'PY'
-import sys, re, unicodedata
-ANSI = re.compile(r'\x1b\[[0-9;:]*[mK]')
-def cw(ch):
-    if unicodedata.combining(ch): return 0
-    if unicodedata.east_asian_width(ch) in ('W', 'F'): return 2
-    if unicodedata.category(ch)[0] == 'C': return 0
-    return 1
-def trunc(s, w):
-    out, cols, i = [], 0, 0
-    while i < len(s):
-        m = ANSI.match(s, i)
-        if m:
-            out.append(m.group()); i = m.end(); continue
-        c = s[i]; v = cw(c)
-        if cols + v > w: break
-        out.append(c); cols += v; i += 1
-    return ''.join(out) + '\x1b[0m'
-w = int(sys.argv[1])
-for line in sys.stdin:
-    print(trunc(line.rstrip('\n'), w))
-PY
-)
+# 出力: \033[?7l で auto-wrap を無効化すると、はみ出した分は折り返さずに
+# 見切れる（実機検証済み）。列幅の自前計算・クリップは不要。
 printf '\033[?7l'
-printf '%b\n%b\n%b' "$L1" "$L2" "$L3" | python3 -c "$_py" "$TERM_W"
+printf '%b\n%b\n%b' "$L1" "$L2" "$L3"
 printf '\033[?7h'
