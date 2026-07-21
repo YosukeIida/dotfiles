@@ -21,6 +21,10 @@ export PATH
 # agent-switch の setup-claude-account が settings.*.json 等を直リンクする元
 export AGSW_CLAUDE_ASSETS_DIR="${HOME}/workspace/github.com/YosukeIida/dotfiles/claude"
 
+# 新しいターミナルは常に personal アカウントの Codex CODEX_HOME で開始する
+# （tools/agent-switch/README.md の「デフォルトアカウントを固定したい場合」参照）
+[[ -d "${HOME}/.codex-personal" ]] && export CODEX_HOME="${CODEX_HOME:-${HOME}/.codex-personal}"
+
 # Load direnv in non-interactive shells (for Claude Code)
 if ! [[ -o interactive ]] && [[ -f "$PWD/.envrc" ]] && command -v direnv >/dev/null 2>&1; then
   eval "$(direnv export zsh 2>/dev/null)"
