@@ -34,8 +34,11 @@
       # yosukeiida/casks-personal 版は upstream が npm optionalDependency で配布している
       # プリコンパイル済みネイティブバイナリ（darwin-arm64）を直接installし、node依存ゼロ。
       "yosukeiida/casks-personal/backlog-md"
+      "bat"
       "brightness"
       "ffmpeg"
+      "git-delta"
+      "glow"
       "herdr"
       "hermes-agent"
       "hunk"
