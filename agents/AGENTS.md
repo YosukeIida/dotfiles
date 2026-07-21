@@ -68,3 +68,12 @@ macOS の system Python（Xcode 由来）やユーザー領域（`~/Library/Pyth
 | HTTP サーバ（標準ライブラリ） | `python -m http.server 8080`（インストール不要） |
 
 devshell が有効かの確認・direnv の手順は **devshell-setup スキル**を参照。
+
+---
+
+## コード調査時のツール選択
+
+grep/find/cat 相当の調査は Bash ではなくネイティブの `Grep`/`Glob`/`Read` ツールを優先する。
+`rtk` の PreToolUse hook は `Bash` にしか掛からないため、Bash 経由の `grep` 等は
+`rtk grep ...` に書き換えられ plan mode で確認プロンプトが出る。ネイティブツールは
+Read-only 扱いで確認不要かつ rtk の影響を受けない。
