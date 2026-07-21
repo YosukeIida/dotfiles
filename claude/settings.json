@@ -9,6 +9,7 @@
       "Bash(rtk tree:*)",
       "Bash(rtk read:*)",
       "Bash(rtk wc:*)",
+      "Bash(rtk du:*)",
       "Bash(rtk json:*)",
       "Bash(rtk deps:*)",
       "Bash(rtk env:*)",
