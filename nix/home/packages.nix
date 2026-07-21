@@ -23,6 +23,7 @@ in
     duti
     fzf
     gh
+    git
     ghq
     lazydocker
     lazygit
