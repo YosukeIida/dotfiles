@@ -59,5 +59,20 @@ in
     # 通常の PATH には載せない（node は devshell のみの方針）。agent-switch の codex()
     # ラッパーが codex 起動時だけこの dir を PATH 先頭に注入する。
     ".local/share/codex-runtime/bin/node".source = "${pkgs.nodejs}/bin/node";
+
+    # Claude Code プラグイン（openai-codex, impeccable）の hook が `command: "node"` で
+    # 起動されるための node。通常の PATH には載せない。agent-switch の claude()
+    # ラッパーが claude 起動時だけこの dir を PATH 先頭に注入する。
+    ".local/share/claude-runtime/bin/node".source = "${pkgs.nodejs}/bin/node";
+
+    # Claude Code が system python（Xcode CLT の /usr/bin/python3）を無自覚に使わないための
+    # ガード。claude() ラッパーが node と同様 PATH 先頭に注入する（/usr/bin より必ず先に
+    # 見つかる）。優先順位の制御はPATH位置ではなくガードスクリプト自身の判定に任せる
+    # （IN_NIX_SHELL なら devShell の本物の python に委譲、無ければ pyproject.toml/uv.lock の
+    # 有無で uv run python に委譲するか拒否するかを決める）。
+    ".local/share/claude-runtime/fallback/python3".source =
+      lnk "tools/agent-switch/runtime-guards/python-guard.sh";
+    ".local/share/claude-runtime/fallback/python".source =
+      lnk "tools/agent-switch/runtime-guards/python-guard.sh";
   };
 }

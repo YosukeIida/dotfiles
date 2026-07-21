@@ -127,3 +127,18 @@ PY
   echo "email   : $email${display_name:+  ($display_name)}"
   echo "org     : ${org_name:-(unknown)}"
 }
+
+# claude() ラッパー: codex() と同じ設計。Claude Code 起動時だけ、
+# プラグインhook用のnode と、pythonのsystem-python誤用ガードをPATHに注入する。
+# 両方ともPATH先頭に追加する（/usr/binより必ず先に見つかる）。pythonガード自身が
+# IN_NIX_SHELL の有無・pyproject.toml/uv.lock の有無を見て、devShellの本物のpythonに
+# 委譲するか、uv run pythonに委譲するか、拒否するかを判定する
+# （PATH位置だけでは devShell > guard > /usr/bin という優先順位を表現できないため）。
+claude() {
+  local _rt_bin="$HOME/.local/share/claude-runtime/bin"
+  local _rt_fallback="$HOME/.local/share/claude-runtime/fallback"
+  local _path="$PATH"
+  [[ -d "$_rt_bin" ]] && _path="$_rt_bin:$_path"
+  [[ -d "$_rt_fallback" ]] && _path="$_rt_fallback:$_path"
+  PATH="$_path" command claude "$@"
+}
