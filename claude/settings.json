@@ -96,7 +96,8 @@
     "daymade-docs@daymade-skills": true,
     "rust-analyzer-lsp@claude-plugins-official": true,
     "swift-lsp@claude-plugins-official": true,
-    "impeccable@impeccable": true
+    "impeccable@impeccable": true,
+    "claude-security@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "YosukeIida": {
