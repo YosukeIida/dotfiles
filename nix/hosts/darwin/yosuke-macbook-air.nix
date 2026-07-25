@@ -128,11 +128,6 @@ let
       failed=1
     fi
 
-    echo "==> zed-latex-upgrade"
-    if ! "${zedLatexUpgrade}/bin/zed-latex-upgrade"; then
-      failed=1
-    fi
-
     exit "$failed"
   '';
 
@@ -172,55 +167,11 @@ let
     fi
   '';
 
-  # Zed Dev RaTeX(unofficial) は nixpkgs にも Homebrew cask にも無い個人 fork の
-  # GitHub release なので、brew-upgrade-all と同じパターンで手動更新コマンドにする。
-  # darwin-switch には組み込まない（system activation 中にネットワーク取得と
-  # /Applications 書き換えをするのは重く、brew 側の運用とも一貫しないため）。
-  zedLatexUpgrade = pkgs.writeShellScriptBin "zed-latex-upgrade" ''
-    set -euo pipefail
-
-    PATH="/etc/profiles/per-user/${username}/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
-
-    if ! command -v gh >/dev/null 2>&1; then
-      echo "error: gh (GitHub CLI) not found" >&2
-      exit 1
-    fi
-
-    repo="YosukeIida/zed"
-    app_name="Zed Dev RaTeX(unofficial).app"
-    dest="/Applications/$app_name"
-
-    latest_tag="$(gh release view --repo "$repo" --json tagName -q .tagName)"
-
-    current_version=""
-    if [ -d "$dest" ]; then
-      current_version="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$dest/Contents/Info.plist" 2>/dev/null || true)"
-    fi
-
-    if [ "v$current_version" = "$latest_tag" ]; then
-      echo "zed-latex-upgrade: already up to date ($latest_tag)"
-      exit 0
-    fi
-
-    tmp_dir="$(mktemp -d)"
-    trap 'rm -rf "$tmp_dir"' EXIT
-
-    echo "==> Downloading $latest_tag"
-    gh release download "$latest_tag" --repo "$repo" --pattern '*.dmg' --dir "$tmp_dir" --clobber
-
-    dmg_path="$(ls "$tmp_dir"/*.dmg | head -n1)"
-    mount_point="$(mktemp -d)"
-    hdiutil attach -nobrowse -readonly "$dmg_path" -mountpoint "$mount_point"
-
-    echo "==> Installing to $dest"
-    rm -rf "$dest"
-    ditto "$mount_point/$app_name" "$dest"
-
-    hdiutil detach "$mount_point" -quiet
-    xattr -dr com.apple.quarantine "$dest" 2>/dev/null || true
-
-    echo "zed-latex-upgrade: installed $latest_tag"
-  '';
+  # Zed Dev RaTeX(unofficial) は yosukeiida/casks-personal の zed-dev-ratex cask で
+  # 管理する（homebrew.nix 参照）。以前はここに zed-latex-upgrade という自作コマンドが
+  # あったが、cask と二重管理になり /Applications を brew の記録の裏で書き換えるため
+  # Caskroom のバージョンと実体がずれる問題を起こしていたので削除した。
+  # 週次リリースへの追従は zed 側の latex_weekly_release.yml が cask を bump する。
 
   vpnCoexistenceApply = pkgs.writeShellScriptBin "vpn-coexistence-apply" ''
     set -euo pipefail
@@ -445,7 +396,6 @@ in
     darwinUpdate
     brewUpgradeAll
     brewUpdateReminder
-    zedLatexUpgrade
     vpnCoexistenceApply
   ];
 
