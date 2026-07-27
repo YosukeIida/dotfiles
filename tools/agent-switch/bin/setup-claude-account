@@ -87,15 +87,33 @@ fi
 #
 # ln -sfn は実ファイルを問答無用で置き換えるため元の内容が失われる。実ディレクトリは
 # 置き換えられず、その中に同名リンクが作られて半壊する（実測 2026-07-28）。
+#
+# 検査は「実際にリンクする項目」だけを対象にする。下のリンク処理と同じリンク元存在条件
+# （assets は ASSETS_DIR 指定かつリンク元が存在、shared は $BASE/<item> が存在）を
+# 使わないと、置換されないファイルまで衝突扱いして不要な退避を促してしまう。
+CONFLICTS=""
+_note_conflict() {
+  # CLAUDE.md は ASSET_LINKS と SHARED_FROM_BASE の両方にあるため重複を除く
+  case " $CONFLICTS " in *" $1 "*) ;; *) CONFLICTS="$CONFLICTS $1" ;; esac
+}
+# 不在なら張るだけ。symlink なら張り替えるだけ（収束動作）。実体だけが衝突。
+_is_conflict() {
+  [[ -e "$1" && ! -L "$1" ]]
+}
+
 if [[ -d "$DIR" ]]; then
-  CONFLICTS=""
-  for item in "${ASSET_LINKS[@]}" "${SHARED_FROM_BASE[@]}"; do
-    dst="$DIR/$item"
-    # 不在なら張るだけ。symlink なら張り替えるだけ（収束動作）。実体だけが衝突。
-    if [[ -e "$dst" && ! -L "$dst" ]]; then
-      case " $CONFLICTS " in *" $item "*) ;; *) CONFLICTS="$CONFLICTS $item" ;; esac
-    fi
+  if [[ -n "$ASSETS_DIR" ]]; then
+    for item in "${ASSET_LINKS[@]}"; do
+      [[ -e "$ASSETS_DIR/$item" ]] || continue
+      if _is_conflict "$DIR/$item"; then _note_conflict "$item"; fi
+    done
+  fi
+
+  for item in "${SHARED_FROM_BASE[@]}"; do
+    [[ -e "$BASE/$item" || -L "$BASE/$item" ]] || continue
+    if _is_conflict "$DIR/$item"; then _note_conflict "$item"; fi
   done
+
   if [[ -n "$CONFLICTS" ]]; then
     {
       echo "Error: $DIR に共有 symlink と衝突する実体があります:$CONFLICTS"
