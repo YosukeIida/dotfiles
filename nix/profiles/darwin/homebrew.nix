@@ -105,10 +105,15 @@
       "zed"
       # 個人 fork の自前ビルドなので ad-hoc 署名（TeamIdentifier なし、spctl は rejected）で、
       # quarantine 属性が付くと Gatekeeper に起動を止められる。ただしここで
-      # args = { no_quarantine = true; } は指定できない: Homebrew 6 で --no-quarantine は
-      # CLI フラグとしては廃止されており（HOMEBREW_CASK_OPTS 経由のみ）、brew bundle は
-      # それをフラグに変換して渡すため install が失敗する。加えて brew bundle は
-      # upgrade 経路では args を渡さない（bundle/cask.rb:75-76）。対処は cask 側で行う。
+      # args = { no_quarantine = true; } は指定できない: Homebrew 6 には install 時に
+      # quarantine を無効化する手段がそもそも存在しない。--no-quarantine は CLI フラグとして
+      # 廃止されたうえ、HOMEBREW_CASK_OPTS 経由でも効かない（判定関数
+      # EnvConfig.cask_opts_quarantine? は env_config.rb:983 に定義が残るだけで呼び出し元ゼロ。
+      # cmd/install.rb:372,420 は Cask::Installer に quarantine: を渡さないため、
+      # installer.rb:42 の既定値 true が常に使われる）。加えて brew bundle は args を
+      # そのまま "--#{key}" に変換して渡すため（bundle/cask.rb:78-88）install 自体が失敗し、
+      # upgrade 経路では args を渡さない（同 76）。対処は cask 側の postflight で
+      # xattr -dr する（検証: Homebrew 6.0.12）。
       "yosukeiida/casks-personal/zed-dev-ratex"
     ];
   };
