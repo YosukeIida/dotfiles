@@ -63,7 +63,12 @@ let
   # zsh関数 sleepctl / raycast-scripts/sleepctl_{on,off}.sh 側が行う。
   # 状態源は pmset の実状態のみなので、手動 pmset で切り替えても追従する。
   # 元ネタ: skanehira/dotfiles 2a98c294 (nix/modules/darwin/sleepctl.nix)。
-  sleepctlWatcher = pkgs.writeShellScript "sleepctl-watcher" ''
+  # writeShellScript ではなく writeShellScriptBin を使うのは表示名のため:
+  # 「ログイン項目とバックグラウンドで実行可能な項目」は署名のない実行ファイルを
+  # ProgramArguments[0] の basename で表示する。writeShellScript だと store パス直下の
+  # ファイル (72glf…-sleepctl-watcher) になりハッシュ込みで出るが、writeShellScriptBin は
+  # <store>/bin/sleepctl-watcher を作るので basename がそのまま名前になる。
+  sleepctlWatcher = pkgs.writeShellScriptBin "sleepctl-watcher" ''
     fired=0
     while :; do
       # SleepDisabled 行は未設定のマシンでは出力されないことがあるため
@@ -614,11 +619,13 @@ in
   # CODEX_HOME 未指定の生 `codex login` が共有 symlink を上書きする事故（2026-07-11 発生）
   # を早期に気づけるようにする。修復はしない（cx 実行時に codex-auth-doctor が担当）。
   # スクリプト本体は agent-switch 配下に置き（自己完結・将来独立repo化予定）、nix はそれを叩くだけ。
+  # /bin/bash を挟まずスクリプトを直に指す（shebang + 実行権限あり）。挟むと
+  # 「ログイン項目とバックグラウンドで実行可能な項目」での表示名が basename 由来の
+  # "bash" になり、同じ形の agent と区別がつかなくなるため。
   launchd.user.agents."codex-auth-watch" = {
     serviceConfig = {
       Label = "com.yosuke.codex-auth-watch";
       ProgramArguments = [
-        "/bin/bash"
         "${publicDir}/tools/agent-switch/bin/codex-auth-watch"
       ];
       WatchPaths = [
@@ -632,11 +639,11 @@ in
   };
 
   # figma-pat.age の失効前チェック（週次月曜 10:00）。期限はスクリプト内の定数で管理。
+  # /bin/bash を挟まない理由は codex-auth-watch と同じ（表示名が "bash" になるため）。
   launchd.user.agents.figmaPatExpiryCheck = {
     serviceConfig = {
       Label = "com.yosuke.figma-pat-expiry-check";
       ProgramArguments = [
-        "/bin/bash"
         "${publicDir}/scripts/check-figma-pat-expiry.sh"
       ];
       StartCalendarInterval = [
@@ -677,7 +684,7 @@ in
   launchd.user.agents.sleepctlWatcher = {
     serviceConfig = {
       Label = "com.yosuke.sleepctl-watcher";
-      ProgramArguments = [ "${sleepctlWatcher}" ];
+      ProgramArguments = [ "${sleepctlWatcher}/bin/sleepctl-watcher" ];
       RunAtLoad = true;
       KeepAlive = true;
       ProcessType = "Background";
