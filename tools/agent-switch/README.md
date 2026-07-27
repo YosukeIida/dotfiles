@@ -35,11 +35,11 @@ echo 'source ~/.agent-switch/tools/agent-switch/agent-switch.plugin.zsh' >> ~/.z
 
 プラグインは source 時に**関数を定義する**のが主な仕事で、ファイルを書き換える副作用は一切持たない。ただしインタラクティブシェルに限り、Codex の App 用 `auth.json`（共有 symlink）が「実ファイル化（事故）」または「リンク切れ」のときだけ軽量な警告チェックを表示する（正常時は lstat 数回で即抜ける・出力なし・修復はしない）。実際の修復はユーザーが `cx` を実行したときだけ行う（下記「Codex 認証ファイルの保護」参照）。
 
-デフォルトアカウントを固定したい場合は、自分の zshenv / zshrc に存在ガード付きで書く：
+デフォルトアカウントを固定したい場合は、自分の zshenv / zshrc に存在ガード付きで書く。ガードは**ディレクトリの有無ではなくマーカー**で行うこと（`-d` だけだと prefix に偶然一致した未管理ディレクトリでも Codex が直接使えてしまい、`cx` 側のガードと食い違う）：
 
 ```zsh
 # 例: 新しいシェルは常に work アカウントで開始
-[[ -d "$HOME/.codex-work" ]] && export CODEX_HOME="${CODEX_HOME:-$HOME/.codex-work}"
+[[ -f "$HOME/.codex-work/.agsw-profile" ]] && export CODEX_HOME="${CODEX_HOME:-$HOME/.codex-work}"
 ```
 
 ### 設定変数（source 前に定義、すべて任意）
@@ -105,6 +105,22 @@ Error: /Users/yosuke/.claude-science は既に存在し、agent-switch の管理
 ```
 
 > `--claim` は「既存の未管理ディレクトリをプロファイルとして取り込む」フラグ。`setup-codex-account adopt <name>`（実ファイル化した `auth.json` の取り込み）とは別の概念なので注意。
+
+### プロファイル名の制約
+
+setup スクリプトは名前を検査する（`bin/agsw-check-name`）。
+
+- 先頭は英数字、以降は英数字・`.`・`_`・`-` のみ。**`/` と先頭 `.` は不可**
+  名前は prefix と連結してディレクトリパスになるため、`../../victim` のような名前は prefix の外へ書き込める（2026-07-28 実測: `auth.json` が `$HOME/victim/` へ移動した）
+- 予約語は不可。`cc` / `cx` がサブコマンドやモード語として消費するため、その名前のプロファイルには切り替えられない
+  - Codex: `list` `app`
+  - Claude: `list` `api` `sub` `subscription`、および `AGSW_CLAUDE_DEFAULT_NAME`（既定 `labteam`。`cc labteam` は `CLAUDE_CONFIG_DIR` 未設定を意味するので、`~/.claude-labteam` を作っても使われない）
+
+### 共有 symlink と実体の衝突
+
+setup スクリプトは共有 symlink を張る前に、張り先に**実ファイル・実ディレクトリ**が無いかを検査し、あれば何も変更せず中断する。`ln -sfn` は実ファイルを問答無用で置き換えて内容を失わせ、実ディレクトリは置き換えられずその中に同名リンクを作って半壊させるため（2026-07-28 実測）。
+
+マーカー（`.agsw-profile`）は**正規化が完了してから**作る。先に作ると、途中で失敗した半端なディレクトリが「管理下」と誤認される。
 
 ## 日常の使い方
 
@@ -213,6 +229,7 @@ completions/_cc           # cc のタブ補完（fpath 経由で読み込む）
 completions/_cx           # cx のタブ補完
 bin/agsw-list-profiles    # マーカー付きプロファイルの列挙（zsh/bash 双方から使う唯一の実装）
 bin/agsw-codex-account-id # Codex auth.json から account_id を取り出す（同上）
+bin/agsw-check-name       # プロファイル名の検査（パス脱出・予約語の拒否）
 bin/setup-claude-account  # Claude アカウント dir 作成・正規化
 bin/setup-codex-account   # Codex アカウント dir 作成・正規化（migrate / adopt / add）
 bin/check-codex-drift     # プロファイル間の symlink 漏れ検出・修復

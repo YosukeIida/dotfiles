@@ -39,6 +39,13 @@ for arg in "$@"; do
 done
 [[ -n "$NAME" ]] || { echo "Error: <name> が必要です。" >&2; echo "$USAGE" >&2; exit 1; }
 
+# 名前の検査。'/' や '..' を含む名前は prefix の外へ書き込めるため必須。
+# 予約語は cc がサブコマンド／モード語として消費する語（そのプロファイルへ切り替えられない）。
+# デフォルトアカウント名も拒否する（cc <default> は CLAUDE_CONFIG_DIR 未設定を意味するので、
+# ~/.claude-<default> を作っても永久に使われない紛らわしいディレクトリになる）。
+"$(dirname "$0")/agsw-check-name" "$NAME" \
+  list api sub subscription "${AGSW_CLAUDE_DEFAULT_NAME:-labteam}" || exit 1
+
 BASE="$HOME/.claude"
 DIR="$HOME/.claude-$NAME"
 ASSETS_DIR="${AGSW_CLAUDE_ASSETS_DIR:-}"
@@ -76,13 +83,35 @@ if [[ "$EXISTED" == 1 && ! -f "$DIR/.agsw-profile" && -n "$(ls -A "$DIR" 2>/dev/
   echo "[--claim] 既存ディレクトリを agent-switch のプロファイルとして取り込みます"
 fi
 
+# 共有 symlink を張る先に実体があるかを、変更を始める前に検査する。
+#
+# ln -sfn は実ファイルを問答無用で置き換えるため元の内容が失われる。実ディレクトリは
+# 置き換えられず、その中に同名リンクが作られて半壊する（実測 2026-07-28）。
+if [[ -d "$DIR" ]]; then
+  CONFLICTS=""
+  for item in "${ASSET_LINKS[@]}" "${SHARED_FROM_BASE[@]}"; do
+    dst="$DIR/$item"
+    # 不在なら張るだけ。symlink なら張り替えるだけ（収束動作）。実体だけが衝突。
+    if [[ -e "$dst" && ! -L "$dst" ]]; then
+      case " $CONFLICTS " in *" $item "*) ;; *) CONFLICTS="$CONFLICTS $item" ;; esac
+    fi
+  done
+  if [[ -n "$CONFLICTS" ]]; then
+    {
+      echo "Error: $DIR に共有 symlink と衝突する実体があります:$CONFLICTS"
+      echo "  symlink に張り替えると元の内容が失われます（ディレクトリの場合は中に迷子の"
+      echo "  リンクができて半壊します）。何も変更していません。"
+      echo "  内容が不要／退避済みなら、次のように退けてから再実行してください:"
+      for item in $CONFLICTS; do
+        echo "    mv \"$DIR/$item\" \"$DIR/$item.bak\""
+      done
+    } >&2
+    exit 1
+  fi
+fi
+
 echo "Setting up: $DIR"
 mkdir -p "$DIR"
-
-# プロファイル・マーカー。cc はこれが無い dir を拒否する（prefix が偶然一致した
-# 無関係なディレクトリを掴んで他ツールのデータを汚染するのを防ぐ）。
-# 既存 dir への再実行でも冪等に作る。詳細は lib/common.zsh 参照。
-touch "$DIR/.agsw-profile"
 
 if [[ -n "$ASSETS_DIR" ]]; then
   for item in "${ASSET_LINKS[@]}"; do
@@ -114,6 +143,13 @@ if [[ ! -e "$DIR/settings.json" && ! -L "$DIR/settings.json" ]]; then
     echo "  linked: settings.json -> (assets) settings.json"
   fi
 fi
+
+# プロファイル・マーカー。cc はこれが無い dir を拒否する（prefix が偶然一致した
+# 無関係なディレクトリを掴んで他ツールのデータを汚染するのを防ぐ）。詳細は lib/common.zsh。
+#
+# 正規化（symlink 張り）が完了してから作る。先に作ると、途中で失敗した半端な dir が
+# 「agent-switch の管理下」と誤認されてしまう。
+touch "$DIR/.agsw-profile"
 
 if [[ ! -f "$DIR/anthropic.env" ]]; then
   echo ""

@@ -105,12 +105,43 @@ _warn_missing() {
   _unmarked_hint
 }
 
+# App 用 symlink のリンク先が「管理下のプロファイルの auth.json」かを検証する。
+#
+# リンク先が実在するだけで正常扱いすると、~/.codex/auth.json -> ~/.codex-unmanaged/auth.json
+# のようにマーカー無しの dir を指した状態が見逃される。cx は未管理 dir を拒否するのに
+# App / IDE 拡張だけがそこを使い続けるため、「全経路で除外する」という契約が破れる。
+# 一致しなければ警告のみ（自動修復はしない。doctor の保守的な方針に合わせる）。
+_check_app_link_target() {
+  local target resolved name
+  target="$(readlink "$APP_AUTH")" || return 0
+
+  # cx app は絶対パスで張るが、手で張られた相対 symlink も解決を試みる
+  case "$target" in
+    /*) resolved="$target" ;;
+    *)  resolved="$(cd "$(dirname "$APP_AUTH")" 2>/dev/null && cd "$(dirname "$target")" 2>/dev/null && pwd)/$(basename "$target")" ;;
+  esac
+
+  while IFS= read -r name; do
+    [[ -n "$name" ]] || continue
+    [[ "$resolved" == "$PREFIX$name/auth.json" ]] && return 0
+  done < <(_list_profiles)
+
+  echo "⚠ codex-auth: $APP_AUTH が管理下でないプロファイルを指しています。"
+  echo "  リンク先    : $resolved"
+  echo "  cx は未管理の dir を拒否しますが、Codex App / IDE 拡張はこのまま使い続けます。"
+  echo "  管理下のプロファイルへ切り替えるには:"
+  echo "    cx app <name>"
+  _unmarked_hint
+  return 1
+}
+
 main() {
   _require_helpers
 
-  # (a) 正常な symlink（リンク先実在）→ 何もしない
+  # (a) 正常な symlink（リンク先実在）→ リンク先が管理下かだけ確認して終了
   if [[ -L "$APP_AUTH" ]]; then
     if [[ -e "$APP_AUTH" ]]; then
+      _check_app_link_target || true
       exit 0
     fi
     # (c) リンク切れ symlink

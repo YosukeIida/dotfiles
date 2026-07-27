@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# プロファイル名の妥当性検査。
+#
+# 使い方: agsw-check-name <name> [<reserved-word> ...]
+# 正当なら無出力・exit 0。不正なら理由を stderr に出して exit 1。
+#
+# 名前は prefix と連結してディレクトリパスになる（$HOME/.codex-<name>）ため、
+# `/` や `..` を含む名前は prefix の外へ到達できてしまう。実測（2026-07-28）:
+#   setup-codex-account migrate ../../victim
+#     → $HOME/.codex-../../victim が $HOME/victim に解決され、auth.json がそこへ移動した
+#     → 副産物として $HOME/.codex-.. という空ディレクトリも残った
+# パス要素1つに収まる安全な文字集合だけを許可してこれを防ぐ。
+#
+# 予約語は呼び出し側が渡す（cc / cx がサブコマンドとして消費してしまい、その名前の
+# プロファイルへ切り替えられなくなるため）。
+set -uo pipefail
+
+NAME="${1-}"
+shift || true
+
+if [[ -z "$NAME" ]]; then
+  echo "Error: プロファイル名が空です。" >&2
+  exit 1
+fi
+
+# 先頭は英数字のみ（先頭 '-' でオプション誤認、先頭 '.' で '..' や隠しディレクトリを防ぐ）。
+# 2文字目以降は英数字・ドット・アンダースコア・ハイフンのみ（'/' を含められない）。
+if [[ ! "$NAME" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+  echo "Error: プロファイル名 '$NAME' は使えません。" >&2
+  echo "  先頭は英数字、以降は英数字・'.'・'_'・'-' のみが使えます（'/' と先頭 '.' は不可）。" >&2
+  echo "  名前は prefix と連結してディレクトリパスになるため、'/' や '..' を含む名前は" >&2
+  echo "  prefix の外へ書き込めてしまいます。" >&2
+  exit 1
+fi
+
+for reserved in "$@"; do
+  if [[ "$NAME" == "$reserved" ]]; then
+    echo "Error: プロファイル名 '$NAME' は予約語です。" >&2
+    echo "  cc / cx がサブコマンドとして解釈するため、この名前のプロファイルには切り替えられません。" >&2
+    exit 1
+  fi
+done
+
+exit 0

@@ -28,16 +28,51 @@ LINKED_ITEMS=(skills AGENTS.md config.toml sessions history.jsonl session_index.
               memories memories_1.sqlite memories_1.sqlite-shm memories_1.sqlite-wal \
               goals_1.sqlite transcription-history.jsonl models_cache.json)
 
-# アカウント dir を正規化する（再実行で収束）。共有 symlink を張り直し、
+# 共有 symlink を張る先に「実ファイル / 実ディレクトリ」があるかを事前検査する。
+#
+# ln -sfn は実ファイルを問答無用で置き換えるため、元の内容が失われる。実ディレクトリは
+# 置き換えられず、その中に同名のリンクが作られて半壊する。実測（2026-07-28）:
+#   実ファイル config.toml（内容 VICTIM-OWN）→ 共有 symlink に置換され内容消失
+#   実ディレクトリ sessions/ → sessions/sessions という迷子リンクができ、成功扱い
+# 変更を一切行う前に呼び、衝突があれば中断する。
+_check_link_conflicts() {
+  local acct_dir="$1"
+  local item dst conflicts=""
+
+  [[ -d "$acct_dir" ]] || return 0
+
+  for item in "${LINKED_ITEMS[@]}"; do
+    [[ -e "$HOME_CODEX/$item" ]] || continue
+    dst="$acct_dir/$item"
+    # 不在なら張るだけ。symlink なら張り替えるだけ（収束動作）。実体だけが衝突。
+    if [[ -e "$dst" && ! -L "$dst" ]]; then
+      conflicts="$conflicts $item"
+    fi
+  done
+
+  [[ -n "$conflicts" ]] || return 0
+
+  {
+    echo "Error: $acct_dir に共有 symlink と衝突する実体があります:$conflicts"
+    echo "  symlink に張り替えると元の内容が失われます（ディレクトリの場合は中に迷子の"
+    echo "  リンクができて半壊します）。何も変更していません。"
+    echo "  内容が不要／退避済みなら、次のように退けてから再実行してください:"
+    for item in $conflicts; do
+      echo "    mv \"$acct_dir/$item\" \"$acct_dir/$item.bak\""
+    done
+  } >&2
+  exit 1
+}
+
+# アカウント dir を正規化する（再実行で収束）。共有 symlink を張り直し、最後に
 # プロファイル・マーカーを置く。migrate / adopt / add のすべてがここを通るので、
 # マーカーを付け忘れる経路が生まれない。
+#
+# マーカーは正規化が完了してから作る。先に作ると、途中で失敗した半端な dir が
+# 「agent-switch の管理下」と誤認されてしまう。
 _init_profile() {
   local acct_dir="$1"
   local item
-
-  # cx はマーカーが無い dir を拒否する（prefix が偶然一致した無関係なディレクトリを
-  # 掴んで他ツールのデータを汚染するのを防ぐ）。詳細は lib/common.zsh 参照。
-  touch "$acct_dir/.agsw-profile"
 
   for item in "${LINKED_ITEMS[@]}"; do
     if [[ -e "$HOME_CODEX/$item" ]]; then
@@ -45,6 +80,10 @@ _init_profile() {
       ln -sfn "$HOME_CODEX/$item" "$acct_dir/$item"
     fi
   done
+
+  # cx はマーカーが無い dir を拒否する（prefix が偶然一致した無関係なディレクトリを
+  # 掴んで他ツールのデータを汚染するのを防ぐ）。詳細は lib/common.zsh 参照。
+  touch "$acct_dir/.agsw-profile"
 }
 
 # auth.json の .tokens.account_id を取り出す（取れなければ非ゼロ終了・無出力）。
@@ -136,6 +175,8 @@ adopt() {
   # ここを塞がないと `adopt <name>` が --claim ガードの迂回路になり、無関係な dir に
   # 認証を移して symlink を撒き、cx から使えるようにしてしまう。
   _require_claimable "$acct_dir" "$name" "$claim"
+  # auth.json を mv する前に検査する（後で中断すると認証だけ動いた半端な状態になる）
+  _check_link_conflicts "$acct_dir"
 
   if [[ ! -d "$acct_dir" ]]; then
     # 新規 dir: migrate と同じ動き
@@ -193,6 +234,7 @@ add_account() {
   [[ -d "$acct_dir" ]] && existed=1
 
   _require_claimable "$acct_dir" "$name" "$claim"
+  _check_link_conflicts "$acct_dir"
 
   mkdir -p "$acct_dir"
   _init_profile "$acct_dir"
@@ -244,6 +286,10 @@ for arg in "$@"; do
   esac
 done
 [[ -n "$NAME" ]] || { echo "Error: <name> が必要です。" >&2; echo "$USAGE" >&2; exit 1; }
+
+# 名前の検査。'/' や '..' を含む名前は prefix の外へ書き込めるため必須。
+# 予約語は cx がサブコマンドとして消費する語（そのプロファイルへ切り替えられなくなる）。
+"$(dirname "$0")/agsw-check-name" "$NAME" list app || exit 1
 
 case "$SUBCMD" in
   migrate) migrate "$NAME" ;;
