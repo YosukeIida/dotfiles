@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
-# k16shikano の gist 由来 skill（cognitive-rhythm-writing / japanese-tech-writing）を
-# agents/skills/ に vendor するスクリプト。
+# 外部の公開ソース由来 skill を agents/skills/ に vendor するスクリプト。
+#
+# 扱う2系統:
+#   1. gist 由来（cognitive-rhythm-writing / japanese-tech-writing）
+#      → clone して SKILL.md をコピーする。REV_* で pin。
+#   2. repo 直下の SKILL.md 由来（herdr）
+#      → gh api で1ファイルだけ取得し、ローカルのパッチと vendor-* metadata を注入する。
+#        gh skill install は使えない: 発見に `<name>/SKILL.md` のディレクトリ構造を要求し、
+#        リポジトリ直下の裸の SKILL.md を認識しない（`gh skill preview` が
+#        "no standard skills found" を返す。2026-07 実測）。
+#
+# 名前が gist 限定に見えるがリネームしていないのは、
+# nix/hosts/darwin/common/default.nix と CLAUDE.md の両方から参照されているため。
 #
 # なぜ vendor か: この2 skillは cognitive-rhythm-writing が
 # `../japanese-tech-writing/SKILL.md` を相対参照する依存関係を持つ。
@@ -26,6 +37,14 @@ REV_JAPANESE_TECH_WRITING="209db7d6d19bc4727139844c0e8d786542e9ff68"
 
 GIST_COGNITIVE_RHYTHM="https://gist.github.com/k16shikano/eb2929f13ed19c97188393d297be8432"
 GIST_JAPANESE_TECH_WRITING="https://gist.github.com/k16shikano/fd287c3133457c4fd8f5601d34aa817d"
+
+# repo 直下 SKILL.md 由来。SKILL.md を最後に変更した commit で pin する
+# （リポジトリの HEAD ではない。活発な repo なので HEAD で pin すると無関係な
+# commit で「更新あり」になる）。更新確認は agent-skills-outdated が
+# vendor-* metadata を読んで行う。
+HERDR_REPO="ogulcancelik/herdr"
+HERDR_PATH="SKILL.md"
+HERDR_REV="0f161fac287011b3e216383e2b8482f049fd6a7b"
 
 DEST="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/agents/skills"
 WORK="$(mktemp -d)"
@@ -56,11 +75,85 @@ sync_one() {
   fi
 
   git -C "$clone_dir" checkout -q "$rev"
-  rm -rf "$DEST/$name"
+  # 変数が空でも rm -rf / にならないよう :? で防御する
+  rm -rf "${DEST:?}/${name:?}"
   mkdir -p "$DEST/$name"
   cp "$clone_dir/SKILL.md" "$DEST/$name/SKILL.md"
   echo "synced $name @ $rev -> $DEST/$name/SKILL.md"
 }
 
+# repo 直下の1ファイルを vendor する。gist と違い、ローカルで意図的に持つ差分
+# （allowed-tools と description）をここでパッチとして再適用し、更新検知用の
+# vendor-* metadata を注入する。手で編集しないこと（次回 sync で上書きされる）。
+sync_repo_file() {
+  local name="$1" repo="$2" path="$3" rev="$4"
+  local dest="$DEST/$name/SKILL.md"
+
+  if [ "$check_mode" -eq 1 ]; then
+    # 更新確認は agent-skills-outdated が vendor-* を読んで行うのでそちらに委ねる。
+    # ここで二重にAPIを叩かない。
+    echo "$name: pinned $rev (更新確認は agent-skills-outdated が行う)"
+    return
+  fi
+
+  local raw="$WORK/$name.md"
+  gh api "repos/$repo/contents/$path?ref=$rev" \
+    -H "Accept: application/vnd.github.raw" >"$raw"
+
+  # --- ローカルパッチ1: allowed-tools を足す（upstream には無い） -------------
+  # 権限プロンプトを最小限にするため。frontmatter の閉じ `---` の直前に挿入する。
+  if ! grep -q '^allowed-tools:' "$raw"; then
+    awk '
+      NR == 1 && $0 == "---" { print; infm = 1; next }
+      infm && $0 == "---" {
+        print "allowed-tools: Bash(herdr:*), Bash(python3:*)"
+        print
+        infm = 0
+        next
+      }
+      { print }
+    ' "$raw" >"$raw.patched" && mv "$raw.patched" "$raw"
+  fi
+
+  # --- ローカルパッチ2: description を旧版に差し戻す -------------------------
+  # upstream は 2026-07 に「Herdr を明示的に言及したときのみ使う」方向へ絞ったが、
+  # ここでは herdr 内にいれば自動発動する挙動を維持する（自作 skill 全体の方針。
+  # disable-model-invocation を使わず発動を保つ、という判断に揃える）。
+  local old_desc
+  old_desc='description: "Control herdr from inside it. Manage workspaces and tabs, split panes, spawn agents, read output, and wait for state changes — all via CLI commands that talk to the running herdr instance over a local unix socket. Use when running inside herdr (HERDR_ENV=1)."'
+  if ! grep -q '^description: ' "$raw"; then
+    echo "sync: $name の frontmatter に description 行が見つからない（upstream の形式が変わった？）" >&2
+    exit 1
+  fi
+  awk -v repl="$old_desc" '
+    !done_desc && /^description: / { print repl; done_desc = 1; next }
+    { print }
+  ' "$raw" >"$raw.patched" && mv "$raw.patched" "$raw"
+
+  # --- vendor-* metadata を注入（agent-skills-outdated が読む） --------------
+  # github-* にしないのは、gh skill がリポジトリルートの tree を見て
+  # upstream の全 commit を「更新あり」と誤検知するのを避けるため。
+  awk -v repo="$repo" -v path="$path" -v rev="$rev" '
+    NR == 1 && $0 == "---" { print; infm = 1; next }
+    infm && $0 == "---" {
+      print "metadata:"
+      print "    vendor-repo: " repo
+      print "    vendor-path: " path
+      print "    vendor-commit: " rev
+      print
+      infm = 0
+      next
+    }
+    { print }
+  ' "$raw" >"$raw.patched" && mv "$raw.patched" "$raw"
+
+  # 変数が空でも rm -rf / にならないよう :? で防御する
+  rm -rf "${DEST:?}/${name:?}"
+  mkdir -p "$DEST/$name"
+  cp "$raw" "$dest"
+  echo "synced $name @ $rev -> $dest"
+}
+
 sync_one "cognitive-rhythm-writing" "$GIST_COGNITIVE_RHYTHM" "$REV_COGNITIVE_RHYTHM"
 sync_one "japanese-tech-writing" "$GIST_JAPANESE_TECH_WRITING" "$REV_JAPANESE_TECH_WRITING"
+sync_repo_file "herdr" "$HERDR_REPO" "$HERDR_PATH" "$HERDR_REV"
