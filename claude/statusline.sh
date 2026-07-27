@@ -84,11 +84,23 @@ fmt_hms_iso() {
 # ── 区切り文字（同一bg内で使用）─────────────────────────────
 div() { printf "$(fg 240) │ $(rst)"; }
 
+# ── Reasoning effort level → color (grey → cyan → yellow → red) ──
+effort_fg() {
+  case "$1" in
+    low)       printf '245' ;;
+    medium)    printf '73'  ;;
+    high)      printf '220' ;;
+    xhigh|max) printf '203' ;;
+    *)         printf '245' ;;
+  esac
+}
+
 
 # ═══════════════════════════════════════════════════════════════
 # Extract data from stdin JSON
 # ═══════════════════════════════════════════════════════════════
 MODEL=$(echo "$input" | jq -r '.model.display_name // "—"')
+EFFORT=$(echo "$input" | jq -r '.effort.level // empty')
 CWD=$(echo "$input"   | jq -r '.workspace.current_dir // ""')
 CTX=$(echo "$input"   | jq -r '.context_window.used_percentage // 0' | cut -d. -f1)
 [ -z "$CTX" ] || [ "$CTX" = "null" ] && CTX=0
@@ -201,6 +213,10 @@ fi
 BG1=237
 L1="$(bg $BG1)"
 L1+="$(fg 183)$(bld) ${MODEL} $(rst)"
+if [ -n "$EFFORT" ]; then
+  L1+="$(bg $BG1)$(div)"
+  L1+="$(bg $BG1)$(fg "$(effort_fg "$EFFORT")")$(bld) effort:${EFFORT}$(rst)"
+fi
 L1+="$(bg $BG1)$(div)"
 L1+="$(bg $BG1)$(fg 245) ctx "
 L1+="$(bar_fine "$CTX")$(rst)"
