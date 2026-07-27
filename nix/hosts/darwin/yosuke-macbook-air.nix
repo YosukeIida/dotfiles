@@ -658,24 +658,11 @@ in
     };
   };
 
-  # cctag spoke（tmllab Slack workspace 向け）常時稼働。ログイン時に自動起動し、
-  # クラッシュしたら KeepAlive で自動再起動する。複数 workspace を足すときは
-  # 同じパターンで launchd.user.agents に追加する（Label / EnvironmentVariables を変える）。
-  launchd.user.agents.cctagSpokeTmllab = {
-    serviceConfig = {
-      Label = "com.yosuke.cctag-spoke-tmllab";
-      ProgramArguments = [
-        "${homedir}/.local/bin/cctag-spoke"
-      ];
-      EnvironmentVariables = {
-        CCTAG_ENV_FILE = "${homedir}/.config/cctag/slack_tmllab_workspace.env";
-      };
-      RunAtLoad = true;
-      KeepAlive = true;
-      StandardOutPath = "${homedir}/Library/Logs/cctag-spoke-tmllab.log";
-      StandardErrorPath = "${homedir}/Library/Logs/cctag-spoke-tmllab.log";
-    };
-  };
+  # cctag spoke は launchd 常駐をやめ、1つのターミナルで手動起動する運用に変更した
+  # (2026-07-27)。同じ owner の Spoke が2つ繋がると Hub が古い接続を切り、KeepAlive で
+  # 蘇った側と手動起動側が永久に蹴り合う再接続ストームになったため。ログも
+  # ~/Library/Logs に隠れて気づきにくかった。復活させる場合は cctag 側の
+  # 単一起動ガード (src/spoke/lock.ts) が入った版であることを確認すること。
 
   # sleepctl on 中に蓋を閉じたら内蔵ディスプレイだけ即座に消す監視エージェント。
   # sleepctl on/off 自体 (pmset -a disablesleep) はこのエージェントの責務ではなく
