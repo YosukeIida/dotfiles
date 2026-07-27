@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# agent-switch のプロファイル名を列挙する。
+#
+# 使い方: agsw-list-profiles <prefix>
+#   例:   agsw-list-profiles "$HOME/.codex-"
+# 出力:   プロファイル名（prefix を除いた部分）を1行1件。該当なしなら無出力・exit 0。
+#
+# プロファイル・マーカー（.agsw-profile）を持つ dir だけを列挙する。prefix 方式
+# （~/.claude-<name> / ~/.codex-<name>）は agent-switch と無関係な既存ディレクトリに
+# 偶然合致しうるため（実例: 別ツールの ~/.claude-science）、dir の存在だけでは
+# プロファイルと見なさない。
+#
+# 同じ規則の単体判定は lib/common.zsh の _agsw_require_profile が実装している。
+# マーカー名を変更する場合は両方を直すこと。
+set -uo pipefail
+
+MARKER=".agsw-profile"
+PREFIX="${1:?usage: agsw-list-profiles <prefix>}"
+
+for dir in "$PREFIX"*; do
+  # glob 不一致のときはリテラル文字列がそのまま入るので -d で弾かれる
+  [[ -d "$dir" ]] || continue
+  [[ -f "$dir/$MARKER" ]] || continue
+  printf '%s\n' "${dir#"$PREFIX"}"
+done

@@ -6,6 +6,7 @@
 # ~/.codex を見るため、そちらは cx app で切り替える。
 #
 # cx                 → 現在状態表示（shell / App / 起動中デーモン）
+# cx list            → プロファイル一覧（* が現在の CODEX_HOME）
 # cx <name>          → このターミナルの CODEX_HOME を切替（他ターミナルに影響しない）
 # cx app <name>      → Codex App 用（~/.codex/auth.json symlink）を切替
 cx() {
@@ -14,14 +15,14 @@ cx() {
     "")
       cx_status
       ;;
+    list)
+      cx_list
+      ;;
     app)
       local name="${2:-}"
       [[ -n "$name" ]] || { echo "usage: cx app <name>" >&2; return 1; }
       local dir="${AGSW_CODEX_HOME_PREFIX:-$HOME/.codex-}$name"
-      if [[ ! -d "$dir" ]]; then
-        echo "Error: $dir not found. Run: $_AGSW_DIR/bin/setup-codex-account $name" >&2
-        return 1
-      fi
+      _agsw_require_profile "$dir" "$_AGSW_DIR/bin/setup-codex-account $name" || return 1
       local app_auth="${AGSW_CODEX_APP_AUTH:-$HOME/.codex/auth.json}"
       # 実ファイル（非symlink）を ln -sf で潰すとログイン中の認証情報を破壊するため拒否
       if [[ -e "$app_auth" && ! -L "$app_auth" ]]; then
@@ -35,14 +36,43 @@ cx() {
       ;;
     *)
       local dir="${AGSW_CODEX_HOME_PREFIX:-$HOME/.codex-}$sub"
-      if [[ ! -d "$dir" ]]; then
-        echo "Error: $dir not found. Run: $_AGSW_DIR/bin/setup-codex-account $sub" >&2
-        return 1
-      fi
+      _agsw_require_profile "$dir" "$_AGSW_DIR/bin/setup-codex-account $sub" || return 1
       export CODEX_HOME="$dir"
       cx_status
       ;;
   esac
+}
+
+# プロファイル一覧。* が現在このシェルで有効な CODEX_HOME、@ が Codex App 側。
+# Claude と違い Codex は「デフォルト = env var 未設定」という特別扱いを持たず、
+# 全アカウントが dir を実体に持つので、列挙はマーカー由来のものだけで足りる。
+cx_list() {
+  local prefix="${AGSW_CODEX_HOME_PREFIX:-$HOME/.codex-}"
+  local app_auth="${AGSW_CODEX_APP_AUTH:-$HOME/.codex/auth.json}"
+  local current="${CODEX_HOME:-}"
+  local app_target name dir mark
+
+  app_target="$(readlink "$app_auth" 2>/dev/null || echo "")"
+
+  # CODEX_HOME 未設定のシェルは共有の ~/.codex を直接使う。Claude と違い Codex には
+  # 「デフォルトアカウント」の概念が無いため、この状態はどのプロファイル行にも一致せず
+  # `*` がどこにも付かない。codex() の login ガードが危険と見なす状態でもあるので、
+  # 行として明示する。
+  if [[ -z "${CODEX_HOME:-}" ]]; then
+    echo "*  (CODEX_HOME 未設定 — 共有の ~/.codex を直接使用。cx <name> で選択してください)"
+  fi
+
+  while IFS= read -r name; do
+    [[ -n "$name" ]] || continue
+    dir="$prefix$name"
+    mark=""
+    [[ "$current" == "$dir" ]] && mark="*"
+    [[ "$app_target" == "$dir/auth.json" ]] && mark="$mark@"
+    printf '%-2s %s\n' "$mark" "$name"
+  done < <(_agsw_list_profiles "$prefix")
+
+  echo ""
+  echo "  * = このシェルの CODEX_HOME / @ = Codex App が読む auth.json"
 }
 
 cx_status() {
@@ -51,8 +81,19 @@ cx_status() {
   local app_target
   app_target="$(readlink "$app_auth" 2>/dev/null || echo "(not a symlink)")"
 
+  # account_id を出して「shell と App が同じアカウントか」をディレクトリ名の記憶に
+  # 頼らず確認できるようにする。アカウントが3つ以上あると名前だけでは追えない。
+  # 取れないのは未ログイン / API-key 認証（tokens が null）/ python3 不在のとき。
+  local shell_id="" app_id=""
+  if [[ -x "$_AGSW_DIR/bin/agsw-codex-account-id" ]]; then
+    shell_id="$("$_AGSW_DIR/bin/agsw-codex-account-id" "$shell_home/auth.json" 2>/dev/null)" || shell_id=""
+    app_id="$("$_AGSW_DIR/bin/agsw-codex-account-id" "$app_auth" 2>/dev/null)" || app_id=""
+  fi
+
   echo "shell CODEX_HOME : $shell_home"
+  echo "shell account_id : ${shell_id:-(不明)}"
   echo "app auth.json -> : $app_target"
+  echo "app account_id   : ${app_id:-(不明)}"
 
   # 自分の CODEX_HOME 用 managed daemon が動いていれば情報表示のみ行う。
   # 他ツール・他プロジェクトが起動した無関係な codex app-server プロセス

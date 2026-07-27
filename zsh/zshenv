@@ -23,7 +23,10 @@ export AGSW_CLAUDE_ASSETS_DIR="${HOME}/workspace/github.com/YosukeIida/dotfiles/
 
 # 新しいターミナルは常に personal アカウントの Codex CODEX_HOME で開始する
 # （tools/agent-switch/README.md の「デフォルトアカウントを固定したい場合」参照）
-[[ -d "${HOME}/.codex-personal" ]] && export CODEX_HOME="${CODEX_HOME:-${HOME}/.codex-personal}"
+#
+# 存在チェックはマーカー（.agsw-profile）で行う。-d だけだと、prefix に偶然一致した
+# 未管理ディレクトリでも Codex が直接使えてしまい、cx 側のガードと食い違う。
+[[ -f "${HOME}/.codex-personal/.agsw-profile" ]] && export CODEX_HOME="${CODEX_HOME:-${HOME}/.codex-personal}"
 
 # Load direnv in non-interactive shells (for Claude Code)
 if ! [[ -o interactive ]] && [[ -f "$PWD/.envrc" ]] && command -v direnv >/dev/null 2>&1; then

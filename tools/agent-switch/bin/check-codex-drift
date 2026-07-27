@@ -32,10 +32,28 @@ FIX=0
 # プロファイル固有として扱う（2026-07-10）。
 IGNORE_RE='^(auth\.json|\.credentials\.json|\.codex-global-state\.json(\.bak)?|history\.jsonl|logs?(_[0-9]+)?\.sqlite([-.].*)?|goals_[0-9]+\.sqlite([-.].*)?|state_[0-9]+\.sqlite([-.].*)?|mcp-oauth-locks|log|\.DS_Store|version\.json|\.personality_snapshot.*|\.app-server-state-reconciled.*|config\.toml\.bak.*|ambient-suggestions|app-server-control|app-server-daemon|attachments|browser|chrome-native-hosts.*\.json|computer-use|generated_images|keybindings\.json|node_repl|pets|process_manager|rules|sqlite|vendor_imports|worktrees)$'
 
+# プロファイルの列挙は bin/agsw-list-profiles に一本化する（マーカー付きの dir のみ）。
+# このスクリプトは cx 実行ごとに --fix 付きで呼ばれる「唯一の全自動書き込み経路」なので、
+# prefix に偶然合致した無関係な dir（例: 別アプリの ~/.codex-*）に symlink を撒かないよう
+# 列挙側で確実に除外する。
+HELPER="$(dirname "$0")/agsw-list-profiles"
+
+# ヘルパ不在時に黙って空の列挙を返すと「差分なし」と誤報するため、先に確認して中断する
+# （process substitution の中で exit しても本体は止まらないので、ここで確認する必要がある）。
+if [ ! -x "$HELPER" ]; then
+  echo "Error: $HELPER が見つからない/実行可能ではありません。" >&2
+  echo "  プロファイルを同定できない状態で symlink を張ると未管理の dir を汚染しかねないため中断します。" >&2
+  exit 1
+fi
+
+_list_profiles() {
+  "$HELPER" "$PREFIX"
+}
+
 found=0
-for dir in "$PREFIX"*; do
-  [ -d "$dir" ] || continue
-  name="${dir#"$PREFIX"}"
+while IFS= read -r name; do
+  [ -n "$name" ] || continue
+  dir="$PREFIX$name"
   fixed=""
   missing=""
   while IFS= read -r entry; do
@@ -58,6 +76,6 @@ for dir in "$PREFIX"*; do
     echo "⚠ codex-drift: プロファイル '$name' に未共有の項目:$missing"
     echo "   → check-codex-drift --fix を実行、または意図的なら IGNORE_RE に追記"
   fi
-done
+done < <(_list_profiles)
 
 exit 0

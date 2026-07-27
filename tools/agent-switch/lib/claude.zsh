@@ -4,11 +4,13 @@
 # エントリで保存される（実測: 認証の無い dir では "Not logged in" になる）。
 # よってシェルの CLAUDE_CONFIG_DIR 切替 = 本物の認証分離。
 # 一方 Codex と違いトークンはファイルではないため、symlink 差替による
-# App/VS Code 拡張の切替（cx app 相当）は実装できない。App/拡張は常に
-# デフォルト（CLAUDE_CONFIG_DIR 未設定 = ~/.claude + ~/.claude.json）の
-# アカウントで動く。
+# App/VS Code 拡張の切替（cx app 相当）は同じ方法では作れない。現状 App/拡張は
+# 常にデフォルト（CLAUDE_CONFIG_DIR 未設定 = ~/.claude + ~/.claude.json）の
+# アカウントで動く。Keychain エントリの move による cc app の実現可否は検証中
+# （README.md「cc app の検証」参照）。
 #
 # cc                     → 現在状態表示
+# cc list                → プロファイル一覧（* が現在のアカウント）
 # cc <name>              → アカウント切替（このシェルのみ）
 #                          デフォルトアカウント名（AGSW_CLAUDE_DEFAULT_NAME、
 #                          既定 labteam）は unset CLAUDE_CONFIG_DIR に相当し、
@@ -23,15 +25,13 @@ cc() {
     cc_status; return 0
   fi
 
+  if [[ "$1" == "list" ]]; then
+    cc_list; return $?
+  fi
+
   for arg in "$@"; do
     case "$arg" in
       api|sub|subscription) mode="$arg" ;;
-      1)
-        echo "note: 番号制は廃止されました。'cc $default_name' を使ってください（今回はそのまま実行します）" >&2
-        account="$default_name" ;;
-      2)
-        echo "note: 番号制は廃止されました。'cc personal' を使ってください（今回はそのまま実行します）" >&2
-        account="personal" ;;
       *)
         account="$arg" ;;
     esac
@@ -46,10 +46,7 @@ cc() {
       unset CLAUDE_CONFIG_DIR
     else
       local dir="${AGSW_CLAUDE_HOME_PREFIX:-$HOME/.claude-}$account"
-      if [[ ! -d "$dir" ]]; then
-        echo "Error: $dir not found. Run: $_AGSW_DIR/bin/setup-claude-account $account" >&2
-        return 1
-      fi
+      _agsw_require_profile "$dir" "$_AGSW_DIR/bin/setup-claude-account $account" || return 1
       export CLAUDE_CONFIG_DIR="$dir"
     fi
   fi
@@ -84,6 +81,33 @@ cc() {
   cc_status
 }
 
+# プロファイル一覧。* が現在このシェルで有効なアカウント。
+# デフォルトアカウントは dir を持たない（CLAUDE_CONFIG_DIR 未設定に相当）ので、
+# マーカー由来の列挙とは別に必ず先頭へ出す。
+cc_list() {
+  local default_name="${AGSW_CLAUDE_DEFAULT_NAME:-labteam}"
+  local prefix="${AGSW_CLAUDE_HOME_PREFIX:-$HOME/.claude-}"
+  local current name mark
+
+  if [[ -z "${CLAUDE_CONFIG_DIR:-}" ]]; then
+    current="$default_name"
+  else
+    # 列挙側（agsw-list-profiles）は prefix をちょうど剥がすので、同じ規則で導出する。
+    # `##*[-/]` だと「最後の - まで」を剥がすため、ハイフンを含む名前（lab-team → team）や
+    # 末尾スラッシュ付きのパスで一覧のどの行とも一致しなくなる。
+    current="${${CLAUDE_CONFIG_DIR%/}#$prefix}"
+  fi
+
+  mark=" "; [[ "$current" == "$default_name" ]] && mark="*"
+  echo "$mark $default_name  (default — CLAUDE_CONFIG_DIR 未設定。App/拡張と同じ認証)"
+
+  while IFS= read -r name; do
+    [[ -n "$name" && "$name" != "$default_name" ]] || continue
+    mark=" "; [[ "$current" == "$name" ]] && mark="*"
+    echo "$mark $name"
+  done < <(_agsw_list_profiles "$prefix")
+}
+
 cc_status() {
   local default_name="${AGSW_CLAUDE_DEFAULT_NAME:-labteam}"
   local config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
@@ -95,7 +119,8 @@ cc_status() {
     # （~/.claude/.claude.json は旧位置で更新されない — mtime実測で確認済み）
     json="$HOME/.claude.json"
   else
-    name="${config_dir##*[-/]}"
+    # cc_list と同じ規則で導出する（`##*[-/]` はハイフンを含む名前で誤る）
+    name="${${config_dir%/}#${AGSW_CLAUDE_HOME_PREFIX:-$HOME/.claude-}}"
     json="$config_dir/.claude.json"
   fi
 

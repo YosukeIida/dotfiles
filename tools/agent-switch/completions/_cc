@@ -1,0 +1,21 @@
+#compdef cc
+# cc（Claude Code アカウント・モード切替）の補完。
+#
+# compdef を直接呼ばず fpath 経由で拾わせているのは、プラグインが compinit より
+# 先に source される構成でも順序に依存せず動くようにするため
+# （agent-switch.plugin.zsh のコメント参照）。
+
+local -a candidates
+local default_name="${AGSW_CLAUDE_DEFAULT_NAME:-labteam}"
+local prefix="${AGSW_CLAUDE_HOME_PREFIX:-$HOME/.claude-}"
+local out
+
+# デフォルトアカウントは dir を持たない（CLAUDE_CONFIG_DIR 未設定に相当）ので別に足す
+candidates=("$default_name" list api sub)
+
+if [[ -x "$_AGSW_DIR/bin/agsw-list-profiles" ]]; then
+  out="$("$_AGSW_DIR/bin/agsw-list-profiles" "$prefix" 2>/dev/null)"
+  [[ -n "$out" ]] && candidates+=("${(@f)out}")
+fi
+
+compadd -- "${(@u)candidates}"
