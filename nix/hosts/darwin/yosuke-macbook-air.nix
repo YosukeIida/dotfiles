@@ -128,6 +128,16 @@ let
       failed=1
     fi
 
+    # skill の更新有無も日次で拾う（読み取り専用。取り込みは手動で diff を目視する）。
+    # exit 1 は「更新あり」で異常ではないため、set -e で落ちないよう終了コードを受ける。
+    echo "==> agent skills"
+    skills_rc=0
+    "${agentSkillsOutdated}/bin/agent-skills-outdated" || skills_rc=$?
+    case "$skills_rc" in
+      0 | 1) ;; # 最新 / 更新あり（内容は上に出力済み）
+      *) failed=1 ;; # 判定できなかった場合だけ失敗として扱う
+    esac
+
     exit "$failed"
   '';
 
@@ -172,6 +182,177 @@ let
   # あったが、cask と二重管理になり /Applications を brew の記録の裏で書き換えるため
   # Caskroom のバージョンと実体がずれる問題を起こしていたので削除した。
   # 週次リリースへの追従は zed 側の latex_weekly_release.yml が cask を bump する。
+
+  # skill の更新有無だけを表示する（brew outdated 相当）。内容は一切書き換えない。
+  # 取り込みを自動化しないのは、外部 skill の更新時は目視 diff を必須とする方針
+  # （CLAUDE.md、プロンプトインジェクション対策）に従うため。
+  #
+  # なぜラッパーが必要か: `gh skill update --dry-run` は更新の有無に関わらず exit 0 を
+  # 返し、`--json` も未実装（2026-07 実測。cli/cli#13215 で要望中）。スクリプトから
+  # 判定できないため、ここで exit code の契約を与える:
+  #   0 = 全て最新 / 1 = 更新あり / 2 = エラー
+  agentSkillsOutdated = pkgs.writeShellScriptBin "agent-skills-outdated" ''
+    # -e は付けない: grep が「該当なし」で 1 を返すのが正常系のため。
+    set -uo pipefail
+
+    PATH="/etc/profiles/per-user/${username}/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+
+    verbose=0
+    quiet=0
+    for arg in "$@"; do
+      case "$arg" in
+        --verbose) verbose=1 ;;
+        --quiet) quiet=1 ;;
+        *)
+          echo "usage: agent-skills-outdated [--verbose] [--quiet]" >&2
+          exit 2
+          ;;
+      esac
+    done
+
+    if ! command -v gh >/dev/null 2>&1; then
+      echo "agent-skills-outdated: gh (GitHub CLI) not found" >&2
+      exit 2
+    fi
+
+    updates=0
+    errors=0
+    report=""
+
+    add_report() {
+      report="$report$1"$'\n'
+    }
+
+    # --- gh skill 経路 -----------------------------------------------------
+    # metadata.github-* を持つ skill（sync-lab-skills.sh が注入）を比較する。
+    #
+    # --all は必須: 付けないと metadata の無い skill について「どの GitHub repo 由来か」を
+    # 対話的に尋ね、無人実行が stdin 待ちで固まる（sync-lab-skills.sh に実機確認の記録あり）。
+    # </dev/null で二重に担保する。
+    scan_gh_skill() {
+      dir="$1"
+      label="$2"
+
+      [ -d "$dir" ] || return 0
+
+      result="$(gh skill update --dry-run --all --dir "$dir" 2>&1 </dev/null)"
+
+      if printf '%s\n' "$result" | grep -q 'update(s) available'; then
+        updates=1
+        add_report "[$label]"
+        add_report "$(printf '%s\n' "$result" \
+          | awk '/update\(s\) available/,0' \
+          | grep -v 'no GitHub metadata' \
+          | sed '/^[[:space:]]*$/d')"
+      elif printf '%s\n' "$result" | grep -qE 'All skills are up to date\.|No installed skills found'; then
+        : # 最新、または gh が skill として認識するものが無い
+      else
+        # 想定外の出力を「更新なし」と誤読すると、静かに古いまま放置される。
+        # ネットワーク断や gh の出力形式変更はエラーとして鳴らす。
+        errors=1
+        add_report "[$label] cannot interpret gh skill output:"
+        add_report "$result"
+      fi
+
+      if [ "$verbose" -eq 1 ]; then
+        printf '%s\n' "$result" | grep 'no GitHub metadata' | sed "s/^/[$label] /" || true
+      fi
+    }
+
+    # --- vendor-* pin 経路 -------------------------------------------------
+    # gh skill はリポジトリ直下の SKILL.md を扱えない（`gh skill preview
+    # ogulcancelik/herdr` が "no standard skills found" を返す）。そうした vendor コピーは
+    # frontmatter に vendor-* を持たせ、その SKILL.md を触った commit だけを比較する。
+    # キー名を github-* にしないのは、gh 側がリポジトリルートの tree を見て upstream の
+    # 全 commit を「更新あり」と誤検知するのを避けるため。
+    scan_vendor_pins() {
+      dir="$1"
+      label="$2"
+
+      [ -d "$dir" ] || return 0
+
+      for skill in "$dir"/*/SKILL.md; do
+        [ -f "$skill" ] || continue
+
+        repo="$(sed -nE 's/^[[:space:]]*vendor-repo:[[:space:]]*(.+)$/\1/p' "$skill" | head -n1)"
+        [ -n "$repo" ] || continue
+
+        name="$(basename "$(dirname "$skill")")"
+        vpath="$(sed -nE 's/^[[:space:]]*vendor-path:[[:space:]]*(.+)$/\1/p' "$skill" | head -n1)"
+        pin="$(sed -nE 's/^[[:space:]]*vendor-commit:[[:space:]]*(.+)$/\1/p' "$skill" | head -n1)"
+
+        if [ -z "$vpath" ] || [ -z "$pin" ]; then
+          errors=1
+          add_report "[$label] $name: vendor-repo があるが vendor-path/vendor-commit が無い"
+          continue
+        fi
+
+        latest="$(gh api "repos/$repo/commits?path=$vpath&per_page=1" --jq '.[0].sha' 2>/dev/null)"
+
+        if [ -z "$latest" ]; then
+          # 到達できないだけならエラーにはしないが、黙って飛ばすと「最新」と
+          # 見分けがつかなくなるので必ず報告する（lab PAT は別 repo 用スコープなので、
+          # postActivation では公開 repo にも届かないことがある）。
+          add_report "[$label] $name: 未確認（$repo に到達できず）"
+          continue
+        fi
+
+        if [ "$latest" != "$pin" ]; then
+          updates=1
+          add_report "[$label] $name: $repo:$vpath updated"
+          add_report "  pinned $pin -> $latest"
+        fi
+      done
+    }
+
+    pub="${publicDir}"
+    priv="${privateDir}"
+    skillsPub="${skillsPubDir}"
+    lab_pat="${homedir}/.config/gh/lab-skills-pat"
+
+    # 認証を先に確定させる。対話シェルからは環境の gh 認証で足りるが、postActivation の
+    # su - 経由では keyring が見えないため、agenix 管理の読み取り専用 PAT に切り替える。
+    #
+    # ここで必ず検証するのは、**認証が無くても gh skill update --dry-run が
+    # "All skills are up to date." と報告する**ため（2026-07 実測）。確認できていないのに
+    # 最新と表示すると、古い skill を静かに使い続けることになる。
+    token=""
+    if gh auth status >/dev/null 2>&1; then
+      : # 環境の認証を使う
+    elif [ -r "$lab_pat" ] && GH_TOKEN="$(cat "$lab_pat")" gh auth status >/dev/null 2>&1; then
+      token="$(cat "$lab_pat")"
+      export GH_TOKEN="$token"
+    else
+      echo "agent-skills-outdated: GitHub 認証が無いため確認できなかった" >&2
+      echo "  gh skill は未認証でも \"All skills are up to date.\" と報告するため、最新とは見なさない" >&2
+      exit 2
+    fi
+
+    scan_gh_skill "$pub/agents/skills" "public vendor"
+    scan_gh_skill "$priv/agents/skills" "private overlay"
+    scan_gh_skill "$skillsPub" "personal-agent-skills"
+
+    scan_vendor_pins "$pub/agents/skills" "public vendor"
+
+    if [ -n "$report" ]; then
+      printf '%s' "$report"
+    fi
+
+    if [ "$errors" -eq 1 ]; then
+      echo "agent-skills-outdated: 判定できない箇所があった（上記参照）" >&2
+      exit 2
+    fi
+
+    if [ "$updates" -eq 1 ]; then
+      echo "agent skills: 更新があります。取り込みは sync スクリプトを手動実行して diff を目視すること"
+      exit 1
+    fi
+
+    if [ "$quiet" -eq 0 ]; then
+      echo "agent skills: all up to date"
+    fi
+    exit 0
+  '';
 
   vpnCoexistenceApply = pkgs.writeShellScriptBin "vpn-coexistence-apply" ''
     set -euo pipefail
@@ -396,6 +577,7 @@ in
     darwinUpdate
     brewUpgradeAll
     brewUpdateReminder
+    agentSkillsOutdated
     vpnCoexistenceApply
   ];
 
@@ -575,21 +757,18 @@ in
     _place "${config.age.secrets."cctag-slack_tmllab_workspace".path}" "$home/.config/cctag/slack_tmllab_workspace.env"
     _place "${config.age.secrets."gh-lab-skills-pat".path}" "$home/.config/gh/lab-skills-pat"
 
-    # 研究室 skill（tmllab-*）の更新有無を通知のみ表示する（brew outdated 相当）。
-    # 内容は一切書き換えない（読み取り専用）。gh の keyring 認証は su - 経由の
-    # 非対話 activation からは見えない（ログインキーチェーンを開けない）ため、
-    # agenix 管理の fine-grained PAT を GH_TOKEN として明示的に渡す
-    # （このPATは TMLlaboratory/lab-claude-skills への読み取り専用スコープのみ）。
-    # 上の _place より後に置くこと（secret配置前だとファイルが無くフォールバックする）。
-    # TMLlabメンバーでない・アクセス不可・PAT未配備でも正常終了するようスクリプト側・
-    # ここのフォールバックで担保済み。switch自体は失敗させない。
-    if [ -x "$priv/sync-lab-skills.sh" ]; then
-      if [ -r "$home/.config/gh/lab-skills-pat" ]; then
-        su - ${username} -c "GH_TOKEN=\"\$(cat '$home/.config/gh/lab-skills-pat')\" bash $priv/sync-lab-skills.sh --check" || true
-      else
-        su - ${username} -c "bash $priv/sync-lab-skills.sh --check" || true
-      fi
-    fi
+    # skill（研究室 tmllab-* と外部 vendor）の更新有無を通知のみ表示する
+    # （brew outdated 相当）。内容は一切書き換えない（読み取り専用）。
+    #
+    # 以前は sync-lab-skills.sh --check を直接呼んでいたが、tmllab-* 以外の vendor skill も
+    # 見たいので agent-skills-outdated に集約した。同コマンドは gh の keyring 認証が
+    # 使えない場合に限り agenix の PAT へフォールバックする（su - 経由の非対話 activation
+    # からはログインキーチェーンを開けないため）。上の _place より後に置くこと。
+    #
+    # exit 1 は「更新あり」なので失敗ではない。TMLlabメンバーでない・アクセス不可・
+    # PAT未配備でも正常終了するようコマンド側で担保しているが、switch を絶対に
+    # 失敗させないため || true も残す。
+    su - ${username} -c "${agentSkillsOutdated}/bin/agent-skills-outdated --quiet" || true
 
     # cf_proxy.sh（public）を ~/.ssh に配置
     _link "$pub/ssh/cf_proxy.sh" "$home/.ssh/cf_proxy.sh"
