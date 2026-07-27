@@ -326,10 +326,16 @@ let
     # ここで必ず検証するのは、**認証が無くても gh skill update --dry-run が
     # "All skills are up to date." と報告する**ため（2026-07 実測）。確認できていないのに
     # 最新と表示すると、古い skill を静かに使い続けることになる。
+    # 判定に gh auth status を使わないこと（2026-07-27 実測）。同コマンドは hosts.yml に
+    # 登録された全アカウント／全ホストを検査し、**1件でも失敗すると exit 1** を返す。
+    # su - 経由では keyring のアカウントが必ず失敗するため、有効な GH_TOKEN を渡した
+    # フォールバック側まで道連れで非ゼロになり、PAT があるのに「認証なし」と誤判定していた。
+    # gh api user は「いま実際に効いている資格情報で認証付き API を叩けるか」だけを見る
+    # （未認証なら exit 4）。rate_limit は未認証でも 200 が返る経路があるため user を使う。
     token=""
-    if gh auth status >/dev/null 2>&1; then
+    if gh api user --silent >/dev/null 2>&1; then
       : # 環境の認証を使う
-    elif [ -r "$lab_pat" ] && GH_TOKEN="$(cat "$lab_pat")" gh auth status >/dev/null 2>&1; then
+    elif [ -r "$lab_pat" ] && GH_TOKEN="$(cat "$lab_pat")" gh api user --silent >/dev/null 2>&1; then
       token="$(cat "$lab_pat")"
       export GH_TOKEN="$token"
     else
