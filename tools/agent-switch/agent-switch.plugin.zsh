@@ -19,5 +19,17 @@
 
 typeset -g _AGSW_DIR="${0:A:h}"
 
+source "$_AGSW_DIR/lib/common.zsh"
 source "$_AGSW_DIR/lib/claude.zsh"
 source "$_AGSW_DIR/lib/codex.zsh"
+
+# 補完。compdef を直接呼ばず fpath へ追加するのは、このプラグインが compinit より
+# 先に source される構成（本 dotfiles がそれ）でも順序に依存せず拾わせるため。
+# compinit が既に走っている構成でも効くよう、compdef が使える場合はその場でも登録する
+# （両方通っても副作用はない）。
+fpath=("$_AGSW_DIR/completions" $fpath)
+if (( $+functions[compdef] )); then
+  autoload -Uz _cc _cx
+  compdef _cc cc
+  compdef _cx cx
+fi

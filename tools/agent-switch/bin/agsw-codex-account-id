@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Codex の auth.json から .tokens.account_id を取り出す。
+#
+# 使い方: agsw-codex-account-id <auth.json>
+# 出力:   account_id を1行。取れなければ無出力で非ゼロ終了。
+#
+# 取れないケース: ファイル不在 / JSON パース失敗 / tokens が dict でない
+# （API-key 認証では tokens が null なので account_id は存在しない）/ python3 不在。
+# 呼び出し側はいずれも「同定不能」として安全側に倒すことを前提にしている。
+#
+# codex-auth-doctor と setup-codex-account が同じ実装を持っていたのを一本化したもの。
+set -uo pipefail
+
+AUTH_FILE="${1:?usage: agsw-codex-account-id <auth.json>}"
+
+command -v python3 >/dev/null 2>&1 || exit 1
+
+python3 - "$AUTH_FILE" <<'PY' 2>/dev/null
+import json, sys
+try:
+    with open(sys.argv[1]) as f:
+        data = json.load(f)
+except Exception:
+    sys.exit(1)
+tokens = data.get("tokens")
+if not isinstance(tokens, dict):
+    sys.exit(1)
+aid = tokens.get("account_id")
+if not aid:
+    sys.exit(1)
+print(aid)
+PY

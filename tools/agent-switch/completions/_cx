@@ -1,0 +1,20 @@
+#compdef cx
+# cx（Codex アカウント切替）の補完。詳細は completions/_cc のコメント参照。
+
+local -a candidates
+local prefix="${AGSW_CODEX_HOME_PREFIX:-$HOME/.codex-}"
+local out
+
+# `cx app <name>` の2語目はプロファイル名のみ。それ以外はサブコマンドも候補に出す。
+if [[ "${words[2]}" == "app" && $CURRENT -eq 3 ]]; then
+  candidates=()
+else
+  candidates=(list app)
+fi
+
+if [[ -x "$_AGSW_DIR/bin/agsw-list-profiles" ]]; then
+  out="$("$_AGSW_DIR/bin/agsw-list-profiles" "$prefix" 2>/dev/null)"
+  [[ -n "$out" ]] && candidates+=("${(@f)out}")
+fi
+
+(( ${#candidates} )) && compadd -- "${(@u)candidates}"

@@ -26,23 +26,27 @@ FIX=0
 [[ "${1:-}" == "--fix" ]] && FIX=1
 
 # auth.json の .tokens.account_id を取り出す（取れなければ非ゼロ終了・無出力）。
+# 実装は bin/agsw-codex-account-id に一本化（setup-codex-account と共用）。
+# 非ゼロ・無出力は「account_id を同定できない」を意味する（python3 不在 / API-key 認証 /
+# パース失敗）。ヘルパ自体の不在は _require_helpers が先に弾くので、ここには来ない。
 _account_id() {
-  command -v python3 >/dev/null 2>&1 || return 1
-  python3 - "$1" <<'PY' 2>/dev/null
-import json, sys
-try:
-    with open(sys.argv[1]) as f:
-        data = json.load(f)
-except Exception:
-    sys.exit(1)
-tokens = data.get("tokens")
-if not isinstance(tokens, dict):
-    sys.exit(1)
-aid = tokens.get("account_id")
-if not aid:
-    sys.exit(1)
-print(aid)
-PY
+  "$(dirname "$0")/agsw-codex-account-id" "$1"
+}
+
+# ヘルパの存在確認。列挙や同定が「空を返した」のか「壊れている」のかを区別できないと、
+# 「プロファイルが見つかりません」「未知アカウント」と誤報して修復を諦める。
+# サブシェル（$(...) や < <(...)）の中で exit しても本体は止まらないため、
+# main の先頭で一度だけ確認する。
+_require_helpers() {
+  local h path
+  for h in agsw-list-profiles agsw-codex-account-id; do
+    path="$(dirname "$0")/$h"
+    if [[ ! -x "$path" ]]; then
+      echo "Error: $path が見つからない/実行可能ではありません。" >&2
+      echo "  agent-switch のインストールが壊れています（bin/ を確認してください）。" >&2
+      exit 1
+    fi
+  done
 }
 
 # auth.json の last_refresh を取り出す（取れなければ無出力）。
@@ -63,13 +67,24 @@ if lr:
 PY
 }
 
-# 利用可能なプロファイル名を1行1件で列挙する。
+# 利用可能なプロファイル名を1行1件で列挙する（マーカー付きの dir のみ）。
+# 実装は bin/agsw-list-profiles に一本化（cc / cx / 補完と共用）。
+# ヘルパの存在は _require_helpers が保証済み。
 _list_profiles() {
-  local dir name
+  "$(dirname "$0")/agsw-list-profiles" "$PREFIX"
+}
+
+# prefix に合致する dir はあるのにマーカーが無い＝移行前 or 無関係な別アプリの dir。
+# 案内に添える。取り込みコマンドには --claim を付ける（setup 側のガードが要求するため、
+# 付けずに案内すると必ず失敗する指示になる）。
+_unmarked_hint() {
+  local dir
   for dir in "$PREFIX"*; do
     [[ -d "$dir" ]] || continue
-    name="${dir#"$PREFIX"}"
-    echo "$name"
+    [[ -f "$dir/.agsw-profile" ]] && continue
+    echo "  注: $dir はマーカー(.agsw-profile)が無いため列挙対象外です。"
+    echo "      無関係な別アプリのデータでないことを確認したうえで取り込むなら:"
+    echo "      $(dirname "$0")/setup-codex-account ${dir#"$PREFIX"} --claim"
   done
 }
 
@@ -87,9 +102,12 @@ _warn_missing() {
     echo "  プロファイルが見つかりません。まず作成してください:"
     echo "    $(dirname "$0")/setup-codex-account migrate <name>"
   fi
+  _unmarked_hint
 }
 
 main() {
+  _require_helpers
+
   # (a) 正常な symlink（リンク先実在）→ 何もしない
   if [[ -L "$APP_AUTH" ]]; then
     if [[ -e "$APP_AUTH" ]]; then
@@ -120,17 +138,18 @@ main() {
 
   # 各プロファイルの実ファイル auth.json と account_id を照合
   local dir name pid matched_dir="" matched_name="" match_count=0
-  for dir in "$PREFIX"*; do
-    [[ -d "$dir" ]] || continue
+  while IFS= read -r name; do
+    [[ -n "$name" ]] || continue
+    dir="$PREFIX$name"
     [[ -f "$dir/auth.json" && ! -L "$dir/auth.json" ]] || continue
     pid="$(_account_id "$dir/auth.json")" || continue
     [[ -n "$pid" ]] || continue
     if [[ "$pid" == "$src_id" ]]; then
       match_count=$((match_count + 1))
       matched_dir="$dir"
-      matched_name="${dir#"$PREFIX"}"
+      matched_name="$name"
     fi
-  done
+  done < <(_list_profiles)
 
   if [[ "$match_count" -eq 1 ]]; then
     # 既知アカウント（唯一一致）→ 同一アカウントの新しいトークンなので上書きで安全
@@ -163,6 +182,8 @@ main() {
   [[ -n "$last_refresh" ]] && echo "  last_refresh: $last_refresh"
   echo "  新規アカウントとして取り込むには:"
   echo "    $(dirname "$0")/setup-codex-account adopt <name>"
+  # マーカー未付与のプロファイルがあると、既知アカウントでも「未知」と出てしまう
+  _unmarked_hint
   exit 0
 }
 

@@ -3,7 +3,12 @@
 # 使い方:
 #   ./setup-account.sh migrate <name>   初回移行（既存 ~/.codex の auth.json だけ分離）
 #   ./setup-account.sh adopt <name>     実ファイル化した ~/.codex/auth.json を取り込む
-#   ./setup-account.sh <name>           2アカウント目以降の追加
+#   ./setup-account.sh <name> [--claim] 2アカウント目以降の追加 / 既存 dir の正規化
+#
+# --claim: 既存の「マーカー無し・空でない」ディレクトリを agent-switch のプロファイル
+#          として取り込む。無関係な別アプリのデータを掴む事故を防ぐため、この明示が
+#          無い限り拒否する。サブコマンドの `adopt`（実ファイル化した auth.json の
+#          取り込み）とは別の概念。
 #
 # 設計: ~/.codex は今まで通り実体（sessions, history.jsonl, skills, AGENTS.md,
 # config.toml等）を持ち続ける。各アカウントディレクトリ(~/.codex-<name>)は
@@ -23,9 +28,17 @@ LINKED_ITEMS=(skills AGENTS.md config.toml sessions history.jsonl session_index.
               memories memories_1.sqlite memories_1.sqlite-shm memories_1.sqlite-wal \
               goals_1.sqlite transcription-history.jsonl models_cache.json)
 
-_link_shared_items() {
+# アカウント dir を正規化する（再実行で収束）。共有 symlink を張り直し、
+# プロファイル・マーカーを置く。migrate / adopt / add のすべてがここを通るので、
+# マーカーを付け忘れる経路が生まれない。
+_init_profile() {
   local acct_dir="$1"
   local item
+
+  # cx はマーカーが無い dir を拒否する（prefix が偶然一致した無関係なディレクトリを
+  # 掴んで他ツールのデータを汚染するのを防ぐ）。詳細は lib/common.zsh 参照。
+  touch "$acct_dir/.agsw-profile"
+
   for item in "${LINKED_ITEMS[@]}"; do
     if [[ -e "$HOME_CODEX/$item" ]]; then
       # -n: リンク先がディレクトリでも辿らずリンク自体を置き換える（再実行で収束）
@@ -35,25 +48,44 @@ _link_shared_items() {
 }
 
 # auth.json の .tokens.account_id を取り出す（取れなければ非ゼロ終了・無出力）。
-# python3 前提（無い環境では adopt の同一アカウント判定ができず、既存 dir への
-# 取り込みは安全側に倒して拒否される）。
+# 実装は bin/agsw-codex-account-id に一本化（codex-auth-doctor と共用）。
+# python3 前提のため、無い環境では adopt の同一アカウント判定ができず、既存 dir への
+# 取り込みは安全側に倒して拒否される。
 _account_id() {
-  command -v python3 >/dev/null 2>&1 || return 1
-  python3 - "$1" <<'PY' 2>/dev/null
-import json, sys
-try:
-    with open(sys.argv[1]) as f:
-        data = json.load(f)
-except Exception:
-    sys.exit(1)
-tokens = data.get("tokens")
-if not isinstance(tokens, dict):
-    sys.exit(1)
-aid = tokens.get("account_id")
-if not aid:
-    sys.exit(1)
-print(aid)
-PY
+  local helper
+  helper="$(dirname "$0")/agsw-codex-account-id"
+  [[ -x "$helper" ]] || return 1
+  "$helper" "$1"
+}
+
+# 既存の「マーカー無し・空でない」dir を agent-switch のプロファイルとして取り込んで
+# よいかを判定する。無関係な別アプリのデータ（実例: ~/.claude-science は Claude Science
+# アプリ）に symlink を撒いてマーカーを付けると、以後 cx から使えるようになり、
+# そのアプリの dir に Codex が書き込み始める。明示の --claim が無い限り拒否する。
+#
+# 新規 dir（未作成）は何も奪わないので対象外。マーカー付きの dir は既に管理下なので素通し。
+_require_claimable() {
+  local acct_dir="$1" name="$2" claim="$3"
+
+  [[ -d "$acct_dir" ]] || return 0
+  [[ -f "$acct_dir/.agsw-profile" ]] && return 0
+  [[ -n "$(ls -A "$acct_dir" 2>/dev/null)" ]] || return 0
+
+  if [[ "$claim" != 1 ]]; then
+    {
+      echo "Error: $acct_dir は既に存在し、agent-switch の管理下ではありません（.agsw-profile が無い）。"
+      echo "  中身:"
+      # set -e + pipefail 下で head が先に終了すると ls が SIGPIPE で死に、
+      # 案内の残りが出ないまま exit 141 になるため、パイプライン全体を保護する。
+      { ls -A "$acct_dir" 2>/dev/null | head -8 | sed 's/^/    /'; } || true
+      [[ "$(ls -A "$acct_dir" 2>/dev/null | wc -l)" -gt 8 ]] && echo "    ..."
+      echo "  別アプリのデータディレクトリでないことを確認してください。"
+      echo "  agent-switch のプロファイルとして取り込むなら:"
+      echo "    $0 $name --claim"
+    } >&2
+    exit 1
+  fi
+  echo "[--claim] 既存ディレクトリを agent-switch のプロファイルとして取り込みます"
 }
 
 migrate() {
@@ -75,7 +107,7 @@ migrate() {
   mv "$HOME_CODEX/auth.json" "$acct_dir/auth.json"
   ln -sf "$acct_dir/auth.json" "$HOME_CODEX/auth.json"
 
-  _link_shared_items "$acct_dir"
+  _init_profile "$acct_dir"
 
   echo "Migrated."
   echo "  ~/.codex/auth.json -> $acct_dir/auth.json"
@@ -89,6 +121,7 @@ migrate() {
 # 事故（CODEX_HOME 未指定の生 login で symlink が実ファイル上書き）からの復旧用。
 adopt() {
   local name="$1"
+  local claim="${2:-0}"
   local acct_dir="$HOME/.codex-$name"
   local app_auth="${AGSW_CODEX_APP_AUTH:-$HOME_CODEX/auth.json}"
 
@@ -99,12 +132,17 @@ adopt() {
     exit 1
   fi
 
+  # 既存の未管理 dir への取り込みは add_account と同じく --claim を要求する。
+  # ここを塞がないと `adopt <name>` が --claim ガードの迂回路になり、無関係な dir に
+  # 認証を移して symlink を撒き、cx から使えるようにしてしまう。
+  _require_claimable "$acct_dir" "$name" "$claim"
+
   if [[ ! -d "$acct_dir" ]]; then
     # 新規 dir: migrate と同じ動き
     mkdir -p "$acct_dir"
     mv "$app_auth" "$acct_dir/auth.json"
     ln -sf "$acct_dir/auth.json" "$app_auth"
-    _link_shared_items "$acct_dir"
+    _init_profile "$acct_dir"
     echo "Adopted into new $acct_dir"
     echo "  $app_auth -> $acct_dir/auth.json"
     return 0
@@ -115,7 +153,7 @@ adopt() {
   if [[ ! -e "$acct_dir/auth.json" ]]; then
     mv "$app_auth" "$acct_dir/auth.json"
     ln -sf "$acct_dir/auth.json" "$app_auth"
-    _link_shared_items "$acct_dir"
+    _init_profile "$acct_dir"
     echo "Adopted into existing $acct_dir (auth.json was absent)"
     return 0
   fi
@@ -129,7 +167,7 @@ adopt() {
   if [[ -n "$src_id" && -n "$existing_id" && "$src_id" == "$existing_id" ]]; then
     mv "$app_auth" "$acct_dir/auth.json"
     ln -sf "$acct_dir/auth.json" "$app_auth"
-    _link_shared_items "$acct_dir"
+    _init_profile "$acct_dir"
     echo "Adopted (same account_id=$src_id) into existing $acct_dir"
     return 0
   fi
@@ -143,36 +181,72 @@ adopt() {
 
 add_account() {
   local name="$1"
+  local claim="${2:-0}"
   local acct_dir="$HOME/.codex-$name"
+  local existed=0
 
   if [[ ! -d "$HOME_CODEX" ]]; then
     echo "Error: $HOME_CODEX not found" >&2
     exit 1
   fi
 
-  mkdir -p "$acct_dir"
-  _link_shared_items "$acct_dir"
+  [[ -d "$acct_dir" ]] && existed=1
 
-  echo "Created $acct_dir"
+  _require_claimable "$acct_dir" "$name" "$claim"
+
+  mkdir -p "$acct_dir"
+  _init_profile "$acct_dir"
+
+  # 既存 dir への再実行は「正規化」（共有 symlink の張り直し＋マーカー付与）。
+  # マーカー導入時の移行もこの経路を通るため、ログイン済みなら login の案内は出さない。
+  if [[ "$existed" == 1 ]]; then
+    if [[ -e "$acct_dir/auth.json" ]]; then
+      echo "Normalized $acct_dir (共有 symlink とマーカーを再適用。既存の認証はそのまま)"
+      return 0
+    fi
+    echo "Normalized $acct_dir (未ログイン)"
+  else
+    echo "Created $acct_dir"
+  fi
+
   echo ""
   echo "Next: ログインしてください"
   echo "  CODEX_HOME=\"$acct_dir\" codex login"
 }
 
+# 引数解析。サブコマンドを取り出したうえで <name> と --claim を位置に依存せず解釈する。
+# `-*` を name として受け入れないのが重要（例: `$0 --claim personal` が
+# ~/.codex---claim を作ってしまうのを防ぐ）。
+USAGE="usage: $(basename "$0") migrate <name> | $(basename "$0") adopt <name> [--claim] | $(basename "$0") <name> [--claim]"
+
+SUBCMD=""
 case "${1:-}" in
-  migrate)
-    [[ -n "${2:-}" ]] || { echo "usage: $0 migrate <name>" >&2; exit 1; }
-    migrate "$2"
-    ;;
-  adopt)
-    [[ -n "${2:-}" ]] || { echo "usage: $0 adopt <name>" >&2; exit 1; }
-    adopt "$2"
-    ;;
-  ""|-h|--help)
-    echo "usage: $0 migrate <name> | $0 adopt <name> | $0 <name>"
-    exit 1
-    ;;
-  *)
-    add_account "$1"
-    ;;
+  migrate|adopt) SUBCMD="$1"; shift ;;
+  ""|-h|--help)  echo "$USAGE"; exit 1 ;;
+esac
+
+CLAIM=0
+NAME=""
+for arg in "$@"; do
+  case "$arg" in
+    # --claim: 既存の「マーカー無し・空でない」dir を取り込む明示フラグ。
+    # サブコマンドの `adopt`（実ファイル化した auth.json の取り込み）とは別概念。
+    --claim) CLAIM=1 ;;
+    -*)      echo "Error: unknown option: $arg" >&2; echo "$USAGE" >&2; exit 1 ;;
+    *)
+      if [[ -n "$NAME" ]]; then
+        echo "Error: 引数が多すぎます（'$NAME' と '$arg'）。指定できるオプションは --claim のみです。" >&2
+        echo "$USAGE" >&2
+        exit 1
+      fi
+      NAME="$arg"
+      ;;
+  esac
+done
+[[ -n "$NAME" ]] || { echo "Error: <name> が必要です。" >&2; echo "$USAGE" >&2; exit 1; }
+
+case "$SUBCMD" in
+  migrate) migrate "$NAME" ;;
+  adopt)   adopt "$NAME" "$CLAIM" ;;
+  *)       add_account "$NAME" "$CLAIM" ;;
 esac
