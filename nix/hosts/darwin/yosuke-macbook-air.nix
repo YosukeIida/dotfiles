@@ -106,6 +106,11 @@ let
 
     PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 
+    # auto_updates な cask を brew upgrade の対象から外す（Homebrew 6 の既定は対象）。
+    # ~/.homebrew/brew.env（homebrew/brew.env、理由の詳細もそちら）と同じ設定だが、
+    # brew.env が未配備でも日次実行のこのスクリプトだけは意図どおり動くよう明示する。
+    export HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1
+
     if ! command -v brew >/dev/null 2>&1; then
       echo "error: brew not found (expected /opt/homebrew/bin/brew)" >&2
       exit 1

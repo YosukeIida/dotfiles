@@ -18,6 +18,9 @@ in
     ".config/zsh/plugins/agent-switch".source = lnk "tools/agent-switch";
     ".config/zsh/fzf/key-bindings.zsh".source = "${pkgs.fzf}/share/fzf/key-bindings.zsh";
     ".gitconfig".source = lnk "git/gitconfig";
+    # Homebrew のユーザー設定。全 brew 呼び出し（手打ち・スクリプト・GUI 起動を問わず）に効く。
+    # 中身の説明は homebrew/brew.env のコメント参照。
+    ".homebrew/brew.env".source = lnk "homebrew/brew.env";
     ".config/git/ignore".source = lnk "git/ignore";
     ".config/ghostty/config".source = lnk "ghostty/config";
     ".config/direnv/direnvrc".source = lnk "direnv/direnvrc";
