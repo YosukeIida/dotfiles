@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # Claude Code マルチアカウントセットアップ（名前制・ln -sf 収束型）
-# 使い方: ./setup-claude-account <name>
+# 使い方: ./setup-claude-account <name> [--claim]
 # 例:     ./setup-claude-account personal
+#
+# --claim: 既存の「マーカー無し・空でない」ディレクトリを agent-switch のプロファイル
+#          として取り込む。無関係な別アプリのデータを掴む事故を防ぐため、この明示が
+#          無い限り拒否する（下記ガード参照）。
 #
 # デフォルトアカウント（labteam 相当）は CLAUDE_CONFIG_DIR 未設定の ~/.claude を
 # そのまま使うため、このスクリプトの対象外（何も作る必要がない）。
@@ -12,7 +16,36 @@
 # 直接 symlink したい場合にそのディレクトリを指定する（未指定ならスキップ）。
 set -euo pipefail
 
-NAME="${1:?usage: setup-claude-account <name>}"
+USAGE="usage: $(basename "$0") <name> [--claim]"
+
+CLAIM=0
+NAME=""
+for arg in "$@"; do
+  case "$arg" in
+    --claim)   CLAIM=1 ;;
+    -h|--help) echo "$USAGE"; exit 0 ;;
+    -*)        echo "Error: unknown option: $arg" >&2; echo "$USAGE" >&2; exit 1 ;;
+    *)
+      # 余分な位置引数を黙って採用すると、`--claim` のダッシュ忘れ（例: `personal claim`）が
+      # ~/.claude-claim を作って成功したように見えてしまう。
+      if [[ -n "$NAME" ]]; then
+        echo "Error: 引数が多すぎます（'$NAME' と '$arg'）。指定できるオプションは --claim のみです。" >&2
+        echo "$USAGE" >&2
+        exit 1
+      fi
+      NAME="$arg"
+      ;;
+  esac
+done
+[[ -n "$NAME" ]] || { echo "Error: <name> が必要です。" >&2; echo "$USAGE" >&2; exit 1; }
+
+# 名前の検査。'/' や '..' を含む名前は prefix の外へ書き込めるため必須。
+# 予約語は cc がサブコマンド／モード語として消費する語（そのプロファイルへ切り替えられない）。
+# デフォルトアカウント名も拒否する（cc <default> は CLAUDE_CONFIG_DIR 未設定を意味するので、
+# ~/.claude-<default> を作っても永久に使われない紛らわしいディレクトリになる）。
+"$(dirname "$0")/agsw-check-name" "$NAME" \
+  list api sub subscription "${AGSW_CLAUDE_DEFAULT_NAME:-labteam}" || exit 1
+
 BASE="$HOME/.claude"
 DIR="$HOME/.claude-$NAME"
 ASSETS_DIR="${AGSW_CLAUDE_ASSETS_DIR:-}"
@@ -23,6 +56,77 @@ ASSET_LINKS=(settings.api.json get_key.sh statusline.sh CLAUDE.md)
 
 # デフォルトアカウント (~/.claude) から共有する項目
 SHARED_FROM_BASE=(projects skills todos plans history.jsonl CLAUDE.md)
+
+EXISTED=0
+[[ -d "$DIR" ]] && EXISTED=1
+
+# 既存の「マーカー無し・空でない」dir は、agent-switch と無関係な別アプリのデータで
+# ある可能性がある（実例: ~/.claude-science は Claude Science アプリ）。ここで symlink を
+# 撒いてマーカーを付けると cc から使えるようになり、そのアプリの dir に Claude Code が
+# 書き込み始める。cc 側のガードだけでは「マーカーを付ければ通る」迂回路が残るため、
+# 取り込みには明示の --claim を要求する。
+if [[ "$EXISTED" == 1 && ! -f "$DIR/.agsw-profile" && -n "$(ls -A "$DIR" 2>/dev/null)" ]]; then
+  if [[ "$CLAIM" != 1 ]]; then
+    {
+      echo "Error: $DIR は既に存在し、agent-switch の管理下ではありません（.agsw-profile が無い）。"
+      echo "  中身:"
+      # set -e + pipefail 下で head が先に終了すると ls が SIGPIPE で死に、
+      # 案内の残りが出ないまま exit 141 になるため、パイプライン全体を保護する。
+      { ls -A "$DIR" 2>/dev/null | head -8 | sed 's/^/    /'; } || true
+      [[ "$(ls -A "$DIR" 2>/dev/null | wc -l)" -gt 8 ]] && echo "    ..."
+      echo "  別アプリのデータディレクトリでないことを確認してください。"
+      echo "  agent-switch のプロファイルとして取り込むなら:"
+      echo "    $0 $NAME --claim"
+    } >&2
+    exit 1
+  fi
+  echo "[--claim] 既存ディレクトリを agent-switch のプロファイルとして取り込みます"
+fi
+
+# 共有 symlink を張る先に実体があるかを、変更を始める前に検査する。
+#
+# ln -sfn は実ファイルを問答無用で置き換えるため元の内容が失われる。実ディレクトリは
+# 置き換えられず、その中に同名リンクが作られて半壊する（実測 2026-07-28）。
+#
+# 検査は「実際にリンクする項目」だけを対象にする。下のリンク処理と同じリンク元存在条件
+# （assets は ASSETS_DIR 指定かつリンク元が存在、shared は $BASE/<item> が存在）を
+# 使わないと、置換されないファイルまで衝突扱いして不要な退避を促してしまう。
+CONFLICTS=""
+_note_conflict() {
+  # CLAUDE.md は ASSET_LINKS と SHARED_FROM_BASE の両方にあるため重複を除く
+  case " $CONFLICTS " in *" $1 "*) ;; *) CONFLICTS="$CONFLICTS $1" ;; esac
+}
+# 不在なら張るだけ。symlink なら張り替えるだけ（収束動作）。実体だけが衝突。
+_is_conflict() {
+  [[ -e "$1" && ! -L "$1" ]]
+}
+
+if [[ -d "$DIR" ]]; then
+  if [[ -n "$ASSETS_DIR" ]]; then
+    for item in "${ASSET_LINKS[@]}"; do
+      [[ -e "$ASSETS_DIR/$item" ]] || continue
+      if _is_conflict "$DIR/$item"; then _note_conflict "$item"; fi
+    done
+  fi
+
+  for item in "${SHARED_FROM_BASE[@]}"; do
+    [[ -e "$BASE/$item" || -L "$BASE/$item" ]] || continue
+    if _is_conflict "$DIR/$item"; then _note_conflict "$item"; fi
+  done
+
+  if [[ -n "$CONFLICTS" ]]; then
+    {
+      echo "Error: $DIR に共有 symlink と衝突する実体があります:$CONFLICTS"
+      echo "  symlink に張り替えると元の内容が失われます（ディレクトリの場合は中に迷子の"
+      echo "  リンクができて半壊します）。何も変更していません。"
+      echo "  内容が不要／退避済みなら、次のように退けてから再実行してください:"
+      for item in $CONFLICTS; do
+        echo "    mv \"$DIR/$item\" \"$DIR/$item.bak\""
+      done
+    } >&2
+    exit 1
+  fi
+fi
 
 echo "Setting up: $DIR"
 mkdir -p "$DIR"
@@ -58,6 +162,13 @@ if [[ ! -e "$DIR/settings.json" && ! -L "$DIR/settings.json" ]]; then
   fi
 fi
 
+# プロファイル・マーカー。cc はこれが無い dir を拒否する（prefix が偶然一致した
+# 無関係なディレクトリを掴んで他ツールのデータを汚染するのを防ぐ）。詳細は lib/common.zsh。
+#
+# 正規化（symlink 張り）が完了してから作る。先に作ると、途中で失敗した半端な dir が
+# 「agent-switch の管理下」と誤認されてしまう。
+touch "$DIR/.agsw-profile"
+
 if [[ ! -f "$DIR/anthropic.env" ]]; then
   echo ""
   echo "  [INFO] API モードを使う場合は以下を作成:"
@@ -65,6 +176,15 @@ if [[ ! -f "$DIR/anthropic.env" ]]; then
 fi
 
 echo ""
+
+# 既存 dir への再実行は「正規化」（symlink の張り直し＋マーカー付与）であり、
+# 使用済み（.claude.json がある）なら login の案内は不要。マーカー導入時の移行も
+# この経路を通るため、誤解を招く案内を出さない。
+if [[ "$EXISTED" == 1 && -f "$DIR/.claude.json" ]]; then
+  echo "Normalized. symlink とマーカーを再適用しました（既存の認証・状態はそのまま）。"
+  exit 0
+fi
+
 echo "Done. Next: このアカウントでログイン"
 echo "  CLAUDE_CONFIG_DIR=$DIR claude   # 起動後 /login"
 echo ""
