@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# Claude Code 起動シム（PATH 経由で本体より先に見つかる実行可能ファイル）。
+#
+# 役割は lib/claude.zsh の claude() 関数と同じ ―― プラグイン hook 用の node
+# （~/.local/share/claude-runtime/bin）と system-python 誤用ガード
+# （.../fallback）を、Claude Code のプロセスにだけ PATH 注入する。
+# node をグローバル PATH に置かない方針は変えない。
+#
+# zsh 関数版は**対話 zsh でしか定義されない**ため、
+#   - 非対話シェル（zsh -c / bash / sh）からの起動
+#   - herdr / cmux などが自プロセスの env のまま spawn した claude
+#   - 関数が定義される前に起動していた古いシェル
+# では注入が効かず、openai-codex / impeccable プラグインの hook が
+#   SessionEnd hook [node "${CLAUDE_PLUGIN_ROOT}/scripts/..."] failed:
+#   /bin/sh: node: command not found
+# で落ちていた（2026-07-28 に実測で再現。hook は claude プロセスの env を
+# そのまま継承するので、claude の PATH に node が無いことが唯一の原因）。
+# シムは実行可能ファイルなのでシェルの種類に依存せず、PATH を継承した
+# 子プロセス（herdr server → claude 等）にも効く。
+set -uo pipefail
+
+_self="$0"
+_self_dir="$(dirname -- "$_self")"
+# PATH に載っているのは symlink 側（~/.local/share/agent-switch/shims）なので、
+# 論理パスと物理パスの両方を除外対象にする。
+_self_dir_phys="$(cd -- "$_self_dir" 2>/dev/null && pwd -P || printf '%s' "$_self_dir")"
+
+_rt_bin="$HOME/.local/share/claude-runtime/bin"
+_rt_fallback="$HOME/.local/share/claude-runtime/fallback"
+
+# 1. 自分のディレクトリを PATH から外す（シムが自分自身を再実行しないように）
+_newpath=""
+_oldifs="$IFS"
+IFS=:
+for _dir in ${PATH:-}; do
+  case "$_dir" in
+    "$_self_dir" | "$_self_dir_phys") continue ;;
+  esac
+  if [[ -z "$_newpath" ]]; then _newpath="$_dir"; else _newpath="$_newpath:$_dir"; fi
+done
+IFS="$_oldifs"
+
+# 2. runtime を PATH 先頭へ冪等に注入する（zsh 関数版と二重に走っても重複しない）
+for _dir in "$_rt_bin" "$_rt_fallback"; do
+  [[ -d "$_dir" ]] || continue
+  case ":$_newpath:" in
+    *":$_dir:"*) ;;
+    *) _newpath="$_dir:$_newpath" ;;
+  esac
+done
+
+export PATH="$_newpath"
+
+# 3. 本体を解決する。万一シムに戻るようなら無限ループさせずに失敗させる。
+_real="$(command -v claude || true)"
+if [[ -z "$_real" ]]; then
+  echo "agent-switch claude shim: claude 本体が PATH 上に見つかりません。" >&2
+  echo "  Homebrew cask の claude-code が入っているか確認してください。" >&2
+  exit 127
+fi
+if [[ "$_real" -ef "$_self" ]]; then
+  echo "agent-switch claude shim: 自分自身に再帰しています（$_real）。" >&2
+  exit 127
+fi
+
+# argv[0] は "claude" のまま渡す（zsh 関数版の `command claude` と同じ見え方を保つ。
+# herdr の agent 検出や ps を見るスクリプトの挙動を変えないため）。
+exec -a claude "$_real" "$@"

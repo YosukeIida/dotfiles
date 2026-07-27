@@ -10,9 +10,14 @@ unset _hm_vars
 export PIP_REQUIRE_VIRTUALENV=1
 
 # ユーザーローカルバイナリ（~/.agents/bin を先頭に確実に置く）
+#
+# ~/.local/share/agent-switch/shims は claude 起動シム（tools/agent-switch/shims/）。
+# Homebrew の claude 本体より先に見つからないと意味が無いので、zshrc 側でも
+# Homebrew 初期化のあとに再度先頭へ寄せている。
 path=("${path[@]:#${HOME}/.agents/bin}")
+path=("${path[@]:#${HOME}/.local/share/agent-switch/shims}")
 path=("${path[@]:#${HOME}/.local/bin}")
-path=("${HOME}/.agents/bin" "${HOME}/.local/bin" "${path[@]}")
+path=("${HOME}/.agents/bin" "${HOME}/.local/share/agent-switch/shims" "${HOME}/.local/bin" "${path[@]}")
 export PATH
 
 # Figma PAT for figma-console-mcp (expires 2026-09-21; managed by agenix)
