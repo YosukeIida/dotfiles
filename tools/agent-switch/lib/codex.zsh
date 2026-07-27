@@ -16,11 +16,14 @@ cx() {
       cx_status
       ;;
     list)
+      # 余分な引数を黙って捨てると、指定したつもりの操作が別の意味になる
+      (( $# == 1 )) || { echo "usage: cx list" >&2; return 1; }
       cx_list
       ;;
     app)
       local name="${2:-}"
       [[ -n "$name" ]] || { echo "usage: cx app <name>" >&2; return 1; }
+      (( $# == 2 )) || { echo "Error: 引数が多すぎます。usage: cx app <name>" >&2; return 1; }
       local dir="${AGSW_CODEX_HOME_PREFIX:-$HOME/.codex-}$name"
       _agsw_require_profile "$dir" "$_AGSW_DIR/bin/setup-codex-account $name" || return 1
       local app_auth="${AGSW_CODEX_APP_AUTH:-$HOME/.codex/auth.json}"
@@ -35,6 +38,7 @@ cx() {
       cx_status
       ;;
     *)
+      (( $# == 1 )) || { echo "Error: 引数が多すぎます。usage: cx <name>" >&2; return 1; }
       local dir="${AGSW_CODEX_HOME_PREFIX:-$HOME/.codex-}$sub"
       _agsw_require_profile "$dir" "$_AGSW_DIR/bin/setup-codex-account $sub" || return 1
       export CODEX_HOME="$dir"

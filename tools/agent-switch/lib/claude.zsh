@@ -32,7 +32,24 @@ cc() {
   for arg in "$@"; do
     case "$arg" in
       api|sub|subscription) mode="$arg" ;;
+      app)
+        # cx app に相当する機能は未実装。黙って `cc <name>` として動作すると
+        # 「App も切り替わった」と誤解させる（2026-07-28 に実際に発生）。
+        echo "Error: cc app は未実装です（cx app に相当する機能はありません）。" >&2
+        echo "  Claude の認証は CLAUDE_CONFIG_DIR のパスハッシュで引く Keychain エントリで、" >&2
+        echo "  Codex の auth.json のように symlink を差し替えられないためです。" >&2
+        echo "  Desktop App / VS Code 拡張は常に非ハッシュの 'Claude Code-credentials'" >&2
+        echo "  （= CLAUDE_CONFIG_DIR 未設定のアカウント）を読みます。" >&2
+        echo "  実現方針と検証状況: $_AGSW_DIR/README.md の「cc app の検証」" >&2
+        return 1 ;;
       *)
+        # 余分な位置引数を黙って上書きすると、意図と違うアカウントに切り替わったまま
+        # 成功したように見える。
+        if [[ -n "$account" ]]; then
+          echo "Error: 引数が多すぎます（'$account' と '$arg'）。" >&2
+          echo "  使い方: cc [<name>] [api|sub] / cc list" >&2
+          return 1
+        fi
         account="$arg" ;;
     esac
   done
