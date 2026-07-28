@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ pkgs, lib, pkgsUnstable, ... }:
 
 let
   figma-console-mcp = pkgs.buildNpmPackage {
@@ -19,7 +19,6 @@ in
 {
   home.packages = with pkgs; [
     age
-    agent-browser
     cloudflared
     duti
     fzf
@@ -38,6 +37,9 @@ in
     zsh-autosuggestions
     zsh-syntax-highlighting
     figma-console-mcp
+    # nixpkgs-25.11-darwin（stable）には未収録（新規パッケージは stable に
+    # バックポートされない）ため、nixpkgs-unstable から個別に引く。
+    pkgsUnstable.agent-browser
   ];
 
   home.sessionVariables = {
