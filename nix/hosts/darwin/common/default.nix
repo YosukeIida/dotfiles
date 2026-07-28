@@ -82,15 +82,25 @@
     # 編集は api-mode-overlay.json 側へ。サブスクは live をそのまま使う（複製しない）。
     su - ${username} -c "bash $pub/claude/gen-api-settings.sh" || true
 
+    # clean filter は python を使わない。python ガード
+    # （tools/agent-switch/runtime-guards/python-guard.sh）が Claude Code セッション中の
+    # PATH に入ると、フィルタが絶対パスで /usr/bin/python3 を呼んでいても撃ち落とされる
+    # （macOS の python3 は PATH を再解決するスタブのため。2026-07-28 実測）。
+    # フィルタが失敗すると「除去すべきキーがそのままコミットされる」か「git add が
+    # 中断する」のどちらかになり、この仕組みの目的が崩れる。
+    # インタプリタは nix store のパスを直指定する（PATH に依存しない・generation ごとに固定）。
+
     # settings.json / settings.api.json の "model" キーは /model コマンドで頻繁に
     # ローカル書き換えされるため、git の管理対象から外す（clean filter で常に除去）。
     # .gitattributes で filter=strip-model が指定されているファイルにのみ効く。
-    su - ${username} -c "cd $pub && git config filter.strip-model.clean '/usr/bin/python3 \"\$(git rev-parse --show-toplevel)/claude/git-filters/strip-model-clean.py\"' && git config filter.strip-model.smudge cat" || true
+    su - ${username} -c "cd $pub && git config filter.strip-model.clean '${pkgs.jq}/bin/jq --indent 2 -f \"\$(git rev-parse --show-toplevel)/claude/git-filters/strip-model-clean.jq\"' && git config filter.strip-model.smudge cat" || true
 
     # karabiner.json の "selected" プロファイルは GUI 切替で頻繁に書き換わるため、
     # git の管理対象から外す（clean filter で常に "Default profile" に固定）。
     # .gitattributes で filter=strip-selected が指定されているファイルにのみ効く。
-    su - ${username} -c "cd $pub && git config filter.strip-selected.clean '/usr/bin/python3 \"\$(git rev-parse --show-toplevel)/karabiner/git-filters/strip-selected-clean.py\"' && git config filter.strip-selected.smudge cat" || true
+    # jq ではなく awk なのは、karabiner.json の独自コンパクト整形を再シリアライズで
+    # 壊さないため（実測 783行 → 1161行）。詳細はスクリプト内のコメント参照。
+    su - ${username} -c "cd $pub && git config filter.strip-selected.clean '${pkgs.gawk}/bin/awk -f \"\$(git rev-parse --show-toplevel)/karabiner/git-filters/strip-selected-clean.awk\"' && git config filter.strip-selected.smudge cat" || true
     _link "$pub/claude/settings.api.json"          "$home/.claude/settings.api.json"
     _link "$pub/claude/get_key.sh"                 "$home/.claude/get_key.sh"
     _link "$pub/claude/statusline.sh"              "$home/.claude/statusline.sh"

@@ -25,6 +25,9 @@ in
     gh
     git
     ghq
+    # jq: git clean filter（strip-model）と agent-switch の agsw-codex-identity が使う。
+    # macOS 同梱の /usr/bin/jq に依存すると OS バージョンで挙動が変わるので nix で固定する。
+    jq
     lazydocker
     lazygit
     neovim
