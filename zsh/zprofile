@@ -1,0 +1,20 @@
+# ~/.zprofile — ログインシェル（対話・非対話とも）で読まれる。
+#
+# 元は dotfiles 管理外の手書きファイルだった。管理下に入れた理由は末尾の
+# dot_path_priority を呼ぶため（2026-07-28）。`brew shellenv` が
+# /opt/homebrew/bin を PATH 先頭へ押し込むので、zshenv での順序付けが
+# ログインシェルでは無効化される。zshrc は非対話では読まれないため、
+# ここで呼び直さないと `zsh -lc` で ~/.agents/bin と
+# ~/.local/share/agent-switch/shims が Homebrew に負ける。
+
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+# Added by Obsidian
+export PATH="$PATH:/Applications/Obsidian.app/Contents/MacOS"
+
+# Added by OrbStack: command-line tools and integration
+# This won't be added again if you remove it.
+source ~/.orbstack/shell/init.zsh 2>/dev/null || :
+
+# PATH 先頭の再確保（定義は zsh/zshenv）。上の brew shellenv より必ず後に呼ぶ。
+(( $+functions[dot_path_priority] )) && dot_path_priority

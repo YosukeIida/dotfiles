@@ -57,6 +57,10 @@ in
     ".config/gh/config.yml".source = lnk "gh/config.yml";
     ".zshenv".source = lnk "zsh/zshenv";
     ".zshrc".source = lnk "zsh/zshrc";
+    # zprofile を管理下に入れているのは dot_path_priority を brew shellenv の後に
+    # 呼び直すため。非対話ログインシェル（zsh -lc）は zshrc を読まないので、
+    # ここで呼ばないと ~/.agents/bin と agent-switch のシムが Homebrew に負ける。
+    ".zprofile".source = lnk "zsh/zprofile";
 
     # codex プラグイン（sites 等）の MCP サーバが `command: "node"` で起動されるための node。
     # 通常の PATH には載せない（node は devshell のみの方針）。agent-switch の codex()
