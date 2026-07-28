@@ -4,7 +4,7 @@
 # 扱う2系統:
 #   1. gist 由来（cognitive-rhythm-writing / japanese-tech-writing）
 #      → clone して SKILL.md をコピーする。REV_* で pin。
-#   2. repo 直下の SKILL.md 由来（herdr）
+#   2. repo 直下の SKILL.md 由来（herdr, browser-harness）
 #      → gh api で1ファイルだけ取得し、ローカルのパッチと vendor-* metadata を注入する。
 #        gh skill install は使えない: 発見に `<name>/SKILL.md` のディレクトリ構造を要求し、
 #        リポジトリ直下の裸の SKILL.md を認識しない（`gh skill preview` が
@@ -46,6 +46,13 @@ HERDR_REPO="ogulcancelik/herdr"
 HERDR_PATH="SKILL.md"
 HERDR_REV="0f161fac287011b3e216383e2b8482f049fd6a7b"
 
+# browser-use は 2026-07 に browser-harness（コマンド名も変更、AXツリー優先の
+# 新設計）へ実質移行した。browser-use/browser-use 本体には SKILL.md が無いため
+# （404 実測）、こちらだけを vendor する。
+BROWSER_HARNESS_REPO="browser-use/browser-harness"
+BROWSER_HARNESS_PATH="SKILL.md"
+BROWSER_HARNESS_REV="4000dd16919360ea60c3329403061b15bb730b25"
+
 DEST="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/agents/skills"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -83,10 +90,12 @@ sync_one() {
 }
 
 # repo 直下の1ファイルを vendor する。gist と違い、ローカルで意図的に持つ差分
-# （allowed-tools と description）をここでパッチとして再適用し、更新検知用の
-# vendor-* metadata を注入する。手で編集しないこと（次回 sync で上書きされる）。
+# （allowed-tools と、必要な skill だけ description）をここでパッチとして再適用し、
+# 更新検知用の vendor-* metadata を注入する。手で編集しないこと（次回 sync で上書きされる）。
+# $5 = allowed-tools の値。$6 = description の上書き行（frontmatter の
+# `description: ...` 1行そのもの）。省略時は description を上書きしない。
 sync_repo_file() {
-  local name="$1" repo="$2" path="$3" rev="$4"
+  local name="$1" repo="$2" path="$3" rev="$4" allowed_tools="$5" desc_override="${6:-}"
   local dest="$DEST/$name/SKILL.md"
 
   if [ "$check_mode" -eq 1 ]; then
@@ -103,10 +112,10 @@ sync_repo_file() {
   # --- ローカルパッチ1: allowed-tools を足す（upstream には無い） -------------
   # 権限プロンプトを最小限にするため。frontmatter の閉じ `---` の直前に挿入する。
   if ! grep -q '^allowed-tools:' "$raw"; then
-    awk '
+    awk -v tools="$allowed_tools" '
       NR == 1 && $0 == "---" { print; infm = 1; next }
       infm && $0 == "---" {
-        print "allowed-tools: Bash(herdr:*), Bash(python3:*)"
+        print "allowed-tools: " tools
         print
         infm = 0
         next
@@ -115,20 +124,20 @@ sync_repo_file() {
     ' "$raw" >"$raw.patched" && mv "$raw.patched" "$raw"
   fi
 
-  # --- ローカルパッチ2: description を旧版に差し戻す -------------------------
-  # upstream は 2026-07 に「Herdr を明示的に言及したときのみ使う」方向へ絞ったが、
-  # ここでは herdr 内にいれば自動発動する挙動を維持する（自作 skill 全体の方針。
-  # disable-model-invocation を使わず発動を保つ、という判断に揃える）。
-  local old_desc
-  old_desc='description: "Control herdr from inside it. Manage workspaces and tabs, split panes, spawn agents, read output, and wait for state changes — all via CLI commands that talk to the running herdr instance over a local unix socket. Use when running inside herdr (HERDR_ENV=1)."'
-  if ! grep -q '^description: ' "$raw"; then
-    echo "sync: $name の frontmatter に description 行が見つからない（upstream の形式が変わった？）" >&2
-    exit 1
+  # --- ローカルパッチ2: description を差し戻す（指定した skill のみ） ---------
+  # herdr は upstream が 2026-07 に「Herdr を明示的に言及したときのみ使う」方向へ
+  # 絞ったが、ここでは herdr 内にいれば自動発動する挙動を維持する（自作 skill
+  # 全体の方針。disable-model-invocation を使わず発動を保つ、という判断に揃える）。
+  if [ -n "$desc_override" ]; then
+    if ! grep -q '^description: ' "$raw"; then
+      echo "sync: $name の frontmatter に description 行が見つからない（upstream の形式が変わった？）" >&2
+      exit 1
+    fi
+    awk -v repl="$desc_override" '
+      !done_desc && /^description: / { print repl; done_desc = 1; next }
+      { print }
+    ' "$raw" >"$raw.patched" && mv "$raw.patched" "$raw"
   fi
-  awk -v repl="$old_desc" '
-    !done_desc && /^description: / { print repl; done_desc = 1; next }
-    { print }
-  ' "$raw" >"$raw.patched" && mv "$raw.patched" "$raw"
 
   # --- vendor-* metadata を注入（agent-skills-outdated が読む） --------------
   # github-* にしないのは、gh skill がリポジトリルートの tree を見て
@@ -156,4 +165,8 @@ sync_repo_file() {
 
 sync_one "cognitive-rhythm-writing" "$GIST_COGNITIVE_RHYTHM" "$REV_COGNITIVE_RHYTHM"
 sync_one "japanese-tech-writing" "$GIST_JAPANESE_TECH_WRITING" "$REV_JAPANESE_TECH_WRITING"
-sync_repo_file "herdr" "$HERDR_REPO" "$HERDR_PATH" "$HERDR_REV"
+sync_repo_file "herdr" "$HERDR_REPO" "$HERDR_PATH" "$HERDR_REV" \
+  "Bash(herdr:*), Bash(python3:*)" \
+  'description: "Control herdr from inside it. Manage workspaces and tabs, split panes, spawn agents, read output, and wait for state changes — all via CLI commands that talk to the running herdr instance over a local unix socket. Use when running inside herdr (HERDR_ENV=1)."'
+sync_repo_file "browser-harness" "$BROWSER_HARNESS_REPO" "$BROWSER_HARNESS_PATH" "$BROWSER_HARNESS_REV" \
+  "Bash(browser-harness:*)"

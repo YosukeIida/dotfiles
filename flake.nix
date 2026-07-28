@@ -3,6 +3,10 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-25.11-darwin";
+    # stable (nixpkgs-25.11-darwin) にはまだ入っていない/入らない新しいパッケージ用。
+    # 新規パッケージは基本的に stable リリースブランチにはバックポートされないため、
+    # 個別に unstable から引く（例: agent-browser。packages.nix 参照）。
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-25.11";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager/release-25.11";
@@ -15,6 +19,7 @@
     {
       nix-darwin,
       nixpkgs,
+      nixpkgs-unstable,
       home-manager,
       agenix,
       ...
@@ -22,6 +27,7 @@
     let
       system = "aarch64-darwin";
       pkgs = nixpkgs.legacyPackages.${system};
+      pkgsUnstable = nixpkgs-unstable.legacyPackages.${system};
 
       python = if pkgs ? python313 then pkgs.python313 else pkgs.python3;
       uv = if pkgs ? uv then pkgs.uv else pkgs.python3Packages.uv;
@@ -56,6 +62,7 @@
           (import ./nix/hosts/darwin/common {
             username = "example";
             homedir = "/Users/example";
+            inherit pkgsUnstable;
           })
         ];
       };
@@ -67,6 +74,7 @@
           (import ./nix/hosts/darwin/common {
             username = "yosuke";
             homedir = "/Users/yosuke";
+            inherit pkgsUnstable;
           })
           agenix.darwinModules.default
           ./nix/hosts/darwin/secrets.nix
