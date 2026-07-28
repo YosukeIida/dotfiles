@@ -19,6 +19,7 @@ in
 {
   home.packages = with pkgs; [
     age
+    agent-browser
     cloudflared
     duti
     fzf
