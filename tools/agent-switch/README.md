@@ -125,8 +125,8 @@ setup スクリプトは共有 symlink を張る前に、張り先に**実ファ
 ## 日常の使い方
 
 ```bash
-cx                # 状態表示（shell / App / account_id / 起動中デーモン）
-cx list           # プロファイル一覧（* = このシェル、@ = Codex App）
+cx                # 状態表示（shell / App の email + plan + account_id / 起動中デーモン）
+cx list           # プロファイル一覧（email + plan 付き。* = このシェル、@ = Codex App）
 cx work           # このターミナルを work に切替
 cx app personal   # Codex App 用の認証を personal に切替（App再起動で反映）
 
@@ -137,6 +137,29 @@ cc labteam        # デフォルトに戻す（= unset。App/拡張と同じ認�
 cc api            # API keyモードに切替
 cc personal sub   # personal + subscriptionモード
 ```
+
+> **`cc app` は存在しない。** `cx app` に相当する機能が Claude には無いため、`cc app <name>` は
+> エラーになる（理由と実現方針は下記「`cc app` の検証」）。以前は `app` が黙って捨てられて
+> `cc <name>` と同じ動作をしていたため、「App も切り替わった」と誤解する事故があった（2026-07-28）。
+> Desktop App / VS Code 拡張は**常に**非ハッシュの `Claude Code-credentials`
+> （= `CLAUDE_CONFIG_DIR` 未設定のアカウント）を読む。シェルで何に切り替えても GUI は変わらない。
+
+### 引数の解釈（`cc` と `cx` で共通）
+
+どちらも**1語目がサブコマンド**の位置固定で解釈する。余分な引数は黙って捨てずにエラーにする。
+
+| 形 | `cc` | `cx` |
+|---|---|---|
+| 引数なし | 状態表示 | 状態表示 |
+| `list` | プロファイル一覧 | プロファイル一覧 |
+| `<name>` | アカウント切替 | アカウント切替 |
+| `app <name>` | **未実装（エラー）** | App 用認証の切替 |
+| `api` / `sub` | モード切替（`cc` のみ） | — |
+| `<name> api\|sub` | アカウント + モード | — |
+
+**アカウント（`personal` / `labteam` …）はサブスクの軸、`api` / `sub` はモードの軸**で、API キーは1つしかないためモードはアカウントの次元ではない。よって `cc api <name>` のような組み合わせは受け付けない（`cc <name> api` の順で指定する）。
+
+> 以前の `cc` は全引数を走査するフラグ集合モデルで、語順が無関係だった（`cc api personal` が `cc personal api` と同義）。この緩さが `cc app personal` を黙って `cc personal` として通す原因になったため、`cx` と同じ位置固定に揃えた（2026-07-28）。
 
 `cc` / `cx` はタブ補完に対応する（プロファイル名 ＋ サブコマンド。`cx app <TAB>` はプロファイル名のみ）。補完関数は `completions/` に置き `fpath` 経由で読み込むため、プラグインを `compinit` の前後どちらで source しても効く。
 
@@ -181,6 +204,69 @@ account_id は `auth.json` の `.tokens.account_id`（平文 JSON）で識別す
 
 `codex()` ラッパー（login ガードと同じ関数）は、`~/.local/share/codex-runtime/bin`（nix が node を配置。`nix/home/files.nix` 参照）が存在すれば codex 起動時だけそのディレクトリを PATH 先頭に注入する。node をグローバル PATH には置かない方針のまま、node に依存する Codex プラグイン（`sites@openai-bundled` 等）の MCP サーバを `command: "node"` で起動できるようにするための仕組み。既知の制限として、この zsh 関数を経由しない起動（GUI の Codex App、他ツールが直接 spawn する `codex app-server` 等）には効かない。
 
+### Claude プラグイン hook 用 node の PATH 注入（シム方式）
+
+Claude 側も同じ目的（`~/.local/share/claude-runtime/bin` の node と `.../fallback` の
+python ガードを claude のプロセスにだけ注入する）だが、**zsh 関数ではなく実行可能な
+シム**が担う。実体は `shims/claude`、配備先は `~/.local/share/agent-switch/shims/claude`
+（`nix/home/files.nix` の symlink）。`zsh/zshenv` と `zsh/zshrc` がこのディレクトリを
+Homebrew より前に置くので、`claude` は必ずシム経由で起動する。
+
+**なぜ zsh 関数では不十分だったか（2026-07-28 実測）**
+
+`openai-codex` プラグインの SessionEnd hook が
+
+```
+SessionEnd hook [node "${CLAUDE_PLUGIN_ROOT}/scripts/session-lifecycle-hook.mjs" SessionEnd] failed: /bin/sh: node: command not found
+```
+
+で落ちる事象を調査した結果、
+
+- hook は `/bin/sh -c` で起動されるが、**claude プロセスの env（PATH 含む）をそのまま
+  継承する**。sandbox 設定・SessionEnd のタイミング・PATH のサニタイズはいずれも無関係
+  （runtime を PATH に入れて `claude -p` を走らせると SessionStart / Stop / SessionEnd の
+  すべてで `node` が解決できることを実測で確認）。
+- したがって原因は「claude プロセスの PATH に node が無い」ことだけ。PATH から
+  `claude-runtime` を外して `claude -p` を走らせると上記エラーが一字一句再現する。
+- 旧実装の注入は `lib/claude.zsh` の `claude()` **zsh 関数**にしか無かったため、
+  非対話シェル（`zsh -c` / bash / sh）からの起動、herdr / cmux が自プロセスの env のまま
+  spawn した claude、関数が定義される前に起動していた古いシェルでは注入されない。
+  実際 `herdr server` の PATH には `claude-runtime` が入っていない（実測）ので、
+  herdr が直接 spawn した claude はこの状態になる。
+
+シムは実行可能ファイルなのでシェルの種類に依存せず、PATH を継承した子プロセス
+（`herdr server` → claude 等）にも効く。`settings.json` の `env` で PATH を渡す方法は
+**採らない**（`env.PATH` は PATH を丸ごと置換し、`${PATH}` も展開されない ―― 実測で
+`/bin/sh: sh: command not found` になった。devshell の PATH も壊れる）。
+
+`claude()` zsh 関数は残してあるが、シムと注入が二重に走っても PATH は汚れない
+（シムの注入は冪等）。関数は「シムがまだ配備されていない古いシェル」の保険。
+
+#### 効く範囲と効かない範囲（重要）
+
+シムが効くのは **PATH を継承して `claude` を起動するプロセス**に限る。
+
+| 起動経路 | シムを通るか |
+|---|---|
+| 対話シェル（`zsh -ic` / `zsh -lic`）| ✅ |
+| 非対話シェル（`zsh -c` / `zsh -lc` / bash / sh）| ✅ |
+| PATH を継承した子プロセス（herdr / cmux → claude）| ✅ |
+| **launchd 起動の GUI（Claude Desktop / VS Code 拡張）** | ❌ **効かない** |
+
+launchd は zsh の起動ファイルを読まないため、GUI プロセスの PATH にシムのディレクトリが
+入らない。GUI が spawn した `claude` はシムを通らず、プラグイン hook は従来どおり
+`node: command not found` になりうる。**これは旧実装（zsh 関数）でも同じで、シム方式が
+悪化させたわけではないが、解決もしていない。** GUI 経路まで直すには launchd の環境変数
+（`launchctl setenv` や `launchd.user.agents` の `EnvironmentVariables`）に頼る必要があり、
+未着手。
+
+なお PATH の順序確保には注意が要る。`~/.zprofile` の `brew shellenv` が
+`/opt/homebrew/bin` を PATH 先頭へ押し込むため、`zsh/zshenv` での順序付けだけでは
+ログインシェルで無効化される。`zsh/zshrc` は非対話では読まれないので、`zsh -lc` に穴が開く
+（2026-07-28 実測: シムも `~/.agents/bin/codex` も Homebrew に負けていた）。
+このため順序付けは `zsh/zshenv` で `dot_path_priority` 関数として定義し、
+`zsh/zprofile`（`brew shellenv` の後）と `zsh/zshrc` から呼び直している。
+
 ## `cc app` の検証
 
 `cc app`（Desktop App / VS Code 拡張のアカウント切替）は未実装。設計方針と、着手前に測るべきことを記録する。
@@ -208,7 +294,8 @@ account_id は `auth.json` の `.tokens.account_id`（平文 JSON）で識別す
 ## 動作要件
 
 - zsh（bash/fish は未対応。独立リポジトリ化の際に eval-init 方式への移行を検討）
-- デーモン警告・email/org 表示・`account_id` 表示は macOS + python3 前提（無い環境では自動スキップし `(不明)` と表示する）
+- デーモン警告と Claude 側の email/org 表示は macOS + python3 前提（無い環境では自動スキップ）
+- Codex 側の email / plan / account_id 表示は `jq` 前提（無い環境ではその旨を表示してスキップ）
 
 ## 検証記録（2026-07-02 実測）
 
@@ -229,6 +316,7 @@ completions/_cc           # cc のタブ補完（fpath 経由で読み込む）
 completions/_cx           # cx のタブ補完
 bin/agsw-list-profiles    # マーカー付きプロファイルの列挙（zsh/bash 双方から使う唯一の実装）
 bin/agsw-codex-account-id # Codex auth.json から account_id を取り出す（同上）
+bin/agsw-codex-identity   # Codex auth.json から email / plan / account_id を取り出す（jq 実装）
 bin/agsw-check-name       # プロファイル名の検査（パス脱出・予約語の拒否）
 bin/setup-claude-account  # Claude アカウント dir 作成・正規化
 bin/setup-codex-account   # Codex アカウント dir 作成・正規化（migrate / adopt / add）

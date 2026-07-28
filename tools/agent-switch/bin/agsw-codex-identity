@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Codex の auth.json から表示用の identity（account_id / email / plan）を取り出す。
+#
+# 使い方: agsw-codex-identity <auth.json>
+# 出力:   account_id<TAB>email<TAB>plan  （取れなかったフィールドは空文字）
+#         3つとも取れなければ無出力で非ゼロ終了。
+#
+# email と plan は auth.json 内の id_token（JWT）のペイロードから取る。
+#   .email
+#   ."https://api.openai.com/auth".chatgpt_plan_type
+# account_id は平文の .tokens.account_id。
+#
+# 実装に python3 ではなく jq を使うのは、Claude Code セッション内では PATH 先頭に
+# system-python 誤用ガード（~/.local/share/claude-runtime/fallback/python3）が
+# 入るため python3 が使えず、cx の表示が「不明」に劣化するのを避けるため
+# （2026-07-28 実測。codex-auth-doctor は同じ理由で account_id 判定が落ちる）。
+# jq 1.7 の @base64d はパディング無しの base64url をそのまま解ける。
+#
+# 同一メールで別アカウント（個人 Plus と Team seat）という構成が実在するため、
+# email だけでは識別できない。plan まで出して初めて人間が区別できる。
+set -uo pipefail
+
+AUTH_FILE="${1:?usage: agsw-codex-identity <auth.json>}"
+
+command -v jq >/dev/null 2>&1 || exit 1
+[[ -r "$AUTH_FILE" ]] || exit 1
+
+out="$(
+  jq -r '
+    (.tokens.account_id // "") as $aid
+    | ((.tokens.id_token // "") | split(".") | if length > 1 then .[1] else "" end) as $payload
+    | (try ($payload | @base64d | fromjson) catch {}) as $claims
+    | [
+        $aid,
+        ($claims.email // ""),
+        ($claims["https://api.openai.com/auth"].chatgpt_plan_type // "")
+      ]
+    | @tsv
+  ' "$AUTH_FILE" 2>/dev/null
+)" || exit 1
+
+# 3フィールドすべて空 = 何も同定できない（API-key 認証・パース失敗・不在）
+case "$out" in
+  $'\t\t' | '') exit 1 ;;
+esac
+
+printf '%s\n' "$out"
