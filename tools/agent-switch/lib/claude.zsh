@@ -17,25 +17,73 @@
 #                          App/拡張と同じ認証を使う
 # cc sub / cc api        → 現在のアカウントのモード切替
 # cc <name> sub|api      → アカウント + モード同時切替
+#
+# 引数は cx と同じ「1語目がサブコマンド」の位置固定で解釈する。以前は全引数を
+# 走査するフラグ集合モデルだったため語順が無関係になり（cc api personal が
+# cc personal api と同義）、その緩さが `cc app personal` を黙って
+# `cc personal` として通す原因になった（2026-07-28）。
+# アカウント（personal / labteam …）はサブスクの軸、api / sub はモードの軸で、
+# API キーは1つしかないためモードはアカウントの次元ではない。
+# したがって `cc api <name>` のような組み合わせは受け付けない。
 cc() {
   local default_name="${AGSW_CLAUDE_DEFAULT_NAME:-labteam}"
-  local arg account="" mode=""
+  local account="" mode=""
 
-  if [[ $# -eq 0 ]]; then
+  # 引数なしと「空文字を渡された」を区別する。${1:-} で一緒にすると
+  # `cc "" personal` が状態表示になり personal が黙って捨てられる（2026-07-28 実測）。
+  if (( $# == 0 )); then
     cc_status; return 0
   fi
-
-  if [[ "$1" == "list" ]]; then
-    cc_list; return $?
-  fi
-
+  local arg
   for arg in "$@"; do
-    case "$arg" in
-      api|sub|subscription) mode="$arg" ;;
-      *)
-        account="$arg" ;;
-    esac
+    if [[ -z "$arg" ]]; then
+      echo "Error: 空の引数は指定できません。" >&2
+      echo "  使い方: cc [<name>] [api|sub] / cc list" >&2
+      return 1
+    fi
   done
+
+  case "$1" in
+    list)
+      (( $# == 1 )) || { echo "usage: cc list" >&2; return 1; }
+      cc_list; return $?
+      ;;
+    app)
+      # cx app に相当する機能は未実装。黙って `cc <name>` として動作すると
+      # 「App も切り替わった」と誤解させる（2026-07-28 に実際に発生）。
+      echo "Error: cc app は未実装です（cx app に相当する機能はありません）。" >&2
+      echo "  Claude の認証は CLAUDE_CONFIG_DIR のパスハッシュで引く Keychain エントリで、" >&2
+      echo "  Codex の auth.json のように symlink を差し替えられないためです。" >&2
+      echo "  Desktop App / VS Code 拡張は常に非ハッシュの 'Claude Code-credentials'" >&2
+      echo "  （= CLAUDE_CONFIG_DIR 未設定のアカウント）を読みます。" >&2
+      echo "  実現方針と検証状況: $_AGSW_DIR/README.md の「cc app の検証」" >&2
+      return 1
+      ;;
+    api|sub|subscription)
+      # モードのみ切替（現在のアカウントに適用する）
+      if (( $# != 1 )); then
+        echo "Error: 'cc $1' はモード切替のみです。アカウントも変えるなら順序を逆にしてください:" >&2
+        echo "    cc <name> $1" >&2
+        return 1
+      fi
+      mode="$1"
+      ;;
+    *)
+      account="$1"
+      case "${2:-}" in
+        "") ;;
+        api|sub|subscription) mode="$2" ;;
+        *)
+          echo "Error: 2番目の引数はモード（api / sub）のみです: '$2'" >&2
+          echo "  使い方: cc [<name>] [api|sub] / cc list" >&2
+          return 1 ;;
+      esac
+      if (( $# > 2 )); then
+        echo "Error: 引数が多すぎます。usage: cc [<name>] [api|sub]" >&2
+        return 1
+      fi
+      ;;
+  esac
 
   # アカウント切り替え
   if [[ -n "$account" ]]; then
@@ -57,6 +105,17 @@ cc() {
   #   サブスク専用ファイルは持たない（live そのものがサブスク設定）。
   if [[ -n "$mode" ]]; then
     local config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+
+    # モード切替は settings.json を書き換えるので、マーカー検査を通す。
+    # cc <name> 経由なら上で検査済みだが、`cc api` 単体は外部から export された
+    # CLAUDE_CONFIG_DIR にそのまま作用するため、ここを塞がないと未管理ディレクトリの
+    # settings.json を symlink で置換できてしまう（2026-07-28 実測）。
+    # 未設定（= デフォルトの ~/.claude）はマーカーを持たないので免除する。
+    if [[ -n "${CLAUDE_CONFIG_DIR:-}" ]]; then
+      _agsw_require_profile "$config_dir" \
+        "$_AGSW_DIR/bin/setup-claude-account ${config_dir##*/}" || return 1
+    fi
+
     local dst="$config_dir/settings.json"
     local src
     case "$mode" in

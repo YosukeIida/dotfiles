@@ -4,17 +4,20 @@
 local -a candidates
 local prefix="${AGSW_CODEX_HOME_PREFIX:-$HOME/.codex-}"
 local out
-
-# `cx app <name>` の2語目はプロファイル名のみ。それ以外はサブコマンドも候補に出す。
-if [[ "${words[2]}" == "app" && $CURRENT -eq 3 ]]; then
-  candidates=()
-else
-  candidates=(list app)
-fi
+local -a profiles
 
 if [[ -x "$_AGSW_DIR/bin/agsw-list-profiles" ]]; then
   out="$("$_AGSW_DIR/bin/agsw-list-profiles" "$prefix" 2>/dev/null)"
-  [[ -n "$out" ]] && candidates+=("${(@f)out}")
+  [[ -n "$out" ]] && profiles=("${(@f)out}")
 fi
+
+# cx も位置固定の文法。受理されない候補は出さない（_cc と同じ方針）。
+#   1語目: <name> / list / app
+#   2語目: app のときだけ <name>。それ以外は候補なし
+case $CURRENT in
+  2) candidates=(list app "${profiles[@]}") ;;
+  3) [[ "${words[2]}" == "app" ]] && candidates=("${profiles[@]}") || candidates=() ;;
+  *) candidates=() ;;
+esac
 
 (( ${#candidates} )) && compadd -- "${(@u)candidates}"

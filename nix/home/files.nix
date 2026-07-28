@@ -57,6 +57,10 @@ in
     ".config/gh/config.yml".source = lnk "gh/config.yml";
     ".zshenv".source = lnk "zsh/zshenv";
     ".zshrc".source = lnk "zsh/zshrc";
+    # zprofile を管理下に入れているのは dot_path_priority を brew shellenv の後に
+    # 呼び直すため。非対話ログインシェル（zsh -lc）は zshrc を読まないので、
+    # ここで呼ばないと ~/.agents/bin と agent-switch のシムが Homebrew に負ける。
+    ".zprofile".source = lnk "zsh/zprofile";
 
     # codex プラグイン（sites 等）の MCP サーバが `command: "node"` で起動されるための node。
     # 通常の PATH には載せない（node は devshell のみの方針）。agent-switch の codex()
@@ -64,9 +68,17 @@ in
     ".local/share/codex-runtime/bin/node".source = "${pkgs.nodejs}/bin/node";
 
     # Claude Code プラグイン（openai-codex, impeccable）の hook が `command: "node"` で
-    # 起動されるための node。通常の PATH には載せない。agent-switch の claude()
-    # ラッパーが claude 起動時だけこの dir を PATH 先頭に注入する。
+    # 起動されるための node。通常の PATH には載せない。agent-switch の claude シム
+    # （下記 shims/）が claude 起動時だけこの dir を PATH 先頭に注入する。
     ".local/share/claude-runtime/bin/node".source = "${pkgs.nodejs}/bin/node";
+
+    # claude 起動シム。zsh 関数（lib/claude.zsh の claude()）は対話 zsh でしか
+    # 定義されないため、非対話シェル・bash・herdr/cmux が自プロセスの env のまま
+    # spawn した claude では node が PATH に入らず、プラグインの hook が
+    # `/bin/sh: node: command not found` で落ちていた。実行可能ファイルにすることで
+    # シェルの種類に依存せず、PATH を継承した子プロセスにも効く。
+    # このディレクトリは zsh/zshenv・zsh/zshrc で Homebrew より前に置かれる。
+    ".local/share/agent-switch/shims".source = lnk "tools/agent-switch/shims";
 
     # Claude Code が system python（Xcode CLT の /usr/bin/python3）を無自覚に使わないための
     # ガード。claude() ラッパーが node と同様 PATH 先頭に注入する（/usr/bin より必ず先に

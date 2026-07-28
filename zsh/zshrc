@@ -192,7 +192,6 @@ function sleepctl() {
   esac
 }
 
-# ~/.agents/bin を PATH 先頭に確保（Homebrew の初期化より後に実行する必要がある）
-path=("${path[@]:#${HOME}/.agents/bin}")
-path=("${HOME}/.agents/bin" "${path[@]}")
-export PATH
+# PATH 先頭の再確保（定義は zsh/zshenv、非対話ログイン用の呼び出しは zsh/zprofile）。
+# Homebrew の初期化より後に実行する必要がある。
+dot_path_priority

@@ -10,17 +10,31 @@
 # cx <name>          → このターミナルの CODEX_HOME を切替（他ターミナルに影響しない）
 # cx app <name>      → Codex App 用（~/.codex/auth.json symlink）を切替
 cx() {
-  local sub="${1:-}"
+  # 引数なしと「空文字を渡された」を区別する（cc と同じ理由。2026-07-28）
+  if (( $# == 0 )); then
+    cx_status
+    return $?
+  fi
+  local arg
+  for arg in "$@"; do
+    if [[ -z "$arg" ]]; then
+      echo "Error: 空の引数は指定できません。" >&2
+      echo "  使い方: cx [<name>] / cx app <name> / cx list" >&2
+      return 1
+    fi
+  done
+
+  local sub="$1"
   case "$sub" in
-    "")
-      cx_status
-      ;;
     list)
+      # 余分な引数を黙って捨てると、指定したつもりの操作が別の意味になる
+      (( $# == 1 )) || { echo "usage: cx list" >&2; return 1; }
       cx_list
       ;;
     app)
       local name="${2:-}"
       [[ -n "$name" ]] || { echo "usage: cx app <name>" >&2; return 1; }
+      (( $# == 2 )) || { echo "Error: 引数が多すぎます。usage: cx app <name>" >&2; return 1; }
       local dir="${AGSW_CODEX_HOME_PREFIX:-$HOME/.codex-}$name"
       _agsw_require_profile "$dir" "$_AGSW_DIR/bin/setup-codex-account $name" || return 1
       local app_auth="${AGSW_CODEX_APP_AUTH:-$HOME/.codex/auth.json}"
@@ -35,6 +49,7 @@ cx() {
       cx_status
       ;;
     *)
+      (( $# == 1 )) || { echo "Error: 引数が多すぎます。usage: cx <name>" >&2; return 1; }
       local dir="${AGSW_CODEX_HOME_PREFIX:-$HOME/.codex-}$sub"
       _agsw_require_profile "$dir" "$_AGSW_DIR/bin/setup-codex-account $sub" || return 1
       export CODEX_HOME="$dir"
@@ -62,17 +77,57 @@ cx_list() {
     echo "*  (CODEX_HOME 未設定 — 共有の ~/.codex を直接使用。cx <name> で選択してください)"
   fi
 
+  # 同一メールで plan だけが違う構成（個人 Plus と Team seat）が実在するため、
+  # 名前だけでなく email と plan を並べて初めてどれがどれか分かる。
+  local ident aid email plan
   while IFS= read -r name; do
     [[ -n "$name" ]] || continue
     dir="$prefix$name"
     mark=""
     [[ "$current" == "$dir" ]] && mark="*"
     [[ "$app_target" == "$dir/auth.json" ]] && mark="$mark@"
-    printf '%-2s %s\n' "$mark" "$name"
+
+    email=""; plan=""
+    if [[ -x "$_AGSW_DIR/bin/agsw-codex-identity" ]]; then
+      ident="$("$_AGSW_DIR/bin/agsw-codex-identity" "$dir/auth.json" 2>/dev/null)" \
+        && IFS=$'\t' read -r aid email plan <<< "$ident"
+    fi
+
+    printf '%-2s %-12s %-28s %s\n' \
+      "$mark" "$name" "${email:-(未ログイン)}" "${plan:+($plan)}"
   done < <(_agsw_list_profiles "$prefix")
 
   echo ""
   echo "  * = このシェルの CODEX_HOME / @ = Codex App が読む auth.json"
+}
+
+# auth.json の identity（email / plan / account_id）を継続行として1行出す。
+#
+# 同一メールで別アカウント（個人 Plus と Team seat）という構成が実在するため、
+# email だけでは識別できない。plan まで出して初めて人間が区別できる（2026-07-28）。
+# account_id は同姓同名（同メール・同プラン）の保険として短縮形で添える。
+_agsw_codex_identity_line() {
+  local auth="$1" ident aid email plan
+
+  if [[ ! -x "$_AGSW_DIR/bin/agsw-codex-identity" ]]; then
+    echo "                   (identity ヘルパが見つかりません)"
+    return 0
+  fi
+
+  ident="$("$_AGSW_DIR/bin/agsw-codex-identity" "$auth" 2>/dev/null)" || {
+    # 取れない理由を区別する（「未ログイン」と決めつけると jq 不在を誤診する）
+    if ! command -v jq >/dev/null 2>&1; then
+      echo "                   (identity 不明 — jq が無いため判定できません)"
+    elif [[ ! -r "$auth" ]]; then
+      echo "                   (identity 不明 — auth.json が読めません)"
+    else
+      echo "                   (identity 不明 — 未ログイン or API-key 認証)"
+    fi
+    return 0
+  }
+
+  IFS=$'\t' read -r aid email plan <<< "$ident"
+  echo "                   ${email:-(email 不明)}  (${plan:-plan 不明}, ${aid[1,8]:-????????})"
 }
 
 cx_status() {
@@ -81,19 +136,10 @@ cx_status() {
   local app_target
   app_target="$(readlink "$app_auth" 2>/dev/null || echo "(not a symlink)")"
 
-  # account_id を出して「shell と App が同じアカウントか」をディレクトリ名の記憶に
-  # 頼らず確認できるようにする。アカウントが3つ以上あると名前だけでは追えない。
-  # 取れないのは未ログイン / API-key 認証（tokens が null）/ python3 不在のとき。
-  local shell_id="" app_id=""
-  if [[ -x "$_AGSW_DIR/bin/agsw-codex-account-id" ]]; then
-    shell_id="$("$_AGSW_DIR/bin/agsw-codex-account-id" "$shell_home/auth.json" 2>/dev/null)" || shell_id=""
-    app_id="$("$_AGSW_DIR/bin/agsw-codex-account-id" "$app_auth" 2>/dev/null)" || app_id=""
-  fi
-
   echo "shell CODEX_HOME : $shell_home"
-  echo "shell account_id : ${shell_id:-(不明)}"
+  _agsw_codex_identity_line "$shell_home/auth.json"
   echo "app auth.json -> : $app_target"
-  echo "app account_id   : ${app_id:-(不明)}"
+  _agsw_codex_identity_line "$app_auth"
 
   # 自分の CODEX_HOME 用 managed daemon が動いていれば情報表示のみ行う。
   # 他ツール・他プロジェクトが起動した無関係な codex app-server プロセス
