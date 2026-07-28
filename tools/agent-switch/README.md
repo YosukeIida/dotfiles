@@ -125,8 +125,8 @@ setup スクリプトは共有 symlink を張る前に、張り先に**実ファ
 ## 日常の使い方
 
 ```bash
-cx                # 状態表示（shell / App / account_id / 起動中デーモン）
-cx list           # プロファイル一覧（* = このシェル、@ = Codex App）
+cx                # 状態表示（shell / App の email + plan + account_id / 起動中デーモン）
+cx list           # プロファイル一覧（email + plan 付き。* = このシェル、@ = Codex App）
 cx work           # このターミナルを work に切替
 cx app personal   # Codex App 用の認証を personal に切替（App再起動で反映）
 
@@ -242,6 +242,31 @@ SessionEnd hook [node "${CLAUDE_PLUGIN_ROOT}/scripts/session-lifecycle-hook.mjs"
 `claude()` zsh 関数は残してあるが、シムと注入が二重に走っても PATH は汚れない
 （シムの注入は冪等）。関数は「シムがまだ配備されていない古いシェル」の保険。
 
+#### 効く範囲と効かない範囲（重要）
+
+シムが効くのは **PATH を継承して `claude` を起動するプロセス**に限る。
+
+| 起動経路 | シムを通るか |
+|---|---|
+| 対話シェル（`zsh -ic` / `zsh -lic`）| ✅ |
+| 非対話シェル（`zsh -c` / `zsh -lc` / bash / sh）| ✅ |
+| PATH を継承した子プロセス（herdr / cmux → claude）| ✅ |
+| **launchd 起動の GUI（Claude Desktop / VS Code 拡張）** | ❌ **効かない** |
+
+launchd は zsh の起動ファイルを読まないため、GUI プロセスの PATH にシムのディレクトリが
+入らない。GUI が spawn した `claude` はシムを通らず、プラグイン hook は従来どおり
+`node: command not found` になりうる。**これは旧実装（zsh 関数）でも同じで、シム方式が
+悪化させたわけではないが、解決もしていない。** GUI 経路まで直すには launchd の環境変数
+（`launchctl setenv` や `launchd.user.agents` の `EnvironmentVariables`）に頼る必要があり、
+未着手。
+
+なお PATH の順序確保には注意が要る。`~/.zprofile` の `brew shellenv` が
+`/opt/homebrew/bin` を PATH 先頭へ押し込むため、`zsh/zshenv` での順序付けだけでは
+ログインシェルで無効化される。`zsh/zshrc` は非対話では読まれないので、`zsh -lc` に穴が開く
+（2026-07-28 実測: シムも `~/.agents/bin/codex` も Homebrew に負けていた）。
+このため順序付けは `zsh/zshenv` で `dot_path_priority` 関数として定義し、
+`zsh/zprofile`（`brew shellenv` の後）と `zsh/zshrc` から呼び直している。
+
 ## `cc app` の検証
 
 `cc app`（Desktop App / VS Code 拡張のアカウント切替）は未実装。設計方針と、着手前に測るべきことを記録する。
@@ -269,7 +294,8 @@ SessionEnd hook [node "${CLAUDE_PLUGIN_ROOT}/scripts/session-lifecycle-hook.mjs"
 ## 動作要件
 
 - zsh（bash/fish は未対応。独立リポジトリ化の際に eval-init 方式への移行を検討）
-- デーモン警告・email/org 表示・`account_id` 表示は macOS + python3 前提（無い環境では自動スキップし `(不明)` と表示する）
+- デーモン警告と Claude 側の email/org 表示は macOS + python3 前提（無い環境では自動スキップ）
+- Codex 側の email / plan / account_id 表示は `jq` 前提（無い環境ではその旨を表示してスキップ）
 
 ## 検証記録（2026-07-02 実測）
 
@@ -290,6 +316,7 @@ completions/_cc           # cc のタブ補完（fpath 経由で読み込む）
 completions/_cx           # cx のタブ補完
 bin/agsw-list-profiles    # マーカー付きプロファイルの列挙（zsh/bash 双方から使う唯一の実装）
 bin/agsw-codex-account-id # Codex auth.json から account_id を取り出す（同上）
+bin/agsw-codex-identity   # Codex auth.json から email / plan / account_id を取り出す（jq 実装）
 bin/agsw-check-name       # プロファイル名の検査（パス脱出・予約語の拒否）
 bin/setup-claude-account  # Claude アカウント dir 作成・正規化
 bin/setup-codex-account   # Codex アカウント dir 作成・正規化（migrate / adopt / add）

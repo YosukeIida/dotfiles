@@ -29,10 +29,21 @@ cc() {
   local default_name="${AGSW_CLAUDE_DEFAULT_NAME:-labteam}"
   local account="" mode=""
 
-  case "${1:-}" in
-    "")
-      cc_status; return 0
-      ;;
+  # 引数なしと「空文字を渡された」を区別する。${1:-} で一緒にすると
+  # `cc "" personal` が状態表示になり personal が黙って捨てられる（2026-07-28 実測）。
+  if (( $# == 0 )); then
+    cc_status; return 0
+  fi
+  local arg
+  for arg in "$@"; do
+    if [[ -z "$arg" ]]; then
+      echo "Error: 空の引数は指定できません。" >&2
+      echo "  使い方: cc [<name>] [api|sub] / cc list" >&2
+      return 1
+    fi
+  done
+
+  case "$1" in
     list)
       (( $# == 1 )) || { echo "usage: cc list" >&2; return 1; }
       cc_list; return $?
@@ -94,6 +105,17 @@ cc() {
   #   サブスク専用ファイルは持たない（live そのものがサブスク設定）。
   if [[ -n "$mode" ]]; then
     local config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+
+    # モード切替は settings.json を書き換えるので、マーカー検査を通す。
+    # cc <name> 経由なら上で検査済みだが、`cc api` 単体は外部から export された
+    # CLAUDE_CONFIG_DIR にそのまま作用するため、ここを塞がないと未管理ディレクトリの
+    # settings.json を symlink で置換できてしまう（2026-07-28 実測）。
+    # 未設定（= デフォルトの ~/.claude）はマーカーを持たないので免除する。
+    if [[ -n "${CLAUDE_CONFIG_DIR:-}" ]]; then
+      _agsw_require_profile "$config_dir" \
+        "$_AGSW_DIR/bin/setup-claude-account ${config_dir##*/}" || return 1
+    fi
+
     local dst="$config_dir/settings.json"
     local src
     case "$mode" in

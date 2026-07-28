@@ -17,7 +17,10 @@
 # そのまま継承するので、claude の PATH に node が無いことが唯一の原因）。
 # シムは実行可能ファイルなのでシェルの種類に依存せず、PATH を継承した
 # 子プロセス（herdr server → claude 等）にも効く。
-set -uo pipefail
+# -f: PATH 要素に含まれるワイルドカードを glob 展開させない
+# （実測 2026-07-28: PATH="/usr/bin:$dir/a*:/bin" が a* にマッチする実ディレクトリの
+#   数だけエントリに増え、コマンド解決先が変わった）
+set -ufo pipefail
 
 _self="$0"
 _self_dir="$(dirname -- "$_self")"
@@ -29,16 +32,32 @@ _rt_bin="$HOME/.local/share/claude-runtime/bin"
 _rt_fallback="$HOME/.local/share/claude-runtime/fallback"
 
 # 1. 自分のディレクトリを PATH から外す（シムが自分自身を再実行しないように）
+#
+# PATH は手動で分解する。`IFS=:` の単語分割では末尾の空要素が落ちるため
+# （実測 2026-07-28: "/a::/b:" が4要素ではなく3要素になる）。空要素は
+# 「カレントディレクトリ」を意味するので、勝手に落とすと PATH の意味が変わる。
 _newpath=""
-_oldifs="$IFS"
-IFS=:
-for _dir in ${PATH:-}; do
-  case "$_dir" in
-    "$_self_dir" | "$_self_dir_phys") continue ;;
+_first=1
+_rest="${PATH-}"
+while :; do
+  case "$_rest" in
+    *:*) _dir="${_rest%%:*}"; _rest="${_rest#*:}"; _more=1 ;;
+    *)   _dir="$_rest"; _rest=""; _more="" ;;
   esac
-  if [[ -z "$_newpath" ]]; then _newpath="$_dir"; else _newpath="$_newpath:$_dir"; fi
+
+  case "$_dir" in
+    "$_self_dir" | "$_self_dir_phys") ;;  # 自分のディレクトリは落とす
+    *)
+      if [[ -n "$_first" ]]; then
+        _newpath="$_dir"; _first=""
+      else
+        _newpath="$_newpath:$_dir"
+      fi
+      ;;
+  esac
+
+  [[ -n "$_more" ]] || break
 done
-IFS="$_oldifs"
 
 # 2. runtime を PATH 先頭へ冪等に注入する（zsh 関数版と二重に走っても重複しない）
 for _dir in "$_rt_bin" "$_rt_fallback"; do
