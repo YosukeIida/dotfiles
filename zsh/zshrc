@@ -192,10 +192,6 @@ function sleepctl() {
   esac
 }
 
-# ~/.agents/bin と agent-switch のシムを PATH 先頭に確保
-# （Homebrew の初期化より後に実行する必要がある。claude シムは /opt/homebrew/bin/claude
-#   より先に見つからないと node の PATH 注入が効かない）
-path=("${path[@]:#${HOME}/.agents/bin}")
-path=("${path[@]:#${HOME}/.local/share/agent-switch/shims}")
-path=("${HOME}/.agents/bin" "${HOME}/.local/share/agent-switch/shims" "${path[@]}")
-export PATH
+# PATH 先頭の再確保（定義は zsh/zshenv、非対話ログイン用の呼び出しは zsh/zprofile）。
+# Homebrew の初期化より後に実行する必要がある。
+dot_path_priority

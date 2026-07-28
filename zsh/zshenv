@@ -9,16 +9,35 @@ unset _hm_vars
 # venv 外での pip install を禁止（system Python を汚さない）
 export PIP_REQUIRE_VIRTUALENV=1
 
-# ユーザーローカルバイナリ（~/.agents/bin を先頭に確実に置く）
+# ユーザーローカルバイナリを PATH 先頭に確保する（冪等・何度呼んでもよい）。
 #
-# ~/.local/share/agent-switch/shims は claude 起動シム（tools/agent-switch/shims/）。
-# Homebrew の claude 本体より先に見つからないと意味が無いので、zshrc 側でも
-# Homebrew 初期化のあとに再度先頭へ寄せている。
-path=("${path[@]:#${HOME}/.agents/bin}")
-path=("${path[@]:#${HOME}/.local/share/agent-switch/shims}")
-path=("${path[@]:#${HOME}/.local/bin}")
-path=("${HOME}/.agents/bin" "${HOME}/.local/share/agent-switch/shims" "${HOME}/.local/bin" "${path[@]}")
-export PATH
+# 関数にしてあるのは、複数のタイミングで呼び直す必要があるため。
+# ~/.zprofile の `brew shellenv` が /opt/homebrew/bin を PATH 先頭へ押し込むので、
+# ここ（zshenv）での順序付けはログインシェルでは上書きされる。zprofile は
+# 対話・非対話どちらのログインシェルでも読まれるが、zshrc は非対話では読まれない。
+# したがって zshrc だけで直すと `zsh -lc` に穴が開く。
+#
+# 2026-07-28 実測: `zsh -lc` で以下の2つが /opt/homebrew/bin に負けていた。
+#   ~/.agents/bin/codex                          （agmsg のシム）
+#   ~/.local/share/agent-switch/shims/claude     （hook 用 node を注入する claude シム）
+# どちらも本体より先に見つからないと存在意義が無い。
+#
+# 呼び出し箇所: この直後（全シェル）/ zsh/zprofile（brew shellenv の後）/
+#               zsh/zshrc（対話シェルでの最後の砦）
+dot_path_priority() {
+  local _p
+  local -a _prio=(
+    "${HOME}/.agents/bin"
+    "${HOME}/.local/share/agent-switch/shims"
+    "${HOME}/.local/bin"
+  )
+  for _p in "${_prio[@]}"; do
+    path=("${path[@]:#${_p}}")
+  done
+  path=("${_prio[@]}" "${path[@]}")
+  export PATH
+}
+dot_path_priority
 
 # Figma PAT for figma-console-mcp (expires 2026-09-21; managed by agenix)
 [[ -r "${HOME}/.config/figma/pat" ]] && export FIGMA_ACCESS_TOKEN="$(<"${HOME}/.config/figma/pat")"
