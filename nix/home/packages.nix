@@ -19,6 +19,7 @@ in
 {
   home.packages = with pkgs; [
     age
+    bun
     cloudflared
     duti
     fzf
