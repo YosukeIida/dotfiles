@@ -588,7 +588,6 @@ in
     direnv
     git-filter-repo
     nix-direnv
-    zellij
     darwinSwitch
     darwinUpdate
     brewUpgradeAll
