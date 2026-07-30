@@ -26,6 +26,7 @@
       tap "jundot/omlx", "https://github.com/jundot/omlx", trusted: true
       tap "solarphlare/airmute", trusted: true
       tap "steipete/tap", trusted: true
+      tap "xoshbin/asyar", trusted: true
       tap "yosukeiida/casks-personal", trusted: true
     '';
 
@@ -59,6 +60,7 @@
       "affinity"
       "airmute"
       "arc"
+      "xoshbin/asyar/asyar"
       "chatgpt"
       "chrome-remote-desktop-host"
       "claude"
@@ -72,7 +74,7 @@
       "figma@beta"
       "fujitsu-scansnap-home"
       "ghostty@tip"
-      "google-chrome@canary"
+      "google-chrome"
       "hammerspoon"
       "karabiner-elements"
       "lens"
