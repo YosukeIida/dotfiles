@@ -124,6 +124,10 @@
       _link "$d" "$home/.claude/skills/$(basename "$d")"
     done
 
+    # agent-browser CLI に同梱の公式 skill。git vendor ではなく nix store から直接
+    # symlink する — nixpkgs-unstable の pin 更新だけで CLI と skill が同時にバージョンアップする。
+    _link "${pkgsUnstable.agent-browser}/skills/agent-browser" "$home/.claude/skills/agent-browser"
+
     # public skills を ~/.codex/skills/ にも展開
     mkdir -p "$home/.codex/skills"
     chown ${username}:staff "$home/.codex/skills"
@@ -131,6 +135,7 @@
       [ -d "$d" ] || continue
       _link "$d" "$home/.codex/skills/$(basename "$d")"
     done
+    _link "${pkgsUnstable.agent-browser}/skills/agent-browser" "$home/.codex/skills/agent-browser"
 
     # skill を削除・移動したあとに残るリンク切れ symlink を掃除する。
     # 有効な symlink・実ディレクトリ（home-manager 管理の per-file link 等）には触れない。
