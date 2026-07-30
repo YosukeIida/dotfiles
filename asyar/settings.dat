@@ -1,0 +1,129 @@
+{
+  "settings": {
+    "ai": {
+      "defaultAgentId": null,
+      "maxTokens": 2048,
+      "providers": {
+        "anthropic": {
+          "enabled": false
+        },
+        "custom": {
+          "enabled": false
+        },
+        "google": {
+          "enabled": false
+        },
+        "ollama": {
+          "enabled": false
+        },
+        "openai": {
+          "enabled": false
+        },
+        "openrouter": {
+          "enabled": false
+        }
+      },
+      "tabContinuesLastThread": false,
+      "temperature": 0.7
+    },
+    "appearance": {
+      "launchView": "compact",
+      "theme": "system",
+      "windowHeight": 600,
+      "windowWidth": 800
+    },
+    "developer": {
+      "allowSideloading": false,
+      "enabled": true,
+      "showInspector": false,
+      "tracing": false,
+      "verboseLogging": false
+    },
+    "extensions": {
+      "consent": {
+        "org.asyar.browser": {
+          "consentedAt": 1785416780196,
+          "grandfathered": true,
+          "permissionArgs": {},
+          "permissions": [
+            "browser:tabs.read",
+            "browser:tabs.write",
+            "browser:bookmarks.read",
+            "browser:history.read"
+          ]
+        },
+        "org.asyar.color-picker": {
+          "consentedAt": 1785416780196,
+          "grandfathered": true,
+          "permissionArgs": {},
+          "permissions": [
+            "screen:pick-color",
+            "clipboard:write",
+            "storage:read",
+            "storage:write",
+            "preferences:read",
+            "notifications:send",
+            "extension:invoke"
+          ]
+        },
+        "org.asyar.emoji": {
+          "consentedAt": 1785416780196,
+          "grandfathered": true,
+          "permissionArgs": {},
+          "permissions": [
+            "tools:register",
+            "clipboard:write",
+            "snippets:contribute"
+          ]
+        },
+        "org.asyar.kill-process": {
+          "consentedAt": 1785416780196,
+          "grandfathered": true,
+          "permissionArgs": {},
+          "permissions": [
+            "process:read",
+            "process:kill"
+          ]
+        }
+      },
+      "consentGrandfathered": true,
+      "enabled": {}
+    },
+    "fileSearch": {
+      "enabled": true,
+      "excludePatterns": [],
+      "includeRoots": [],
+      "indexHidden": false
+    },
+    "general": {
+      "escapeInViewBehavior": "go-back",
+      "showDockIcon": true,
+      "startAtLogin": false
+    },
+    "onboarding": {
+      "completed": true
+    },
+    "privacy": {
+      "crashReportMode": "off",
+      "usageShareMode": "off"
+    },
+    "search": {
+      "additionalScanPaths": [],
+      "allowExtensionActions": false,
+      "applicationEnabled": {},
+      "enableExtensionSearch": false,
+      "fuzzySearch": true,
+      "searchApplications": true,
+      "searchSystemPreferences": true
+    },
+    "shortcut": {
+      "key": "Space",
+      "modifier": "Alt"
+    },
+    "updates": {
+      "autoCheck": true,
+      "channel": "stable",
+      "lastSeenVersion": "0.1.1-40"
+    }
+  }
+}

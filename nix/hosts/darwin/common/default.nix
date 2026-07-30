@@ -165,5 +165,31 @@
     if [ -x "$pub/sync-gist-skills.sh" ]; then
       su - ${username} -c "bash $pub/sync-gist-skills.sh --check" || true
     fi
+
+    # Asyar（2026-07-30 Raycastから移行）。設定・portals は tauri-plugin-store の
+    # JSON（拡張子は .dat だが中身はプレーンJSON）で
+    # ~/Library/Application Support/org.asyar.app/ 配下に保存される
+    # （clipboard/snippets/shortcuts/エイリアス等は asyar_data.db という別の
+    # SQLiteで、こちらはクリップボード履歴等の個人データを含むため対象外）。
+    # Claude Code の settings.json と同じ「実ファイルが既にあれば初回だけ dotfiles に
+    # 取り込んで symlink 化」パターン。オンボーディング未完了（ファイル未生成）の間は
+    # 何もしない — root 権限の postActivation が先にディレクトリを作ってしまうと
+    # ユーザー権限で動く Asyar 本体が同ディレクトリに書き込めなくなるため。
+    _asyar_sync_store() {
+      local name="$1"
+      local live="$home/Library/Application Support/org.asyar.app/$name"
+      if [ -f "$live" ] && [ ! -L "$live" ]; then
+        mkdir -p "$pub/asyar"
+        chown ${username}:staff "$pub/asyar"
+        cp "$live" "$pub/asyar/$name"
+        chown ${username}:staff "$pub/asyar/$name"
+      fi
+      if [ -f "$pub/asyar/$name" ] && [ ! -L "$live" ]; then
+        _link "$pub/asyar/$name" "$live"
+        chown -h ${username}:staff "$live"
+      fi
+    }
+    _asyar_sync_store "settings.dat"
+    _asyar_sync_store "portals.dat"
   '';
 }
