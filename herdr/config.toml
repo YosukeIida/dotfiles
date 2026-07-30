@@ -1,0 +1,24 @@
+onboarding = false
+[ui]
+agent_panel_sort = "priority"
+
+show_agent_labels_on_pane_borders = true
+[[keys.command]]
+key = "prefix+d"
+type = "shell"
+command = "herdr plugin action invoke worktree-split --plugin hunk.diff"
+
+[[keys.command]]
+key = "prefix+b"
+type = "shell"
+command = "herdr plugin pane open --plugin official.browser --entrypoint browser --placement split --direction right --focus"
+
+[experimental]
+pane_history = true
+switch_ascii_input_source_in_prefix = true
+# herdr-browser プラグイン（E2Eテストでagentがブラウザを操作する様子を横から
+# 覗く用途、agents/skills/herdr参照）が pane 内に Chromium を描画するのに必要。
+kitty_graphics = true
+
+[ui.toast]
+delivery = "system"
