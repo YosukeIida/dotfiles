@@ -1,12 +1,921 @@
 {
-  "builtin_package_default": {
-    "didMigrateWebSearches": true,
-    "disabledApps": [
+  "remote_package_flux": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_mcpServer": {
+    "provider_schemaVersion": 1
+  },
+  "remote_package_flux-kontext": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_url": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_github": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_linear": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_reminders": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_weather": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_mcp": {
+    "mcpServers": [],
+    "provider_schemaVersion": 1
+  },
+  "remote_package_web": {
+    "provider_schemaVersion": 1
+  },
+  "raycast_onboarding": {
+    "showOnboardingItem": false,
+    "completedTaskIdentifiers": [
+      "windowManagement",
+      "setHotkeyAndAlias",
+      "installFirstExtension"
+    ],
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_raycastPreferences": {
+    "preferencesAppearance": {
+      "raycastShouldFollowSystemAppearance": true,
+      "statusBarIsVisible": false,
+      "showFavoritesInCompactMode": true,
+      "raycastUI_preferredTextSize": "medium",
+      "raycastPreferredWindowMode": "default"
+    },
+    "preferencesAdvanced": {
+      "raycastAPIOptions": 0,
+      "pageNavigationCommandKeysIdentifierKey": "squareBrackets",
+      "navigationCommandStyleIdentifierKey": "macos",
+      "popToRootTimeout": 90,
+      "mainWindowCaptureOpenQuickAccessOverlay": false,
+      "mainWindowCaptureShowInFinder": false,
+      "raycastWindowEscapeKeyBehavior": 0,
+      "useHyperKeyIcon": false,
+      "keepWindowVisibleOnResignKey": false,
+      "mainWindowCaptureCopyToClipboard": true,
+      "raycastWindowPresentationMode": 0
+    },
+    "preferencesGeneral": {
+      "raycastAlternativeEscape": false,
+      "raycastGlobalHotkey": "Option-49"
+    },
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_finder": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_snippets": {
+    "snippets": [],
+    "packSnippets": [],
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_zoom": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_raycastAccount": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_thinking": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_browser": {
+    "provider_schemaVersion": 1
+  },
+  "remote_package_gpt_image": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_gSuite": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_organizations": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_webSearches": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_browserBookmarks": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_developer": {
+    "provider_schemaVersion": 1
+  },
+  "raycast_raycastFocus": {
+    "provider_schemaVersion": 1,
+    "focusCategories": []
+  },
+  "builtin_package_navigation": {
+    "provider_schemaVersion": 1,
+    "pinnedMenuItems": []
+  },
+  "remote_package_nano_banana": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_rootSearch": {
+    "rootSearch": [
       {
-        "path": "/System/Volumes/Data/Users/yosuke/Applications/Claude Code URL Handler.app",
-        "identifier": "com.anthropic.claude-code-url-handler"
+        "key": "builtin_command_windowManagementBottomHalf",
+        "hotkey": "Control-Option-125",
+        "type": "command"
+      },
+      {
+        "hotkey": "Control-Option-38",
+        "type": "command",
+        "key": "builtin_command_windowManagementBottomLeftQuarter"
+      },
+      {
+        "hotkey": "Control-Option-40",
+        "type": "command",
+        "key": "builtin_command_windowManagementBottomRightQuarter"
+      },
+      {
+        "key": "builtin_command_windowManagementCenterThird",
+        "type": "command",
+        "hotkey": "Control-Option-3"
+      },
+      {
+        "searchTerms": "clip",
+        "type": "command",
+        "hotkey": "Shift-Command-9",
+        "key": "builtin_command_clipboardHistory",
+        "frecencyDate": 777422932.1400001,
+        "openedAt": 771670237.4189999
+      },
+      {
+        "type": "command",
+        "hotkey": "Control-Option-2",
+        "key": "builtin_command_windowManagementFirstThird"
+      },
+      {
+        "key": "builtin_command_windowManagementFirstTwoThird",
+        "hotkey": "Control-Option-14",
+        "type": "command"
+      },
+      {
+        "hotkey": "Control-Option-5",
+        "key": "builtin_command_windowManagementLastThird",
+        "type": "command"
+      },
+      {
+        "key": "builtin_command_windowManagementLastTwoThird",
+        "type": "command",
+        "hotkey": "Control-Option-17"
+      },
+      {
+        "hotkey": "Control-Option-123",
+        "type": "command",
+        "key": "builtin_command_windowManagementLeftHalf"
+      },
+      {
+        "type": "command",
+        "hotkey": "Control-Option-36",
+        "key": "builtin_command_windowManagementMaximize"
+      },
+      {
+        "openedAt": 806939610.0999999,
+        "type": "nodeCommand",
+        "key": "extension_arc.new-window__606e26d8-b3c5-4760-8001-dccce1b872c4",
+        "frecencyDate": 815239589.434,
+        "alias": "nw",
+        "searchTerms": "nw,nw,nw,nw,nw"
+      },
+      {
+        "type": "command",
+        "hotkey": "Control-Option-124",
+        "key": "builtin_command_windowManagementRightHalf"
+      },
+      {
+        "hotkey": "Control-Option-126",
+        "type": "command",
+        "key": "builtin_command_windowManagementTopHalf"
+      },
+      {
+        "type": "command",
+        "key": "builtin_command_windowManagementTopLeftQuarter",
+        "hotkey": "Control-Option-32"
+      },
+      {
+        "hotkey": "Control-Option-34",
+        "key": "builtin_command_windowManagementTopRightQuarter",
+        "type": "command"
       }
     ],
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_raycastExtensions": {
+    "extensions": [
+      {
+        "name": "folder-search",
+        "prefs": [
+          {
+            "name": "filterLibraryFolders",
+            "required": false,
+            "type": "checkbox"
+          },
+          {
+            "name": "maxResults",
+            "type": "textfield",
+            "required": false
+          },
+          {
+            "name": "openFolderAfterMove",
+            "type": "checkbox",
+            "required": false
+          },
+          {
+            "type": "checkbox",
+            "name": "pluginsEnabled",
+            "required": false
+          },
+          {
+            "required": false,
+            "name": "pluginsFolder",
+            "type": "textfield"
+          }
+        ],
+        "tokenSets": [],
+        "commands": [
+          {
+            "name": "search",
+            "enabled": true
+          },
+          {
+            "name": "move",
+            "enabled": true
+          }
+        ],
+        "title": "Folder Search",
+        "access": "public",
+        "owner": "GastroGeek"
+      },
+      {
+        "name": "color-picker",
+        "title": "Color Picker",
+        "tokenSets": [],
+        "owner": "thomas",
+        "prefs": [
+          {
+            "required": false,
+            "type": "dropdown",
+            "name": "colorFormat"
+          }
+        ],
+        "access": "public",
+        "commands": [
+          {
+            "prefs": [
+              {
+                "required": false,
+                "name": "showColorName",
+                "type": "checkbox"
+              }
+            ],
+            "name": "pick-color",
+            "enabled": true
+          },
+          {
+            "name": "extract-color",
+            "enabled": true
+          },
+          {
+            "enabled": true,
+            "name": "menu-bar"
+          },
+          {
+            "enabled": true,
+            "prefs": [
+              {
+                "type": "dropdown",
+                "required": false,
+                "name": "primaryAction"
+              }
+            ],
+            "name": "organize-colors"
+          },
+          {
+            "name": "generate-colors",
+            "enabled": true
+          },
+          {
+            "prefs": [
+              {
+                "name": "colorNamesPerGroup",
+                "required": false,
+                "type": "dropdown"
+              }
+            ],
+            "enabled": true,
+            "name": "color-names"
+          },
+          {
+            "name": "color-wheel",
+            "enabled": true
+          },
+          {
+            "enabled": true,
+            "name": "convert-color"
+          }
+        ]
+      },
+      {
+        "isAskExtensionEnabled": true,
+        "access": "public",
+        "owner": "the-browser-company",
+        "title": "Arc",
+        "commands": [
+          {
+            "enabled": true,
+            "name": "search-history"
+          },
+          {
+            "name": "new-window",
+            "enabled": true,
+            "prefs": [
+              {
+                "required": false,
+                "name": "space",
+                "type": "textfield"
+              }
+            ]
+          },
+          {
+            "enabled": true,
+            "name": "new-blank-window"
+          },
+          {
+            "name": "new-little-arc",
+            "enabled": true,
+            "prefs": [
+              {
+                "name": "url",
+                "required": false,
+                "type": "textfield"
+              },
+              {
+                "name": "engine",
+                "required": false,
+                "type": "dropdown"
+              }
+            ]
+          },
+          {
+            "enabled": true,
+            "name": "search-spaces"
+          },
+          {
+            "enabled": true,
+            "name": "search-tabs"
+          },
+          {
+            "name": "search-space-tabs",
+            "enabled": true
+          },
+          {
+            "enabled": true,
+            "name": "search-downloads"
+          },
+          {
+            "name": "new-incognito-window",
+            "enabled": true,
+            "prefs": [
+              {
+                "required": false,
+                "name": "url",
+                "type": "textfield"
+              },
+              {
+                "type": "dropdown",
+                "required": false,
+                "name": "engine"
+              }
+            ]
+          },
+          {
+            "prefs": [
+              {
+                "type": "textfield",
+                "required": false,
+                "name": "url"
+              },
+              {
+                "required": false,
+                "type": "textfield",
+                "name": "space"
+              }
+            ],
+            "enabled": true,
+            "name": "new-tab"
+          },
+          {
+            "name": "menu-bar",
+            "enabled": true
+          },
+          {
+            "enabled": true,
+            "prefs": [
+              {
+                "type": "dropdown",
+                "name": "engine",
+                "required": false
+              },
+              {
+                "type": "dropdown",
+                "name": "sorting",
+                "required": false
+              },
+              {
+                "name": "favoritesTabsOrder",
+                "type": "dropdown",
+                "required": false
+              },
+              {
+                "type": "dropdown",
+                "required": false,
+                "name": "pinnedTabsOrder"
+              },
+              {
+                "type": "dropdown",
+                "required": false,
+                "name": "unpinnedTabsOrder"
+              },
+              {
+                "name": "showFavorites",
+                "type": "checkbox",
+                "required": false
+              },
+              {
+                "required": false,
+                "name": "showPinnedTabs",
+                "type": "checkbox"
+              },
+              {
+                "name": "showUnpinnedTabs",
+                "type": "checkbox",
+                "required": false
+              },
+              {
+                "required": false,
+                "name": "showHistory",
+                "type": "checkbox"
+              },
+              {
+                "type": "checkbox",
+                "name": "showSuggestions",
+                "required": false
+              }
+            ],
+            "name": "search"
+          },
+          {
+            "name": "release-notes",
+            "enabled": false
+          },
+          {
+            "name": "boost-gallery",
+            "enabled": false
+          },
+          {
+            "enabled": false,
+            "name": "new-easel"
+          },
+          {
+            "name": "reset-space-tabs",
+            "enabled": false
+          }
+        ],
+        "tools": [
+          {
+            "enabled": true,
+            "name": "new-window"
+          },
+          {
+            "name": "new-blank-window",
+            "enabled": true
+          },
+          {
+            "enabled": true,
+            "name": "new-little-arc"
+          },
+          {
+            "enabled": true,
+            "name": "new-incognito-window"
+          },
+          {
+            "enabled": true,
+            "name": "new-tab"
+          },
+          {
+            "enabled": true,
+            "name": "get-spaces"
+          },
+          {
+            "enabled": true,
+            "name": "get-tabs"
+          },
+          {
+            "name": "select-tab",
+            "enabled": true
+          },
+          {
+            "name": "select-space",
+            "enabled": true
+          },
+          {
+            "enabled": true,
+            "name": "close-tab"
+          },
+          {
+            "enabled": true,
+            "name": "get-active-space"
+          },
+          {
+            "enabled": true,
+            "name": "search-history"
+          }
+        ],
+        "tokenSets": [],
+        "name": "arc"
+      },
+      {
+        "name": "quit-applications",
+        "commands": [
+          {
+            "name": "index",
+            "enabled": true,
+            "prefs": [
+              {
+                "name": "showQuitAllApplications",
+                "type": "checkbox",
+                "required": false
+              },
+              {
+                "required": false,
+                "type": "textfield",
+                "name": "excludeApplications"
+              }
+            ]
+          }
+        ],
+        "title": "Quit Applications",
+        "access": "public",
+        "owner": "mackopes",
+        "tokenSets": []
+      },
+      {
+        "title": "Bitwarden Vault",
+        "commands": [
+          {
+            "name": "search",
+            "enabled": true,
+            "prefs": [
+              {
+                "type": "dropdown",
+                "name": "primaryAction",
+                "required": false
+              },
+              {
+                "type": "dropdown",
+                "name": "transientCopySearch",
+                "required": false
+              }
+            ]
+          },
+          {
+            "name": "authenticator",
+            "prefs": [
+              {
+                "name": "primaryAction",
+                "type": "dropdown",
+                "required": false
+              }
+            ],
+            "enabled": true
+          },
+          {
+            "enabled": true,
+            "prefs": [
+              {
+                "name": "transientCopyGeneratePassword",
+                "type": "dropdown",
+                "required": false
+              }
+            ],
+            "name": "generate-password"
+          },
+          {
+            "name": "generate-password-quick",
+            "enabled": true,
+            "prefs": [
+              {
+                "name": "generatePasswordQuickAction",
+                "type": "dropdown",
+                "required": false
+              },
+              {
+                "name": "transientCopyGeneratePasswordQuick",
+                "type": "dropdown",
+                "required": false
+              }
+            ]
+          },
+          {
+            "name": "create-folder",
+            "enabled": true
+          },
+          {
+            "name": "create-login",
+            "enabled": true
+          },
+          {
+            "enabled": true,
+            "name": "lock-vault"
+          },
+          {
+            "enabled": true,
+            "name": "logout-vault"
+          },
+          {
+            "enabled": true,
+            "name": "create-send"
+          },
+          {
+            "enabled": true,
+            "name": "search-sends"
+          },
+          {
+            "name": "receive-send",
+            "enabled": true
+          }
+        ],
+        "owner": "jomifepe",
+        "prefs": [
+          {
+            "type": "password",
+            "required": true,
+            "name": "clientId"
+          },
+          {
+            "name": "clientSecret",
+            "required": true,
+            "type": "password"
+          },
+          {
+            "name": "cliPath",
+            "type": "textfield",
+            "required": false
+          },
+          {
+            "type": "textfield",
+            "required": false,
+            "name": "serverUrl"
+          },
+          {
+            "required": false,
+            "name": "serverCertsPath",
+            "type": "textfield"
+          },
+          {
+            "name": "syncOnLaunch",
+            "type": "checkbox",
+            "required": false
+          },
+          {
+            "required": true,
+            "name": "fetchFavicons",
+            "type": "checkbox"
+          },
+          {
+            "name": "repromptIgnoreDuration",
+            "type": "dropdown",
+            "required": false
+          },
+          {
+            "required": false,
+            "name": "windowActionOnCopy",
+            "type": "dropdown"
+          },
+          {
+            "name": "shouldCacheVaultItems",
+            "type": "checkbox",
+            "required": false
+          }
+        ],
+        "name": "bitwarden",
+        "access": "public",
+        "tokenSets": []
+      },
+      {
+        "access": "public",
+        "prefs": [
+          {
+            "name": "build",
+            "type": "dropdown",
+            "required": false
+          },
+          {
+            "name": "showGitBranch",
+            "type": "checkbox",
+            "required": false
+          },
+          {
+            "type": "dropdown",
+            "required": false,
+            "name": "projectIconStyle"
+          },
+          {
+            "required": false,
+            "name": "showOpenStatus",
+            "type": "checkbox"
+          }
+        ],
+        "name": "zed-recent-projects",
+        "tokenSets": [],
+        "title": "Zed",
+        "commands": [
+          {
+            "enabled": true,
+            "name": "open"
+          },
+          {
+            "name": "search",
+            "enabled": true
+          },
+          {
+            "enabled": true,
+            "name": "open-new-window"
+          }
+        ],
+        "owner": "ewgenius"
+      }
+    ],
+    "provider_schemaVersion": 1,
+    "localExtensions": []
+  },
+  "builtin_package_nodeExtension": {
+    "provider_schemaVersion": 1
+  },
+  "remote_package_chart": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_quicklinks": {
+    "enableQuickSearch": false,
+    "packQuicklinks": [],
+    "quicklinks": [
+      {
+        "uuid": "377118D5-55B5-4163-90A4-55CBDAACE569",
+        "isEnabled": true,
+        "name": "Search Google",
+        "openCount": 0,
+        "url": "https://google.com/search?q={argument}",
+        "updatedAt": "2025-06-15T08:50:09Z"
+      },
+      {
+        "uuid": "27A03C60-C8B5-4232-9F56-A18E057EBC93",
+        "url": "https://duckduckgo.com/?q={argument}",
+        "updatedAt": "2025-06-15T08:50:09Z",
+        "isEnabled": true,
+        "name": "Search DuckDuckGo",
+        "openCount": 0
+      }
+    ],
+    "enableAutoFillLink": false,
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_typingPractice": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_scriptCommands": {
+    "provider_schemaVersion": 1,
+    "scriptCommandsDirectories": [
+      "~/workspace/github.com/YosukeIida/dotfiles/raycast-scripts"
+    ]
+  },
+  "remote_package_stable_diffusion": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_selected-text": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_jira": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_calendar": {
+    "provider_schemaVersion": 1
+  },
+  "remote_package_gemini_image": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_screenshots": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_emoji": {
+    "provider_schemaVersion": 1,
+    "emojis": [
+      {
+        "customKeywords": [],
+        "symbol": "😄"
+      },
+      {
+        "symbol": "😁",
+        "customKeywords": []
+      },
+      {
+        "symbol": "😂",
+        "customKeywords": []
+      },
+      {
+        "symbol": "😊",
+        "customKeywords": []
+      },
+      {
+        "symbol": "😍",
+        "customKeywords": []
+      },
+      {
+        "symbol": "😘",
+        "customKeywords": []
+      },
+      {
+        "symbol": "☺️",
+        "customKeywords": []
+      },
+      {
+        "customKeywords": [],
+        "symbol": "😜"
+      },
+      {
+        "symbol": "🤔",
+        "customKeywords": []
+      },
+      {
+        "symbol": "😒",
+        "customKeywords": []
+      },
+      {
+        "customKeywords": [],
+        "symbol": "😔"
+      },
+      {
+        "customKeywords": [],
+        "symbol": "😳"
+      },
+      {
+        "symbol": "😭",
+        "customKeywords": []
+      },
+      {
+        "symbol": "❤️",
+        "customKeywords": []
+      },
+      {
+        "customKeywords": [],
+        "symbol": "💋"
+      },
+      {
+        "symbol": "👍",
+        "customKeywords": []
+      }
+    ]
+  },
+  "remote_package_dalle": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_systemCommands": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_fileSearch": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_translator": {
+    "provider_schemaVersion": 1
+  },
+  "remote_package_nano_banana_lite": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_dictionary": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_location": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_contacts": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_quick-ai": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_calculator": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_asana": {
+    "provider_schemaVersion": 1
+  },
+  "builtin_package_default": {
+    "didMigrateWebSearches": true,
     "enabledFallbackSearchIdentifiers": [
       "builtin_command_fileSearch_fallbackSearch",
       "builtin_command_extensionStore_fallbackSearch",
@@ -35,667 +944,16 @@
       "builtin_command_ask-weather_fallbackSearch",
       "remote_command_web_fallbackSearch"
     ],
+    "didMigrateQuicklinkFallbackSearch": true,
     "installedNativeExtensionIdentifiers": [
       "builtin_package_media"
     ],
-    "didMigrateQuicklinkFallbackSearch": true,
-    "provider_schemaVersion": 1
-  },
-  "remote_package_flux": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_quick-ai": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_jira": {
-    "provider_schemaVersion": 1
-  },
-  "remote_package_chart": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_location": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_gSuite": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_translator": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_contacts": {
-    "provider_schemaVersion": 1
-  },
-  "remote_package_flux-kontext": {
-    "provider_schemaVersion": 1
-  },
-  "remote_package_gpt_image": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_thinking": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_organizations": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_fileSearch": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_webSearches": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_browser": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_typingPractice": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_url": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_selected-text": {
-    "provider_schemaVersion": 1
-  },
-  "remote_package_gemini_image": {
-    "provider_schemaVersion": 1
-  },
-  "remote_package_nano_banana": {
-    "provider_schemaVersion": 1
-  },
-  "remote_package_dalle": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_screenshots": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_github": {
-    "provider_schemaVersion": 1
-  },
-  "remote_package_stable_diffusion": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_scriptCommands": {
-    "provider_schemaVersion": 1,
-    "scriptCommandsDirectories": [
-      "~/workspace/github.com/YosukeIida/dotfiles/raycast-scripts"
-    ]
-  },
-  "builtin_package_quicklinks": {
-    "packQuicklinks": [],
-    "enableQuickSearch": false,
-    "provider_schemaVersion": 1,
-    "enableAutoFillLink": false,
-    "quicklinks": [
+    "disabledApps": [
       {
-        "isEnabled": true,
-        "openCount": 0,
-        "uuid": "377118D5-55B5-4163-90A4-55CBDAACE569",
-        "name": "Search Google",
-        "updatedAt": "2025-06-15T08:50:09Z",
-        "url": "https://google.com/search?q={argument}"
-      },
-      {
-        "isEnabled": true,
-        "updatedAt": "2025-06-15T08:50:09Z",
-        "url": "https://duckduckgo.com/?q={argument}",
-        "name": "Search DuckDuckGo",
-        "uuid": "27A03C60-C8B5-4232-9F56-A18E057EBC93",
-        "openCount": 0
-      }
-    ]
-  },
-  "builtin_package_calculator": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_zoom": {
-    "provider_schemaVersion": 1
-  },
-  "raycast_onboarding": {
-    "provider_schemaVersion": 1,
-    "completedTaskIdentifiers": [
-      "windowManagement",
-      "setHotkeyAndAlias",
-      "installFirstExtension"
-    ],
-    "showOnboardingItem": true
-  },
-  "raycast_raycastFocus": {
-    "provider_schemaVersion": 1,
-    "focusCategories": []
-  },
-  "remote_package_web": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_browserBookmarks": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_calendar": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_developer": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_linear": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_mcp": {
-    "mcpServers": [],
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_nodeExtension": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_asana": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_emoji": {
-    "provider_schemaVersion": 1,
-    "emojis": [
-      {
-        "symbol": "😄",
-        "customKeywords": []
-      },
-      {
-        "symbol": "😁",
-        "customKeywords": []
-      },
-      {
-        "customKeywords": [],
-        "symbol": "😂"
-      },
-      {
-        "symbol": "😊",
-        "customKeywords": []
-      },
-      {
-        "customKeywords": [],
-        "symbol": "😍"
-      },
-      {
-        "symbol": "😘",
-        "customKeywords": []
-      },
-      {
-        "symbol": "☺️",
-        "customKeywords": []
-      },
-      {
-        "customKeywords": [],
-        "symbol": "😜"
-      },
-      {
-        "symbol": "🤔",
-        "customKeywords": []
-      },
-      {
-        "customKeywords": [],
-        "symbol": "😒"
-      },
-      {
-        "customKeywords": [],
-        "symbol": "😔"
-      },
-      {
-        "symbol": "😳",
-        "customKeywords": []
-      },
-      {
-        "customKeywords": [],
-        "symbol": "😭"
-      },
-      {
-        "customKeywords": [],
-        "symbol": "❤️"
-      },
-      {
-        "customKeywords": [],
-        "symbol": "💋"
-      },
-      {
-        "customKeywords": [],
-        "symbol": "👍"
-      }
-    ]
-  },
-  "builtin_package_raycastPreferences": {
-    "preferencesGeneral": {
-      "raycastAlternativeEscape": false,
-      "raycastGlobalHotkey": "Option-49"
-    },
-    "provider_schemaVersion": 1,
-    "preferencesAdvanced": {
-      "popToRootTimeout": 90,
-      "navigationCommandStyleIdentifierKey": "macos",
-      "raycastWindowEscapeKeyBehavior": 0,
-      "mainWindowCaptureCopyToClipboard": true,
-      "useHyperKeyIcon": false,
-      "pageNavigationCommandKeysIdentifierKey": "squareBrackets",
-      "mainWindowCaptureOpenQuickAccessOverlay": false,
-      "raycastAPIOptions": 0,
-      "keepWindowVisibleOnResignKey": false,
-      "raycastWindowPresentationMode": 0,
-      "mainWindowCaptureShowInFinder": false
-    },
-    "preferencesAppearance": {
-      "showFavoritesInCompactMode": true,
-      "raycastUI_preferredTextSize": "medium",
-      "raycastPreferredWindowMode": "default",
-      "statusBarIsVisible": false,
-      "raycastShouldFollowSystemAppearance": true
-    }
-  },
-  "builtin_package_dictionary": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_reminders": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_mcpServer": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_systemCommands": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_snippets": {
-    "provider_schemaVersion": 1,
-    "packSnippets": [],
-    "snippets": []
-  },
-  "builtin_package_rootSearch": {
-    "provider_schemaVersion": 1,
-    "rootSearch": [
-      {
-        "hotkey": "Control-Option-125",
-        "key": "builtin_command_windowManagementBottomHalf",
-        "type": "command"
-      },
-      {
-        "type": "command",
-        "hotkey": "Control-Option-38",
-        "key": "builtin_command_windowManagementBottomLeftQuarter"
-      },
-      {
-        "type": "command",
-        "key": "builtin_command_windowManagementBottomRightQuarter",
-        "hotkey": "Control-Option-40"
-      },
-      {
-        "key": "builtin_command_windowManagementCenterThird",
-        "type": "command",
-        "hotkey": "Control-Option-3"
-      },
-      {
-        "type": "command",
-        "hotkey": "Shift-Command-9",
-        "openedAt": 771670237.4189999,
-        "key": "builtin_command_clipboardHistory",
-        "searchTerms": "clip",
-        "frecencyDate": 777422932.1400001
-      },
-      {
-        "type": "command",
-        "key": "builtin_command_windowManagementFirstThird",
-        "hotkey": "Control-Option-2"
-      },
-      {
-        "hotkey": "Control-Option-14",
-        "type": "command",
-        "key": "builtin_command_windowManagementFirstTwoThird"
-      },
-      {
-        "hotkey": "Control-Option-5",
-        "type": "command",
-        "key": "builtin_command_windowManagementLastThird"
-      },
-      {
-        "type": "command",
-        "key": "builtin_command_windowManagementLastTwoThird",
-        "hotkey": "Control-Option-17"
-      },
-      {
-        "type": "command",
-        "key": "builtin_command_windowManagementLeftHalf",
-        "hotkey": "Control-Option-123"
-      },
-      {
-        "hotkey": "Control-Option-36",
-        "key": "builtin_command_windowManagementMaximize",
-        "type": "command"
-      },
-      {
-        "type": "nodeCommand",
-        "frecencyDate": 808872922.1010001,
-        "key": "extension_arc.new-window__606e26d8-b3c5-4760-8001-dccce1b872c4",
-        "alias": "nw",
-        "searchTerms": "open,open new,open,nw",
-        "openedAt": 801402055.569
-      },
-      {
-        "key": "builtin_command_windowManagementRightHalf",
-        "type": "command",
-        "hotkey": "Control-Option-124"
-      },
-      {
-        "hotkey": "Control-Option-126",
-        "type": "command",
-        "key": "builtin_command_windowManagementTopHalf"
-      },
-      {
-        "key": "builtin_command_windowManagementTopLeftQuarter",
-        "hotkey": "Control-Option-32",
-        "type": "command"
-      },
-      {
-        "key": "builtin_command_windowManagementTopRightQuarter",
-        "type": "command",
-        "hotkey": "Control-Option-34"
-      }
-    ]
-  },
-  "builtin_package_navigation": {
-    "pinnedMenuItems": [],
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_raycastExtensions": {
-    "extensions": [
-      {
-        "title": "Color Picker",
-        "commands": [
-          {
-            "prefs": [
-              {
-                "required": false,
-                "name": "showColorName",
-                "type": "checkbox"
-              }
-            ],
-            "enabled": true,
-            "name": "pick-color"
-          },
-          {
-            "name": "extract-color",
-            "enabled": true
-          },
-          {
-            "name": "menu-bar",
-            "enabled": true
-          },
-          {
-            "enabled": true,
-            "prefs": [
-              {
-                "name": "primaryAction",
-                "type": "dropdown",
-                "required": false
-              }
-            ],
-            "name": "organize-colors"
-          },
-          {
-            "name": "generate-colors",
-            "enabled": true
-          },
-          {
-            "enabled": true,
-            "prefs": [
-              {
-                "name": "colorNamesPerGroup",
-                "type": "dropdown",
-                "required": false
-              }
-            ],
-            "name": "color-names"
-          },
-          {
-            "name": "color-wheel",
-            "enabled": true
-          },
-          {
-            "enabled": true,
-            "name": "convert-color"
-          }
-        ],
-        "prefs": [
-          {
-            "name": "colorFormat",
-            "type": "dropdown",
-            "required": false
-          }
-        ],
-        "access": "public",
-        "tokenSets": [],
-        "name": "color-picker",
-        "owner": "thomas"
-      },
-      {
-        "access": "public",
-        "title": "Arc",
-        "commands": [
-          {
-            "name": "search-history",
-            "enabled": true
-          },
-          {
-            "name": "new-window",
-            "prefs": [
-              {
-                "required": false,
-                "name": "space",
-                "type": "textfield"
-              }
-            ],
-            "enabled": true
-          },
-          {
-            "name": "new-blank-window",
-            "enabled": true
-          },
-          {
-            "name": "new-little-arc",
-            "enabled": true,
-            "prefs": [
-              {
-                "required": false,
-                "type": "textfield",
-                "name": "url"
-              },
-              {
-                "name": "engine",
-                "type": "dropdown",
-                "required": false
-              }
-            ]
-          },
-          {
-            "name": "search-spaces",
-            "enabled": true
-          },
-          {
-            "enabled": true,
-            "name": "search-tabs"
-          },
-          {
-            "name": "search-space-tabs",
-            "enabled": true
-          },
-          {
-            "name": "search-downloads",
-            "enabled": true
-          },
-          {
-            "prefs": [
-              {
-                "type": "textfield",
-                "required": false,
-                "name": "url"
-              },
-              {
-                "type": "dropdown",
-                "name": "engine",
-                "required": false
-              }
-            ],
-            "enabled": true,
-            "name": "new-incognito-window"
-          },
-          {
-            "name": "new-tab",
-            "prefs": [
-              {
-                "type": "textfield",
-                "required": false,
-                "name": "url"
-              },
-              {
-                "required": false,
-                "type": "textfield",
-                "name": "space"
-              }
-            ],
-            "enabled": true
-          },
-          {
-            "name": "menu-bar",
-            "enabled": true
-          },
-          {
-            "enabled": true,
-            "name": "search",
-            "prefs": [
-              {
-                "type": "dropdown",
-                "required": false,
-                "name": "engine"
-              },
-              {
-                "type": "dropdown",
-                "required": false,
-                "name": "sorting"
-              },
-              {
-                "required": false,
-                "name": "favoritesTabsOrder",
-                "type": "dropdown"
-              },
-              {
-                "type": "dropdown",
-                "required": false,
-                "name": "pinnedTabsOrder"
-              },
-              {
-                "type": "dropdown",
-                "required": false,
-                "name": "unpinnedTabsOrder"
-              },
-              {
-                "type": "checkbox",
-                "required": false,
-                "name": "showFavorites"
-              },
-              {
-                "type": "checkbox",
-                "required": false,
-                "name": "showPinnedTabs"
-              },
-              {
-                "type": "checkbox",
-                "required": false,
-                "name": "showUnpinnedTabs"
-              },
-              {
-                "type": "checkbox",
-                "required": false,
-                "name": "showHistory"
-              },
-              {
-                "required": false,
-                "name": "showSuggestions",
-                "type": "checkbox"
-              }
-            ]
-          },
-          {
-            "name": "release-notes",
-            "enabled": false
-          },
-          {
-            "name": "boost-gallery",
-            "enabled": false
-          },
-          {
-            "enabled": false,
-            "name": "new-easel"
-          },
-          {
-            "enabled": false,
-            "name": "reset-space-tabs"
-          }
-        ],
-        "isAskExtensionEnabled": true,
-        "name": "arc",
-        "tokenSets": [],
-        "owner": "the-browser-company",
-        "tools": [
-          {
-            "name": "new-window",
-            "enabled": true
-          },
-          {
-            "enabled": true,
-            "name": "new-blank-window"
-          },
-          {
-            "enabled": true,
-            "name": "new-little-arc"
-          },
-          {
-            "name": "new-incognito-window",
-            "enabled": true
-          },
-          {
-            "name": "new-tab",
-            "enabled": true
-          },
-          {
-            "name": "get-spaces",
-            "enabled": true
-          },
-          {
-            "name": "get-tabs",
-            "enabled": true
-          },
-          {
-            "enabled": true,
-            "name": "select-tab"
-          },
-          {
-            "enabled": true,
-            "name": "select-space"
-          },
-          {
-            "enabled": true,
-            "name": "close-tab"
-          },
-          {
-            "enabled": true,
-            "name": "get-active-space"
-          },
-          {
-            "enabled": true,
-            "name": "search-history"
-          }
-        ]
+        "path": "/System/Volumes/Data/Users/yosuke/Applications/Claude Code URL Handler.app",
+        "identifier": "com.anthropic.claude-code-url-handler"
       }
     ],
-    "localExtensions": [],
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_weather": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_raycastAccount": {
-    "provider_schemaVersion": 1
-  },
-  "builtin_package_finder": {
     "provider_schemaVersion": 1
   }
 }
