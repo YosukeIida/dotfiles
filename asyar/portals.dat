@@ -1,0 +1,32 @@
+{
+  "asyar:portals": [
+    {
+      "createdAt": 1785407235612,
+      "icon": "🌐",
+      "id": "default-search-google",
+      "name": "Search Google",
+      "url": "https://google.com/search?q={query}"
+    },
+    {
+      "createdAt": 1785407235612,
+      "icon": "🐙",
+      "id": "default-search-github",
+      "name": "Search GitHub",
+      "url": "https://github.com/search?q={query}"
+    },
+    {
+      "createdAt": 1785407235612,
+      "icon": "📖",
+      "id": "default-search-wikipedia",
+      "name": "Search Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/{query}"
+    },
+    {
+      "createdAt": 1785407307397,
+      "icon": "🔗",
+      "id": "3ba47d3a-5094-47ec-9cb1-001b7ee3113e",
+      "name": "Search DuckDuckGo",
+      "url": "https://duckduckgo.com/?q={query}"
+    }
+  ]
+}
