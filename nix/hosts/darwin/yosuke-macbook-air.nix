@@ -715,6 +715,7 @@ in
       local src="$1" dst="$2"
       if [ -r "$src" ]; then
         mkdir -p "$(dirname "$dst")"
+        chown ${username}:staff "$(dirname "$dst")"
         rm -f "$dst"
         install -m 600 -o ${username} -g staff "$src" "$dst"
       else
