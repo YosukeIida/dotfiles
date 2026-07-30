@@ -47,7 +47,7 @@ bash ~/workspace/github.com/YosukeIida/dotfiles/bootstrap.sh
 | 2 | nix-darwin の初回適用（`nix run nix-darwin#darwin-rebuild -- switch`）。以後は `darwin-switch` |
 | 3 | `gh auth login` → `dotfiles-private`（個人 skills）を clone |
 | 4 | GitHub に公開鍵登録・両 repo の remote を SSH に切替 |
-| 5 | Raycast 設定（`.rayconfig`）の import（要 dotfiles-private・Raycast 導入済み） |
+| 5 | Raycast 設定（`.rayconfig`）の import（メイン。要 dotfiles-private・Raycast 導入済み）。Asyar は併用インストールのみ（settings.dat は symlink 済みなら自動反映、自動起動は無効化済み） |
 
 **初回の順序に注意**: Step 2（初回適用）が終わるまで `gh` / `raycast` / `claude` 等の
 cask/CLI は入らない。`Step 2 → 新しいシェル → gh auth login → Step 3/4 → Raycast 導入後に Step 5`

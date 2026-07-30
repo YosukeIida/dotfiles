@@ -175,10 +175,14 @@ else
   skip "SSH 切替（id_ed25519 と gh が必要）"
 fi
 
-# ── Step 5: Raycast 設定のインポート（手動）──────────────────────────
-# .rayconfig はローカル履歴・デバイス固有データを含むため public では .gitignore 済み。
-# 実体は dotfiles-private に置くので、Step 3 の private clone 後にここが成立する。
-step 5 "Raycast 設定のインポート"
+# ── Step 5: ランチャー設定のインポート（手動）──────────────────────────
+# 2026-07-30 に Asyar への移行を試したが、Clipboard History の画像プレビュー
+# 不具合により Raycast をメインに戻した（Asyar は併用インストールのみ維持、
+# 自動起動は無効化してグローバルホットキー(Option+Space)の衝突を回避）。
+# .rayconfig はローカル履歴・デバイス固有データを含むため public では
+# .gitignore 済み。実体は dotfiles-private に置くので、Step 3 の private
+# clone 後にここが成立する。
+step 5 "Raycast 設定のインポート（メイン） / Asyar 設定の反映（併用、任意）"
 RAYCAST_RAYCONFIG=$(ls -t "$PRIVATE_DIR/raycast/"*.rayconfig 2>/dev/null | head -1)
 if ! open -Ra "Raycast" &>/dev/null; then
   warn "Raycast 未インストール（Step 2 完了後に再実行してください）"
@@ -190,6 +194,11 @@ else
   echo "      $RAYCAST_RAYCONFIG"
   ok "インポート時のパスワードは agenix 復号済み: ~/.config/raycast/export.env の RAYCAST_EXPORT_PW"
 fi
+
+if [[ -L "$HOME/Library/Application Support/org.asyar.app/settings.dat" ]]; then
+  ok "(併用)Asyar の settings.dat は dotfiles 側から symlink 済み（Step 2 の postActivation が処理済み）"
+fi
+warn "(併用)Asyar は自動起動を無効化してある。手動起動時に Option+Space が Raycast と衝突する可能性に注意"
 
 # ── 完了 ──────────────────────────────────────────────────────────────
 echo ""
