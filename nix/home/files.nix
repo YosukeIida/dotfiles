@@ -27,6 +27,7 @@ in
     ".config/direnv/direnv.toml".source = lnk "direnv/direnv.toml";
     ".config/tmux/tmux.conf".source = lnk "tmux/tmux.conf";
     ".config/nvim/init.lua".source = lnk "nvim/init.lua";
+    ".config/herdr/config.toml".source = lnk "herdr/config.toml";
 
     # Karabiner-Elements は GUI で設定変更すると karabiner.json を一時ファイル→rename で
     # 保存し直すため、ファイル単体を symlink すると symlink が実ファイルで置換され、
@@ -53,6 +54,10 @@ in
     "Library/Application Support/ZedDevRaTeX/config/keymap.json".source = lnk "zed/keymap.json";
     "Library/Application Support/ZedDevRaTeX/config/tasks.json".source = lnk "zed/tasks.json";
     ".config/cmux/settings.json".source = lnk "cmux/settings.json";
+    # cmux.json が優先設定（settings.json はキーが無いときのフォールバック）。
+    # JSONC だが cmux 自体はここへ書き戻さない（Settings GUI の変更は別ストアに保存される）
+    # ため、karabiner.json のような atomic rewrite 由来の symlink 置換は起きない想定。
+    ".config/cmux/cmux.json".source = lnk "cmux/cmux.json";
     ".docker/daemon.json".source = lnk "docker/daemon.json";
     ".config/gh/config.yml".source = lnk "gh/config.yml";
     ".zshenv".source = lnk "zsh/zshenv";
