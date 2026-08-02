@@ -15,14 +15,7 @@ cx() {
     cx_status
     return $?
   fi
-  local arg
-  for arg in "$@"; do
-    if [[ -z "$arg" ]]; then
-      echo "Error: 空の引数は指定できません。" >&2
-      echo "  使い方: cx [<name>] / cx app <name> / cx list" >&2
-      return 1
-    fi
-  done
+  _agsw_reject_empty_args "cx [<name>] / cx app <name> / cx list" "$@" || return 1
 
   local sub="$1"
   case "$sub" in
@@ -116,7 +109,9 @@ cx_list() {
     [[ -n "$name" ]] || continue
     dir="$prefix$name"
     mark=""
-    [[ "$current" == "$dir" ]] && mark="*"
+    # 末尾 '/' 付きの CODEX_HOME（例: 手動 export での付け忘れ違い）でも一致させる。
+    # cc_list は既にこの正規化をしている（2026-08-04 codex-pr-review 指摘で揃えた）。
+    [[ "${current%/}" == "$dir" ]] && mark="*"
     [[ "$app_target" == "$dir/auth.json" ]] && mark="$mark@"
 
     email=""; plan=""

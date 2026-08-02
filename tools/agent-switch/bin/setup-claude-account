@@ -16,6 +16,10 @@
 # 直接 symlink したい場合にそのディレクトリを指定する（未指定ならスキップ）。
 set -euo pipefail
 
+# claim guard / symlink衝突検査 / マーカー付与は setup-codex-account と共有
+# （認証方式と無関係な同一の安全不変条件のため。2026-08-04 codex-pr-review 指摘で抽出）。
+source "$(dirname "$0")/../lib/setup-common.bash"
+
 USAGE="usage: $(basename "$0") <name> [--claim]"
 
 CLAIM=0
@@ -41,13 +45,17 @@ done
 
 # 名前の検査。'/' や '..' を含む名前は prefix の外へ書き込めるため必須。
 # 予約語は cc がサブコマンド／モード語として消費する語（そのプロファイルへ切り替えられない）。
+# app も cc のサブコマンドとして予約されている（cc app は未実装エラーを返すだけだが、
+# その名前のプロファイルには永久に切り替えられなくなるため、他の予約語と同様に拒否する。
+# 以前は setup 側の検査から漏れており、`setup-claude-account app` だけ成功して
+# `cc app` では使えないプロファイルが作れてしまっていた。2026-08-04 codex-pr-review 指摘）。
 # デフォルトアカウント名も拒否する（cc <default> は CLAUDE_CONFIG_DIR 未設定を意味するので、
 # ~/.claude-<default> を作っても永久に使われない紛らわしいディレクトリになる）。
 "$(dirname "$0")/agsw-check-name" "$NAME" \
-  list api sub subscription "${AGSW_CLAUDE_DEFAULT_NAME:-labteam}" || exit 1
+  list app api sub subscription "${AGSW_CLAUDE_DEFAULT_NAME:-labteam}" || exit 1
 
 BASE="$HOME/.claude"
-DIR="$HOME/.claude-$NAME"
+DIR="${AGSW_CLAUDE_HOME_PREFIX:-$HOME/.claude-}$NAME"
 ASSETS_DIR="${AGSW_CLAUDE_ASSETS_DIR:-}"
 
 # assets dir から直接 symlink（各アカウント独立）
@@ -64,69 +72,24 @@ EXISTED=0
 # ある可能性がある（実例: ~/.claude-science は Claude Science アプリ）。ここで symlink を
 # 撒いてマーカーを付けると cc から使えるようになり、そのアプリの dir に Claude Code が
 # 書き込み始める。cc 側のガードだけでは「マーカーを付ければ通る」迂回路が残るため、
-# 取り込みには明示の --claim を要求する。
-if [[ "$EXISTED" == 1 && ! -f "$DIR/.agsw-profile" && -n "$(ls -A "$DIR" 2>/dev/null)" ]]; then
-  if [[ "$CLAIM" != 1 ]]; then
-    {
-      echo "Error: $DIR は既に存在し、agent-switch の管理下ではありません（.agsw-profile が無い）。"
-      echo "  中身:"
-      # set -e + pipefail 下で head が先に終了すると ls が SIGPIPE で死に、
-      # 案内の残りが出ないまま exit 141 になるため、パイプライン全体を保護する。
-      { ls -A "$DIR" 2>/dev/null | head -8 | sed 's/^/    /'; } || true
-      [[ "$(ls -A "$DIR" 2>/dev/null | wc -l)" -gt 8 ]] && echo "    ..."
-      echo "  別アプリのデータディレクトリでないことを確認してください。"
-      echo "  agent-switch のプロファイルとして取り込むなら:"
-      echo "    $0 $NAME --claim"
-    } >&2
-    exit 1
-  fi
-  echo "[--claim] 既存ディレクトリを agent-switch のプロファイルとして取り込みます"
-fi
+# 取り込みには明示の --claim を要求する（実装は lib/setup-common.bash に共有）。
+agsw_require_claimable "$DIR" "$NAME" "$CLAIM" "$0 $NAME"
 
-# 共有 symlink を張る先に実体があるかを、変更を始める前に検査する。
-#
-# ln -sfn は実ファイルを問答無用で置き換えるため元の内容が失われる。実ディレクトリは
-# 置き換えられず、その中に同名リンクが作られて半壊する（実測 2026-07-28）。
+# 共有 symlink を張る先に実体があるかを、変更を始める前に検査する（実装は共有）。
 #
 # 検査は「実際にリンクする項目」だけを対象にする。下のリンク処理と同じリンク元存在条件
 # （assets は ASSETS_DIR 指定かつリンク元が存在、shared は $BASE/<item> が存在）を
 # 使わないと、置換されないファイルまで衝突扱いして不要な退避を促してしまう。
-CONFLICTS=""
-_note_conflict() {
-  # CLAUDE.md は ASSET_LINKS と SHARED_FROM_BASE の両方にあるため重複を除く
-  case " $CONFLICTS " in *" $1 "*) ;; *) CONFLICTS="$CONFLICTS $1" ;; esac
-}
-# 不在なら張るだけ。symlink なら張り替えるだけ（収束動作）。実体だけが衝突。
-_is_conflict() {
-  [[ -e "$1" && ! -L "$1" ]]
-}
-
-if [[ -d "$DIR" ]]; then
-  if [[ -n "$ASSETS_DIR" ]]; then
-    for item in "${ASSET_LINKS[@]}"; do
-      [[ -e "$ASSETS_DIR/$item" ]] || continue
-      if _is_conflict "$DIR/$item"; then _note_conflict "$item"; fi
-    done
-  fi
-
-  for item in "${SHARED_FROM_BASE[@]}"; do
-    [[ -e "$BASE/$item" || -L "$BASE/$item" ]] || continue
-    if _is_conflict "$DIR/$item"; then _note_conflict "$item"; fi
+CONFLICT_PAIRS=()
+if [[ -n "$ASSETS_DIR" ]]; then
+  for item in "${ASSET_LINKS[@]}"; do
+    CONFLICT_PAIRS+=("$ASSETS_DIR/$item:$item")
   done
-
-  if [[ -n "$CONFLICTS" ]]; then
-    {
-      echo "Error: $DIR に共有 symlink と衝突する実体があります:$CONFLICTS"
-      echo "  symlink に張り替えると元の内容が失われます（ディレクトリの場合は中に迷子の"
-      echo "  リンクができて半壊します）。何も変更していません。"
-      echo "  内容が不要／退避済みなら、次のように退けてから再実行してください:"
-      for item in $CONFLICTS; do
-        echo "    mv \"$DIR/$item\" \"$DIR/$item.bak\""
-      done
-    } >&2
-    exit 1
-  fi
 fi
+for item in "${SHARED_FROM_BASE[@]}"; do
+  CONFLICT_PAIRS+=("$BASE/$item:$item")
+done
+agsw_check_link_conflicts "$DIR" "${CONFLICT_PAIRS[@]}"
 
 echo "Setting up: $DIR"
 mkdir -p "$DIR"
@@ -164,10 +127,8 @@ fi
 
 # プロファイル・マーカー。cc はこれが無い dir を拒否する（prefix が偶然一致した
 # 無関係なディレクトリを掴んで他ツールのデータを汚染するのを防ぐ）。詳細は lib/common.zsh。
-#
-# 正規化（symlink 張り）が完了してから作る。先に作ると、途中で失敗した半端な dir が
-# 「agent-switch の管理下」と誤認されてしまう。
-touch "$DIR/.agsw-profile"
+# 実装（正規化完了後にだけ置く）は lib/setup-common.bash に共有。
+agsw_mark_profile "$DIR"
 
 if [[ ! -f "$DIR/anthropic.env" ]]; then
   echo ""

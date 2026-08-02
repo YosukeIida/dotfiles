@@ -50,6 +50,7 @@ echo 'source ~/.agent-switch/tools/agent-switch/agent-switch.plugin.zsh' >> ~/.z
 | `AGSW_CODEX_HOME_PREFIX` | `$HOME/.codex-` | Codex アカウント dir の接頭辞 |
 | `AGSW_CODEX_APP_AUTH` | `$HOME/.codex/auth.json` | Codex App が見る認証 symlink の場所 |
 | `AGSW_CLAUDE_ASSETS_DIR` | （なし） | setup-claude-account が settings.*.json 等を直リンクする元 |
+| `AGSW_CLAUDE_DEFAULT_NAME` | `labteam` | `cc` が「`CLAUDE_CONFIG_DIR` 未設定」として扱うアカウント名 |
 | `AGSW_ALLOW_RAW_LOGIN` | （未設定） | `1` にすると `codex login`/`logout` の共有 symlink 保護ガードを無効化する |
 
 ## セットアップ（アカウントディレクトリの作成）
@@ -183,7 +184,7 @@ cc personal sub   # personal + subscriptionモード
 | (b) 実ファイル | 生 `codex login` が symlink を上書きした事故 | account_id を照合して修復を試みる |
 | (c) 不在 or リンク切れ symlink | App 用の認証が無い | `cx app <name>` を案内 |
 
-account_id は `auth.json` の `.tokens.account_id`（平文 JSON）で識別する（python3 前提・無い環境では照合をスキップ）。API-key 認証（`tokens` が null）では account_id が取れないため照合せず手動対処を案内する。
+account_id は `auth.json` の `.tokens.account_id`（平文 JSON）で識別する（`jq` 前提・無い環境では照合をスキップ）。API-key 認証（`tokens` が null）では account_id が取れないため照合せず手動対処を案内する。
 
 ### 各機能
 
@@ -294,8 +295,10 @@ launchd は zsh の起動ファイルを読まないため、GUI プロセスの
 ## 動作要件
 
 - zsh（bash/fish は未対応。独立リポジトリ化の際に eval-init 方式への移行を検討）
-- デーモン警告と Claude 側の email/org 表示は macOS + python3 前提（無い環境では自動スキップ）
-- Codex 側の email / plan / account_id 表示は `jq` 前提（無い環境ではその旨を表示してスキップ）
+- デーモン警告は macOS 前提
+- Claude 側の email/org 表示、Codex 側の email / plan / account_id 表示はいずれも `jq` 前提
+  （無い環境ではその旨を表示してスキップ。以前は Claude 側だけ python3 実装だったため、
+  Claude Code セッション内の system-python 誤用ガードで動かなくなっていた。2026-08-04 統一）
 
 ## 検証記録（2026-07-02 実測）
 

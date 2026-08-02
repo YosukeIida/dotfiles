@@ -16,7 +16,7 @@
 # symlink 復元を行う。--fix 無しなら実行すべきコマンドを表示するのみ。未知アカウントや
 # account_id 判定不能の場合は自動では触らず手動対処を案内する。
 #
-# account_id の読み取りは python3 前提（無い環境では照合をスキップして手動案内のみ）。
+# account_id の読み取りは jq 前提（無い環境では照合をスキップして手動案内のみ）。
 # API-key 認証（tokens が null）では account_id が取れないため照合しない。
 set -uo pipefail
 
@@ -27,7 +27,7 @@ FIX=0
 
 # auth.json の .tokens.account_id を取り出す（取れなければ非ゼロ終了・無出力）。
 # 実装は bin/agsw-codex-account-id に一本化（setup-codex-account と共用）。
-# 非ゼロ・無出力は「account_id を同定できない」を意味する（python3 不在 / API-key 認証 /
+# 非ゼロ・無出力は「account_id を同定できない」を意味する（jq 不在 / API-key 認証 /
 # パース失敗）。ヘルパ自体の不在は _require_helpers が先に弾くので、ここには来ない。
 _account_id() {
   "$(dirname "$0")/agsw-codex-account-id" "$1"
@@ -51,20 +51,12 @@ _require_helpers() {
 
 # auth.json の last_refresh を取り出す（取れなければ無出力）。
 # 実物では top-level フィールド（2026-07-11 実ファイルで確認）。念のため tokens 内もフォールバック。
+# python3 ではなく jq を使う理由は agsw-codex-identity のコメント参照
+# （Claude Code セッション内の system-python 誤用ガードで python3 が使えないため）。
 _last_refresh() {
-  command -v python3 >/dev/null 2>&1 || return 1
-  python3 - "$1" <<'PY' 2>/dev/null
-import json, sys
-try:
-    with open(sys.argv[1]) as f:
-        data = json.load(f)
-except Exception:
-    sys.exit(1)
-tokens = data.get("tokens")
-lr = data.get("last_refresh") or (tokens.get("last_refresh") if isinstance(tokens, dict) else None)
-if lr:
-    print(lr)
-PY
+  command -v jq >/dev/null 2>&1 || return 1
+  jq -er '(.last_refresh // .tokens.last_refresh // empty)
+          | select(type == "string" and length > 0)' "$1" 2>/dev/null
 }
 
 # 利用可能なプロファイル名を1行1件で列挙する（マーカー付きの dir のみ）。
@@ -158,10 +150,10 @@ main() {
   # ここから (b) 実ファイル（事故）
   local src_id
   if ! src_id="$(_account_id "$APP_AUTH")" || [[ -z "$src_id" ]]; then
-    # python3 不在 / JSON パース失敗 / account_id null（API-key 認証等）→ 手動案内のみ
+    # jq 不在 / JSON パース失敗 / account_id null（API-key 認証等）→ 手動案内のみ
     echo "⚠ codex-auth: $APP_AUTH が symlink ではなく実ファイルです。"
     echo "  CODEX_HOME 未指定で 'codex login' を実行すると共有 symlink が上書きされます。"
-    echo "  account_id を判定できませんでした（python3 不在 or API-key 認証の可能性）。"
+    echo "  account_id を判定できませんでした（jq 不在 or API-key 認証の可能性）。"
     echo "  中身を確認し、意図しないアカウントなら手動で対処してください:"
     echo "    $(dirname "$0")/setup-codex-account adopt <name>   # 新規/既存アカウントへ取り込む"
     exit 0

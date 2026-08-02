@@ -21,7 +21,13 @@
 # 解決してから実体に atomic write するため、symlink は壊れない（ソース確認済み）。
 set -euo pipefail
 
+# claim guard / symlink衝突検査 / マーカー付与は setup-claude-account と共有
+# （認証方式と無関係な同一の安全不変条件のため。2026-08-04 codex-pr-review 指摘で抽出）。
+source "$(dirname "$0")/../lib/setup-common.bash"
+
 HOME_CODEX="$HOME/.codex"
+CODEX_PREFIX="${AGSW_CODEX_HOME_PREFIX:-$HOME/.codex-}"
+APP_AUTH="${AGSW_CODEX_APP_AUTH:-$HOME_CODEX/auth.json}"
 
 # ~/.codex-<name> から ~/.codex/* へ symlink するアイテム（実体は~/.codexに置いたまま）
 LINKED_ITEMS=(skills AGENTS.md config.toml sessions history.jsonl session_index.jsonl archived_sessions \
@@ -29,39 +35,17 @@ LINKED_ITEMS=(skills AGENTS.md config.toml sessions history.jsonl session_index.
               goals_1.sqlite transcription-history.jsonl models_cache.json)
 
 # 共有 symlink を張る先に「実ファイル / 実ディレクトリ」があるかを事前検査する。
-#
-# ln -sfn は実ファイルを問答無用で置き換えるため、元の内容が失われる。実ディレクトリは
-# 置き換えられず、その中に同名のリンクが作られて半壊する。実測（2026-07-28）:
+# 実装は lib/setup-common.bash に共有（実測 2026-07-28 で見つかった破壊パターン:
 #   実ファイル config.toml（内容 VICTIM-OWN）→ 共有 symlink に置換され内容消失
 #   実ディレクトリ sessions/ → sessions/sessions という迷子リンクができ、成功扱い
-# 変更を一切行う前に呼び、衝突があれば中断する。
+# ）。変更を一切行う前に呼び、衝突があれば中断する。
 _check_link_conflicts() {
   local acct_dir="$1"
-  local item dst conflicts=""
-
-  [[ -d "$acct_dir" ]] || return 0
-
+  local item pairs=()
   for item in "${LINKED_ITEMS[@]}"; do
-    [[ -e "$HOME_CODEX/$item" ]] || continue
-    dst="$acct_dir/$item"
-    # 不在なら張るだけ。symlink なら張り替えるだけ（収束動作）。実体だけが衝突。
-    if [[ -e "$dst" && ! -L "$dst" ]]; then
-      conflicts="$conflicts $item"
-    fi
+    pairs+=("$HOME_CODEX/$item:$item")
   done
-
-  [[ -n "$conflicts" ]] || return 0
-
-  {
-    echo "Error: $acct_dir に共有 symlink と衝突する実体があります:$conflicts"
-    echo "  symlink に張り替えると元の内容が失われます（ディレクトリの場合は中に迷子の"
-    echo "  リンクができて半壊します）。何も変更していません。"
-    echo "  内容が不要／退避済みなら、次のように退けてから再実行してください:"
-    for item in $conflicts; do
-      echo "    mv \"$acct_dir/$item\" \"$acct_dir/$item.bak\""
-    done
-  } >&2
-  exit 1
+  agsw_check_link_conflicts "$acct_dir" "${pairs[@]}"
 }
 
 # アカウント dir を正規化する（再実行で収束）。共有 symlink を張り直し、最後に
@@ -82,13 +66,14 @@ _init_profile() {
   done
 
   # cx はマーカーが無い dir を拒否する（prefix が偶然一致した無関係なディレクトリを
-  # 掴んで他ツールのデータを汚染するのを防ぐ）。詳細は lib/common.zsh 参照。
-  touch "$acct_dir/.agsw-profile"
+  # 掴んで他ツールのデータを汚染するのを防ぐ）。詳細は lib/common.zsh。
+  # 実装（正規化完了後にだけ置く）は lib/setup-common.bash に共有。
+  agsw_mark_profile "$acct_dir"
 }
 
 # auth.json の .tokens.account_id を取り出す（取れなければ非ゼロ終了・無出力）。
 # 実装は bin/agsw-codex-account-id に一本化（codex-auth-doctor と共用）。
-# python3 前提のため、無い環境では adopt の同一アカウント判定ができず、既存 dir への
+# jq 前提のため、無い環境では adopt の同一アカウント判定ができず、既存 dir への
 # 取り込みは安全側に倒して拒否される。
 _account_id() {
   local helper
@@ -101,55 +86,46 @@ _account_id() {
 # よいかを判定する。無関係な別アプリのデータ（実例: ~/.claude-science は Claude Science
 # アプリ）に symlink を撒いてマーカーを付けると、以後 cx から使えるようになり、
 # そのアプリの dir に Codex が書き込み始める。明示の --claim が無い限り拒否する。
-#
-# 新規 dir（未作成）は何も奪わないので対象外。マーカー付きの dir は既に管理下なので素通し。
+# 実装は lib/setup-common.bash に共有（setup-claude-account と同一の安全不変条件）。
 _require_claimable() {
-  local acct_dir="$1" name="$2" claim="$3"
-
-  [[ -d "$acct_dir" ]] || return 0
-  [[ -f "$acct_dir/.agsw-profile" ]] && return 0
-  [[ -n "$(ls -A "$acct_dir" 2>/dev/null)" ]] || return 0
-
-  if [[ "$claim" != 1 ]]; then
-    {
-      echo "Error: $acct_dir は既に存在し、agent-switch の管理下ではありません（.agsw-profile が無い）。"
-      echo "  中身:"
-      # set -e + pipefail 下で head が先に終了すると ls が SIGPIPE で死に、
-      # 案内の残りが出ないまま exit 141 になるため、パイプライン全体を保護する。
-      { ls -A "$acct_dir" 2>/dev/null | head -8 | sed 's/^/    /'; } || true
-      [[ "$(ls -A "$acct_dir" 2>/dev/null | wc -l)" -gt 8 ]] && echo "    ..."
-      echo "  別アプリのデータディレクトリでないことを確認してください。"
-      echo "  agent-switch のプロファイルとして取り込むなら:"
-      echo "    $0 $name --claim"
-    } >&2
-    exit 1
-  fi
-  echo "[--claim] 既存ディレクトリを agent-switch のプロファイルとして取り込みます"
+  agsw_require_claimable "$1" "$2" "$3" "$0 $2"
 }
 
 migrate() {
   local first="$1"
-  local acct_dir="$HOME/.codex-$first"
+  local acct_dir="${CODEX_PREFIX}${first}"
 
   if [[ -d "$acct_dir" ]]; then
     echo "Error: already exists: $acct_dir (already migrated?)" >&2
     exit 1
   fi
-  if [[ ! -f "$HOME_CODEX/auth.json" ]]; then
-    echo "Error: $HOME_CODEX/auth.json not found" >&2
+
+  # $APP_AUTH が既に symlink（=既に一度 migrate 済み）だと、[[ -f ]] は symlink を
+  # 辿って真になるため見逃す。その状態で別名 migrate すると、mv がそのシンボリック
+  # リンク自体を新プロファイルへ移し、新プロファイル -> 旧プロファイルの symlink
+  # チェーンができて2つのアカウントが同じ実体トークンを共有してしまう
+  # （2026-08-04 codex-pr-review 指摘。adopt と同じ実ファイル検査を追加）。
+  if [[ -L "$APP_AUTH" ]]; then
+    echo "Error: $APP_AUTH is already a symlink (already migrated?)." >&2
+    echo "  migrate は初回移行専用です。2アカウント目以降は次を使ってください:" >&2
+    echo "    $(basename "$0") <name>" >&2
+    exit 1
+  fi
+  if [[ ! -f "$APP_AUTH" ]]; then
+    echo "Error: $APP_AUTH not found" >&2
     exit 1
   fi
 
   mkdir -p "$acct_dir"
 
   # auth.json だけ実体move。他は一切動かさない（~/.codexに残したまま）。
-  mv "$HOME_CODEX/auth.json" "$acct_dir/auth.json"
-  ln -sf "$acct_dir/auth.json" "$HOME_CODEX/auth.json"
+  mv "$APP_AUTH" "$acct_dir/auth.json"
+  ln -sf "$acct_dir/auth.json" "$APP_AUTH"
 
   _init_profile "$acct_dir"
 
   echo "Migrated."
-  echo "  ~/.codex/auth.json -> $acct_dir/auth.json"
+  echo "  $APP_AUTH -> $acct_dir/auth.json"
   echo "  $acct_dir/{skills,sessions,history.jsonl,...} -> ~/.codex/* (symlink)"
   echo ""
   echo "Next: 2アカウント目を追加する場合は"
@@ -161,8 +137,8 @@ migrate() {
 adopt() {
   local name="$1"
   local claim="${2:-0}"
-  local acct_dir="$HOME/.codex-$name"
-  local app_auth="${AGSW_CODEX_APP_AUTH:-$HOME_CODEX/auth.json}"
+  local acct_dir="${CODEX_PREFIX}${name}"
+  local app_auth="$APP_AUTH"
 
   # 取り込む対象は「実ファイル」であること（symlink/不在なら取り込むものが無い）
   if [[ -L "$app_auth" || ! -e "$app_auth" ]]; then
@@ -223,7 +199,7 @@ adopt() {
 add_account() {
   local name="$1"
   local claim="${2:-0}"
-  local acct_dir="$HOME/.codex-$name"
+  local acct_dir="${CODEX_PREFIX}${name}"
   local existed=0
 
   if [[ ! -d "$HOME_CODEX" ]]; then
