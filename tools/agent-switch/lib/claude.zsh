@@ -34,14 +34,7 @@ cc() {
   if (( $# == 0 )); then
     cc_status; return 0
   fi
-  local arg
-  for arg in "$@"; do
-    if [[ -z "$arg" ]]; then
-      echo "Error: 空の引数は指定できません。" >&2
-      echo "  使い方: cc [<name>] [api|sub] / cc list" >&2
-      return 1
-    fi
-  done
+  _agsw_reject_empty_args "cc [<name>] [api|sub] / cc list" "$@" || return 1
 
   case "$1" in
     list)
@@ -190,19 +183,20 @@ cc_status() {
 
   local email="(not logged in)" display_name="" org_name=""
   if [[ -f "$json" ]]; then
-    if command -v python3 >/dev/null 2>&1; then
-      IFS=$'\t' read -r email display_name org_name <<< "$(python3 - "$json" <<'PY'
-import json, sys
-try:
-    d = json.load(open(sys.argv[1]))
-    oa = d.get("oauthAccount") or {}
-    print(oa.get("emailAddress","(unknown)"), oa.get("displayName",""), oa.get("organizationName",""), sep="\t")
-except Exception:
-    print("(parse error)", "", "", sep="\t")
-PY
-)"
+    local identity_line
+    if [[ -x "$_AGSW_DIR/bin/agsw-claude-identity" ]]; then
+      if identity_line="$("$_AGSW_DIR/bin/agsw-claude-identity" "$json" 2>/dev/null)"; then
+        IFS=$'\t' read -r email display_name org_name <<< "$identity_line"
+      else
+        # jq 不在 or JSON パース失敗を区別する（「未ログイン」と決めつけない）
+        if ! command -v jq >/dev/null 2>&1; then
+          email="(identity 不明 — jq が無いため判定できません)"
+        else
+          email="(identity 不明 — .claude.json の解析に失敗しました)"
+        fi
+      fi
     else
-      email="(python3 not found — email/org display skipped)"
+      email="(identity ヘルパが見つかりません)"
     fi
   fi
 

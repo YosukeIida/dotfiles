@@ -39,3 +39,22 @@ _agsw_list_profiles() {
   [[ -x "$_AGSW_DIR/bin/agsw-list-profiles" ]] || return 0
   "$_AGSW_DIR/bin/agsw-list-profiles" "$1"
 }
+
+# _agsw_reject_empty_args <usage-message> <arg>...
+#   引数に空文字列が含まれていれば理由と使い方を stderr に出して 1。無ければ 0。
+#   cc / cx はどちらも「引数なし」と「空文字列を渡された」を区別する必要がある
+#   （${1:-} でまとめると `cc "" personal` の personal が黙って捨てられ状態表示に
+#   なる事故がある。2026-07-28実測）。使い方文言だけが呼び出し側ごとに異なるため、
+#   チェック本体をここに共有する（2026-08-04 codex-pr-review 指摘で抽出）。
+_agsw_reject_empty_args() {
+  local usage="$1"; shift
+  local arg
+  for arg in "$@"; do
+    if [[ -z "$arg" ]]; then
+      echo "Error: 空の引数は指定できません。" >&2
+      echo "  使い方: $usage" >&2
+      return 1
+    fi
+  done
+  return 0
+}

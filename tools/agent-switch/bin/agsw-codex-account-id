@@ -4,29 +4,25 @@
 # 使い方: agsw-codex-account-id <auth.json>
 # 出力:   account_id を1行。取れなければ無出力で非ゼロ終了。
 #
-# 取れないケース: ファイル不在 / JSON パース失敗 / tokens が dict でない
-# （API-key 認証では tokens が null なので account_id は存在しない）/ python3 不在。
-# 呼び出し側はいずれも「同定不能」として安全側に倒すことを前提にしている。
+# 実装は bin/agsw-codex-identity（jq実装）に委譲する。account_id 自体は平文の
+# .tokens.account_id で email/plan（JWT由来）と違いパースに python3 は元々不要
+# だったが、以前は独自の python3 実装を持っていたため、Claude Code セッション内の
+# system-python 誤用ガード（~/.local/share/claude-runtime/fallback/python3）で
+# python3 が使えず、codex-auth-doctor --fix や setup-codex-account adopt が
+# account_id を判定できず自動修復できない不具合があった
+# （agsw-codex-identity が jq を選んだのと同じ理由。2026-08-04 実測・修正）。
 #
-# codex-auth-doctor と setup-codex-account が同じ実装を持っていたのを一本化したもの。
+# 取れないケース: ファイル不在 / JSON パース失敗 / tokens が dict でない
+# （API-key 認証では tokens が null なので account_id は存在しない）/ jq 不在。
+# 呼び出し側はいずれも「同定不能」として安全側に倒すことを前提にしている。
 set -uo pipefail
 
 AUTH_FILE="${1:?usage: agsw-codex-account-id <auth.json>}"
+IDENTITY="$(dirname "$0")/agsw-codex-identity"
 
-command -v python3 >/dev/null 2>&1 || exit 1
+[[ -x "$IDENTITY" ]] || exit 1
 
-python3 - "$AUTH_FILE" <<'PY' 2>/dev/null
-import json, sys
-try:
-    with open(sys.argv[1]) as f:
-        data = json.load(f)
-except Exception:
-    sys.exit(1)
-tokens = data.get("tokens")
-if not isinstance(tokens, dict):
-    sys.exit(1)
-aid = tokens.get("account_id")
-if not aid:
-    sys.exit(1)
-print(aid)
-PY
+line="$("$IDENTITY" "$AUTH_FILE")" || exit 1
+aid="${line%%$'\t'*}"
+[[ -n "$aid" ]] || exit 1
+printf '%s\n' "$aid"
