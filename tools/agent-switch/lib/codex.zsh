@@ -186,6 +186,14 @@ cx_status() {
 
   # プロファイル間の symlink 漏れ検出＆自動修復（新しい Codex が追加したトップレベル項目の共有漏れ）
   [[ -x "$_AGSW_DIR/bin/check-codex-drift" ]] && "$_AGSW_DIR/bin/check-codex-drift" --fix
+
+  # cx_status の役割は状態表示・付随する自動修復の実行であり、その成否
+  # （ヘルパ不在・修復対象なし等）を呼び出し元に伝播すべきではない。関数の
+  # 最後が `&&` 式のままだと、ヘルパ不在時にその式の終了ステータス（非ゼロ）が
+  # そのまま cx_status の戻り値になり、`cx`/`cx app` の終了コードに漏れ出す
+  # （2026-08-04 codex-pr-review 指摘。setup-codex-account の _check_link_conflicts
+  # と同型のパターン）。
+  return 0
 }
 
 # codex() ラッパー: CODEX_HOME 未指定のまま `codex login`/`codex logout` を実行すると、
