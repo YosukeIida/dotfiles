@@ -9,7 +9,10 @@
   // ~/.config/cmux/settings.json takes precedence over the Application Support fallback.
 
   "app": {
-    "preferredEditor": "zed"
+    // Cmd-click preview の「Open With」で選んだ時、または未対応ファイルを
+    // 開く時に使われる。zedd() は zsh 関数で cmux から直接呼べないため、
+    // cmux/zedd-open ラッパー経由で呼び出す。
+    "preferredEditor": "/Users/yosuke/workspace/github.com/YosukeIida/dotfiles/cmux/zedd-open"
   },
 
   //   "app" : {

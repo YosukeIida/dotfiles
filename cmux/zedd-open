@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# zedd-open — cmux app.preferredEditor 用の実行可能ラッパー。
+#
+# zedd() は zsh/zshrc.zshrc で定義された関数のため、cmux が直接コマンドとして
+# 呼び出せない。zedd() と同じ呼び出し（Zed Dev RaTeX(unofficial) の CLI を
+# 専用 user-data-dir 付きで起動）をここに実体化する。
+
+exec "/Applications/Zed Dev RaTeX(unofficial).app/Contents/MacOS/cli" \
+  --user-data-dir "$HOME/Library/Application Support/ZedDevRaTeX" "$@"
