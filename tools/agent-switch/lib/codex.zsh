@@ -72,16 +72,18 @@ cx() {
 # 管理daemon等）は正常な用法であり、警告対象ではないため
 # （README「app-server の control socket は CODEX_HOME ごとに分離される」参照）。
 _agsw_warn_app_codex_home_mismatch() {
-  local line pid exe codex_home
+  local line pid exe
   while IFS= read -r line; do
     [[ -n "$line" ]] || continue
     pid="${line%% *}"
     exe="${line#* }"
     [[ "$exe" == /Applications/*.app/* ]] || continue
-    codex_home="$(ps eww -p "$pid" 2>/dev/null | tr ' ' '\n' | sed -n 's/^CODEX_HOME=//p')"
-    if [[ -n "$codex_home" ]]; then
+    # CODEX_HOME の値は表示しない: ps eww の env は空白区切りのため、値自体に
+    # 空白を含む場合（例: パスにスペース）は途中で切れて誤った値を表示してしまう
+    # （2026-08-04 codex-pr-review 指摘）。存在確認だけなら空白分割の影響を受けない。
+    if ps eww -p "$pid" 2>/dev/null | tr ' ' '\n' | grep -q '^CODEX_HOME='; then
       echo "⚠ 実行中の Codex App プロセス (PID $pid: $exe)" >&2
-      echo "  に CODEX_HOME=$codex_home が設定されています。このプロセスは symlink" >&2
+      echo "  に CODEX_HOME が設定されています。このプロセスは symlink" >&2
       echo "  (${AGSW_CODEX_APP_AUTH:-$HOME/.codex/auth.json}) を見ないため、今回の" >&2
       echo "  cx app 切替は反映されません。App を完全終了→再起動して再確認してください。" >&2
     fi
