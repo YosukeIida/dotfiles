@@ -20,10 +20,10 @@ case $CURRENT in
   2)
     # デフォルトアカウントは dir を持たない（CLAUDE_CONFIG_DIR 未設定）ので別に足す
     candidates=("$default_name" list api sub)
-    if [[ -x "$_AGSW_DIR/bin/agsw-list-profiles" ]]; then
-      out="$("$_AGSW_DIR/bin/agsw-list-profiles" "$prefix" 2>/dev/null)"
-      [[ -n "$out" ]] && candidates+=("${(@f)out}")
-    fi
+    # common.zsh は補完より必ず先に source されるため _agsw_list_profiles を直接使える
+    # （2026-08-04 codex-pr-review 指摘: bin/ 呼び出しの再実装をやめて一本化）。
+    out="$(_agsw_list_profiles "$prefix" 2>/dev/null)"
+    [[ -n "$out" ]] && candidates+=("${(@f)out}")
     ;;
   3)
     # 1語目がモードや list だった場合、2語目は受理されない

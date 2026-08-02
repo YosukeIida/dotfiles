@@ -15,6 +15,7 @@
 #   AGSW_CODEX_HOME_PREFIX   account dir prefix       (default: $HOME/.codex-)
 #   AGSW_CODEX_APP_AUTH      app-facing auth symlink  (default: $HOME/.codex/auth.json)
 #   AGSW_CLAUDE_ASSETS_DIR   dotfiles-managed settings for setup-claude-account (optional)
+#   AGSW_CLAUDE_DEFAULT_NAME name of the account `cc` treats as CLAUDE_CONFIG_DIR-unset (default: labteam)
 #   AGSW_ALLOW_RAW_LOGIN     set to 1 to bypass the codex login/logout symlink guard
 
 typeset -g _AGSW_DIR="${0:A:h}"

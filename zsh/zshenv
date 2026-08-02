@@ -48,9 +48,20 @@ export AGSW_CLAUDE_ASSETS_DIR="${HOME}/workspace/github.com/YosukeIida/dotfiles/
 # 新しいターミナルは常に personal アカウントの Codex CODEX_HOME で開始する
 # （tools/agent-switch/README.md の「デフォルトアカウントを固定したい場合」参照）
 #
+# 本物の対話ターミナル限定（-o interactive **かつ** stdout が tty）。
+# -o interactive だけでは不十分: GUI アプリ（Electron の fix-path-env 系）は内部で
+# `zsh -ilc '...'` のように -i を明示してPATH取得用シェルを一度だけ起動し、そこで
+# 拾った環境変数を自分のプロセスにキャッシュして以降の子プロセスに使い回す。この
+# `-ilc` 呼び出しは -o interactive が真になるが、stdout は端末ではなくパイプなので
+# `-t 1` で区別できる。ガード不足だと、CODEX_HOME 未設定のプロセス向けに用意された
+# `cx app` の symlink 切替（~/.codex/auth.json）が一切効かなくなる事故が起きる
+# （2026-08-03 実測: ChatGPT.app 内蔵の codex app-server が CODEX_HOME=~/.codex-personal
+# で起動しており、symlink を labteam に向けても App 側には反映されなかった。
+# -o interactive のみのガードでもこの事故は再現した）。
+#
 # 存在チェックはマーカー（.agsw-profile）で行う。-d だけだと、prefix に偶然一致した
 # 未管理ディレクトリでも Codex が直接使えてしまい、cx 側のガードと食い違う。
-[[ -f "${HOME}/.codex-personal/.agsw-profile" ]] && export CODEX_HOME="${CODEX_HOME:-${HOME}/.codex-personal}"
+[[ -o interactive ]] && [[ -t 1 ]] && [[ -f "${HOME}/.codex-personal/.agsw-profile" ]] && export CODEX_HOME="${CODEX_HOME:-${HOME}/.codex-personal}"
 
 # Load direnv in non-interactive shells (for Claude Code)
 if ! [[ -o interactive ]] && [[ -f "$PWD/.envrc" ]] && command -v direnv >/dev/null 2>&1; then

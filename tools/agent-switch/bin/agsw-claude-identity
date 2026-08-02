@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Claude Code の .claude.json から表示用の identity（email / displayName / organizationName）を取り出す。
+#
+# 使い方: agsw-claude-identity <.claude.json>
+# 出力:   email<TAB>displayName<TAB>organizationName （取れなかったフィールドは空文字）
+#         ファイル不在・jq不在・JSONパース失敗なら無出力で非ゼロ終了。
+#
+# 実装に python3 ではなく jq を使うのは bin/agsw-codex-identity と同じ理由:
+# Claude Code セッション内では PATH 先頭に system-python 誤用ガード
+# （~/.local/share/claude-runtime/fallback/python3）が入るため python3 が使えず、
+# cc_status の email/org 表示が壊れる（2026-08-04 実測・修正）。
+set -uo pipefail
+
+JSON_FILE="${1:?usage: agsw-claude-identity <.claude.json>}"
+
+command -v jq >/dev/null 2>&1 || exit 1
+[[ -r "$JSON_FILE" ]] || exit 1
+
+jq -r '
+  (.oauthAccount // {}) as $oa
+  | [
+      ($oa.emailAddress // "(unknown)"),
+      ($oa.displayName // ""),
+      ($oa.organizationName // "")
+    ]
+  | @tsv
+' "$JSON_FILE" 2>/dev/null
