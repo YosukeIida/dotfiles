@@ -90,7 +90,10 @@ fi
 for item in "${SHARED_FROM_BASE[@]}"; do
   [[ -e "$BASE/$item" || -L "$BASE/$item" ]] && CONFLICT_ITEMS+=("$item")
 done
-agsw_check_link_conflicts "$DIR" "${CONFLICT_ITEMS[@]}"
+# macOS 標準の /bin/bash（3.2系）は set -u 下で空配列を "${arr[@]}" 展開すると
+# unbound variable になる（bash 4.4 で修正された既知の挙動。実機再現済み）。
+# CONFLICT_ITEMS が空になり得るためガードする（2026-08-04 codex-pr-review 指摘）。
+(( ${#CONFLICT_ITEMS[@]} )) && agsw_check_link_conflicts "$DIR" "${CONFLICT_ITEMS[@]}"
 
 echo "Setting up: $DIR"
 mkdir -p "$DIR"
