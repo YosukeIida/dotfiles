@@ -39,7 +39,10 @@ _account_id() {
 # main の先頭で一度だけ確認する。
 _require_helpers() {
   local h path
-  for h in agsw-list-profiles agsw-codex-account-id; do
+  # agsw-codex-account-id は agsw-codex-identity に委譲する実装のため、
+  # そちらが欠けていても存在しないヘルパとして誤診しないよう合わせて確認する
+  # （2026-08-04 codex-pr-review 指摘）。
+  for h in agsw-list-profiles agsw-codex-account-id agsw-codex-identity; do
     path="$(dirname "$0")/$h"
     if [[ ! -x "$path" ]]; then
       echo "Error: $path が見つからない/実行可能ではありません。" >&2

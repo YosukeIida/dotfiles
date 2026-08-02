@@ -78,18 +78,19 @@ agsw_require_claimable "$DIR" "$NAME" "$CLAIM" "$0 $NAME"
 # 共有 symlink を張る先に実体があるかを、変更を始める前に検査する（実装は共有）。
 #
 # 検査は「実際にリンクする項目」だけを対象にする。下のリンク処理と同じリンク元存在条件
-# （assets は ASSETS_DIR 指定かつリンク元が存在、shared は $BASE/<item> が存在）を
-# 使わないと、置換されないファイルまで衝突扱いして不要な退避を促してしまう。
-CONFLICT_PAIRS=()
+# （assets は ASSETS_DIR 指定かつリンク元が存在、shared は $BASE/<item> が存在または
+# リンク切れsymlink）を使わないと、置換されないファイルまで衝突扱いして不要な退避を
+# 促してしまう（2026-08-04 codex-pr-review 指摘: 判定条件は下のリンク処理と揃える）。
+CONFLICT_ITEMS=()
 if [[ -n "$ASSETS_DIR" ]]; then
   for item in "${ASSET_LINKS[@]}"; do
-    CONFLICT_PAIRS+=("$ASSETS_DIR/$item:$item")
+    [[ -e "$ASSETS_DIR/$item" ]] && CONFLICT_ITEMS+=("$item")
   done
 fi
 for item in "${SHARED_FROM_BASE[@]}"; do
-  CONFLICT_PAIRS+=("$BASE/$item:$item")
+  [[ -e "$BASE/$item" || -L "$BASE/$item" ]] && CONFLICT_ITEMS+=("$item")
 done
-agsw_check_link_conflicts "$DIR" "${CONFLICT_PAIRS[@]}"
+agsw_check_link_conflicts "$DIR" "${CONFLICT_ITEMS[@]}"
 
 echo "Setting up: $DIR"
 mkdir -p "$DIR"

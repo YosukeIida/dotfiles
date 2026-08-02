@@ -40,28 +40,31 @@ agsw_require_claimable() {
   echo "[--claim] 既存ディレクトリを agent-switch のプロファイルとして取り込みます"
 }
 
-# agsw_check_link_conflicts <dir> <src>:<item> ...
+# agsw_check_link_conflicts <dir> <item>...
 #   共有 symlink を張る先（<dir>/<item>）に実ファイル・実ディレクトリがあれば、
-#   全ペアをまとめて検査したうえで案内を出して exit 1 する（1項目見つかった時点で
+#   全項目をまとめて検査したうえで案内を出して exit 1 する（1項目見つかった時点で
 #   即終了すると、他の衝突が案内から漏れるため全件集めてから報告する）。
-#   <src> が存在しない（リンクされない）ペアは検査対象外。<src> は `-e` に加えて
-#   `-L` も許容する（BASE側がリンク切れsymlinkでも「リンクされ得る」とみなす。
-#   元の Claude 実装の SHARED_FROM_BASE 判定に合わせた）。
-#   同じ <item> が複数ペアで衝突しても案内には1回だけ出す（例: CLAUDE.md が
+#
+#   呼び出し側は「実際にリンクする item」だけを渡すこと。リンク元の存在判定は
+#   ここでは行わない（以前は <src>:<item> 形式で受けて内部判定していたが、
+#   (a) ASSETS_DIR 等のパスに ':' を含むと壊れる (b) 呼び出し側の実リンク処理と
+#   判定条件が食い違う可能性がある、という2つの問題があった。Claude の
+#   ASSET_LINKS/Codex の LINKED_ITEMS は `-e` のみ、Claude の SHARED_FROM_BASE は
+#   `-e || -L` と、リンク元の存在条件が呼び出し側ごとに異なるため、判定は
+#   呼び出し側が自分のリンク処理と同じ条件でフィルタしてから item 名だけを渡す
+#   設計にした。2026-08-04 codex-pr-review 指摘で修正）。
+#   同じ <item> が複数回渡されても案内には1回だけ出す（例: CLAUDE.md が
 #   assets 由来と共有base由来の両方にあるケース）。
 #
 #   ln -sfn は実ファイルを問答無用で置き換え、実ディレクトリの中に迷子リンクを
 #   作って半壊させるため（2026-07-28 実測）、実際に変更を始める前に必ず呼ぶこと。
 agsw_check_link_conflicts() {
   local dir="$1"; shift
-  local conflicts="" pair src item dst
+  local conflicts="" item dst
 
   [[ -d "$dir" ]] || return 0
 
-  for pair in "$@"; do
-    src="${pair%%:*}"
-    item="${pair#*:}"
-    [[ -e "$src" || -L "$src" ]] || continue
+  for item in "$@"; do
     dst="$dir/$item"
     if [[ -e "$dst" && ! -L "$dst" ]]; then
       case " $conflicts " in *" $item "*) ;; *) conflicts="$conflicts $item" ;; esac

@@ -41,11 +41,12 @@ LINKED_ITEMS=(skills AGENTS.md config.toml sessions history.jsonl session_index.
 # ）。変更を一切行う前に呼び、衝突があれば中断する。
 _check_link_conflicts() {
   local acct_dir="$1"
-  local item pairs=()
+  local item items=()
   for item in "${LINKED_ITEMS[@]}"; do
-    pairs+=("$HOME_CODEX/$item:$item")
+    # 下の _init_profile のリンク判定条件と揃える（2026-08-04 codex-pr-review 指摘）。
+    [[ -e "$HOME_CODEX/$item" ]] && items+=("$item")
   done
-  agsw_check_link_conflicts "$acct_dir" "${pairs[@]}"
+  agsw_check_link_conflicts "$acct_dir" "${items[@]}"
 }
 
 # アカウント dir を正規化する（再実行で収束）。共有 symlink を張り直し、最後に

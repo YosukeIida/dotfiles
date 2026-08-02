@@ -115,7 +115,7 @@ setup スクリプトは名前を検査する（`bin/agsw-check-name`）。
   名前は prefix と連結してディレクトリパスになるため、`../../victim` のような名前は prefix の外へ書き込める（2026-07-28 実測: `auth.json` が `$HOME/victim/` へ移動した）
 - 予約語は不可。`cc` / `cx` がサブコマンドやモード語として消費するため、その名前のプロファイルには切り替えられない
   - Codex: `list` `app`
-  - Claude: `list` `api` `sub` `subscription`、および `AGSW_CLAUDE_DEFAULT_NAME`（既定 `labteam`。`cc labteam` は `CLAUDE_CONFIG_DIR` 未設定を意味するので、`~/.claude-labteam` を作っても使われない）
+  - Claude: `list` `app` `api` `sub` `subscription`、および `AGSW_CLAUDE_DEFAULT_NAME`（既定 `labteam`。`cc labteam` は `CLAUDE_CONFIG_DIR` 未設定を意味するので、`~/.claude-labteam` を作っても使われない）
 
 ### 共有 symlink と実体の衝突
 
@@ -312,14 +312,16 @@ launchd は zsh の起動ファイルを読まないため、GUI プロセスの
 
 ```
 agent-switch.plugin.zsh   # エントリポイント（関数定義＋補完登録＋起動時の読み取り専用チェック）
-lib/common.zsh            # マーカー定数 / プロファイル判定・列挙の共通ヘルパ
+lib/common.zsh            # マーカー定数 / プロファイル判定・列挙・CLI入力検査の共通ヘルパ
+lib/setup-common.bash     # claim guard / symlink衝突検査 / マーカー付与（setup-*-account 共有）
 lib/claude.zsh            # cc / cc_list / cc_status / claude() ラッパー
 lib/codex.zsh             # cx / cx_list / cx_status / codex() ガード / 起動時チェック
 completions/_cc           # cc のタブ補完（fpath 経由で読み込む）
 completions/_cx           # cx のタブ補完
 bin/agsw-list-profiles    # マーカー付きプロファイルの列挙（zsh/bash 双方から使う唯一の実装）
-bin/agsw-codex-account-id # Codex auth.json から account_id を取り出す（同上）
+bin/agsw-codex-account-id # Codex auth.json から account_id を取り出す（agsw-codex-identity に委譲）
 bin/agsw-codex-identity   # Codex auth.json から email / plan / account_id を取り出す（jq 実装）
+bin/agsw-claude-identity  # .claude.json から email / displayName / organizationName を取り出す（jq 実装）
 bin/agsw-check-name       # プロファイル名の検査（パス脱出・予約語の拒否）
 bin/setup-claude-account  # Claude アカウント dir 作成・正規化
 bin/setup-codex-account   # Codex アカウント dir 作成・正規化（migrate / adopt / add）
