@@ -46,6 +46,7 @@ cx() {
       fi
       ln -sf "$dir/auth.json" "$app_auth"
       echo "(Codex App は再起動後に反映。確実に切り替えるなら: pkill -f 'codex app-server')"
+      _agsw_warn_app_codex_home_mismatch
       cx_status
       ;;
     *)
@@ -56,6 +57,35 @@ cx() {
       cx_status
       ;;
   esac
+}
+
+# GUI アプリ本体（/Applications/*.app 配下の実行ファイル）が spawn した
+# codex app-server プロセスの CODEX_HOME を検査する。
+#
+# ChatGPT.app 等が内部で非対話 zsh 経由（`zsh -c ...`）で codex を起動すると、
+# ユーザーの zshenv 既定値等を拾って CODEX_HOME が明示的に設定されてしまうことがある。
+# その場合そのプロセスは ~/.codex/auth.json（symlink）を一切見ないため、
+# `cx app` での切替がこのプロセスには反映されない（2026-08-03 実測）。
+#
+# 対象を /Applications/*.app 配下の実行ファイルに限定するのは、ユーザー自身が
+# 明示的に CODEX_HOME を指定して起動した codex app-server（agmsg や他プロジェクトの
+# 管理daemon等）は正常な用法であり、警告対象ではないため
+# （README「app-server の control socket は CODEX_HOME ごとに分離される」参照）。
+_agsw_warn_app_codex_home_mismatch() {
+  local line pid exe codex_home
+  while IFS= read -r line; do
+    [[ -n "$line" ]] || continue
+    pid="${line%% *}"
+    exe="${line#* }"
+    [[ "$exe" == /Applications/*.app/* ]] || continue
+    codex_home="$(ps eww -p "$pid" 2>/dev/null | tr ' ' '\n' | sed -n 's/^CODEX_HOME=//p')"
+    if [[ -n "$codex_home" ]]; then
+      echo "⚠ 実行中の Codex App プロセス (PID $pid: $exe)" >&2
+      echo "  に CODEX_HOME=$codex_home が設定されています。このプロセスは symlink" >&2
+      echo "  (${AGSW_CODEX_APP_AUTH:-$HOME/.codex/auth.json}) を見ないため、今回の" >&2
+      echo "  cx app 切替は反映されません。App を完全終了→再起動して再確認してください。" >&2
+    fi
+  done < <(pgrep -fl 'codex.*app-server' 2>/dev/null)
 }
 
 # プロファイル一覧。* が現在このシェルで有効な CODEX_HOME、@ が Codex App 側。
