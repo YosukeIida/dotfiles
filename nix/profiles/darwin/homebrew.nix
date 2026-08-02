@@ -40,6 +40,10 @@
       "ffmpeg"
       "git-delta"
       "glow"
+      # Google Workspace CLI（gws）。Drive/Sheets/Gmail を1つの CLI で扱う。
+      # 認証情報の置き場は GOOGLE_WORKSPACE_CLI_CONFIG_DIR で上書きできるため、
+      # バイナリはグローバル、アカウントは repo ごと（.envrc）に分離する運用にしている。
+      "googleworkspace-cli"
       "herdr"
       "hermes-agent"
       "hunk"
