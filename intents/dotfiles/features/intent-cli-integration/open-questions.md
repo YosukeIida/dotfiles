@@ -78,6 +78,39 @@ issue #20 → PR #21（squash merge `5a5e147`）まで4スレッドで回した�
 ただし 5 が解決するまで「自律運用」は成立せず、operator が着火を担う半自動運用になる。
 2周目以降のコストを 1〜4 抜きで再測し、それでも重ければ timer-loop モードへの縮退を検討する。
 
+#### 2周目の実測（2026-08-03、`ci-checkout-v7`）— 最小規模での下限
+
+対象は `.github/workflows/nix-check.yml` の**2行**（`actions/checkout@v6` → `@v7`）。
+dependabot PR #14 を代替。issue #22 → PR #23（squash merge `5bf0e1e`）→ closeout。
+
+**初回 gate は消えた。** 1周目に当たった 1〜4 のどれにも当たらず、packet 作成のやり直しも
+ゼロだった。所要は CI 待ち（`nix` 1m31s / `secrets` 28s）と review（2m09s）が支配的で、
+人間の判断待ちを除けば10分弱。着火が必要だったのは Claude Code の2 pane（orchestrator /
+implementation）だけで、codex の review は自動で動いた。
+
+**この規模には contract が過剰である。** `github-body.md` は100行超に対して変更は2行。
+同じ結果は dependabot #14 を1コマンドで merge すれば得られた。
+
+ただし価値がゼロだったわけではない。実際に効いたのは2点:
+
+- out-of-scope（同ファイル内の他の action を一緒に上げない）が守られた
+- review が「この slice では CI 実行そのものが検証手段である」という設計判断を引用して承認した
+
+つまり「価値がない」のではなく **コストが価値を上回る**という意味での過剰。
+
+#### 閾値（この domain の運用ルールとする）
+
+| slice の性質 | intent-cli を通すか |
+|---|---|
+| **設計判断を含む**（統合・分割・順序・境界の決定） | **通す**。1周目の `templates-nixpkgs-2605` は「2つの dependabot PR を1 unit にまとめる」「本体 flake に差分を出さないことを AC にする」という判断があり、contract がそれを検証可能にした |
+| **単一の機械的更新**（dependabot PR をそのまま merge できるもの） | **通さない**。直接 merge し、判断基準だけ intent tree に残す |
+
+どちらの場合も、更新単位の定義（`operations/dependency-updates.md` のようなノード）を
+intent tree に持つことは維持する。
+
+**contract は「判断を検証可能にする」ために使い、「作業を記録する」ためには使わない。**
+これが2周の実測から出た結論であり、OQ-2 への最終回答とする。
+
 ### OQ-3 — transport は agmsg / herdr-only のどちらにするか（FR-3 / AC-3）
 
 前提として両者は対等な選択肢であり、既定は agmsg。1チームにつき1つのみで、混在は
