@@ -1,0 +1,10 @@
+{
+  "artifact_kind": "knowledge-writeback-record",
+  "execution_unit": "templates-nixpkgs-2605",
+  "host_commit": "4739e80cb08cf68eeea380ec6e864eb26c65a10c",
+  "recorded_at": "2026-08-03T13:02:22.047425+00:00",
+  "targets": [
+    "intents/dotfiles/features/intent-cli-integration/open-questions.md"
+  ],
+  "note": null
+}
