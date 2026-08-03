@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-08-03T14:44:56.625175+00:00",
+  "updated_at": "2026-08-03T16:55:34.235923+00:00",
   "items": [
     {
       "execution_unit": "templates-nixpkgs-2605",
@@ -49,7 +49,7 @@
     {
       "execution_unit": "flake-inputs-2605",
       "title": "\u672C\u4F53 flake input \u3092 26.05 \u7CFB\u306B\u63C3\u3048\u308B",
-      "state": "queued",
+      "state": "completed",
       "dependencies": [],
       "blocked_by": [],
       "clarification_return_path": "intents/dotfiles/clarifications/open.md",
