@@ -6,5 +6,10 @@
 # 実体のパスは .intent-cli/config.toml の [project] worktree_root が正。
 .intent-cli/worktrees/
 
+# herdr の logical-role→pane マッピング。pane id はワークスペースを組み直すたびに
+# 変わるマシン/セッション固有の値なので追跡しない。notify は host cwd 上の実体を
+# 読むので、git 管理されていなくても durable かつ operator-visible である。
+.intent-cli/role-pane-mapping.json
+
 # macOS
 .DS_Store

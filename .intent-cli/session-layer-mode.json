@@ -1,0 +1,18 @@
+{
+  "schema_version": "1",
+  "entries": [
+    {
+      "domain": "dotfiles",
+      "team": "dotfiles-dev",
+      "mode": "herdr-only",
+      "updated_at": "2026-08-03T07:11:07.693394+00:00",
+      "transitions": [
+        {
+          "from": "agmsg",
+          "to": "herdr-only",
+          "at": "2026-08-03T07:11:07.693394+00:00"
+        }
+      ]
+    }
+  ]
+}
