@@ -106,6 +106,79 @@ herdr は prompt を送出したが pane 側が状態変化を返していない
 
 修復後、orchestrator が同一 task-id `review-flake-inputs-2605` で再 dispatch する。
 
+## 解決（2026-08-03 追記）— 真因は codex アカウントの rate limit
+
+上記の「問題1: 幅」は**真因ではなかった**。operator が確認した実際の原因:
+
+- pane に `try again at Aug 8th, 2026` が出ていた（codex アカウントの rate limit）
+- 最初の turn が失敗するため `interactive_ready` が確立せず、herdr が
+  `running=false` と扱い、notify の宛先候補から漏れていた
+- `Ctrl+L` でも幅を50桁に戻しても直らず、**アカウント切替で即解決した**
+
+つまり `interactive_ready: null` は正しい観測だったが、その原因を幅と結び付けた
+本書の推論は誤りだった。幅は読みにくさの問題であって配送不能の原因ではない。
+
+対処として実施されたこと:
+
+- review pane を `w1B:pJ` → **`w1B:pP`** に作り直し、`cx labteam` で別アカウントに切替
+- `herdr agent start` で logical role 名を付け、READY ping を送って running を確立
+- topology を record し直し（`review` は `w1B:pP` / `codex`）
+
+幅の方針は変更された: skill の下限判定を team config の `min_pane_cols` で
+変えられるようにし **30** に設定。MacBook のディスプレイ幅（領域195桁）では
+元の割合（design 0.40 / orch 0.24 / impl 0.18 / review 0.18）を維持する運用とし、
+**review は 36桁のまま**とする。pane を読むときは狭いことを前提にする。
+
+### CLI 側に手段が無い制約として認識されたこと
+
+`session-layer topology record` に上書き手段が無く conflict で拒否されるため、
+operator が `role-pane-mapping.json` の review エントリを手で外してから
+record し直す必要があった。pane を作り直すと `pane_id` は必ず変わるので、
+この経路は再 provision のたびに発生する。
+
+## 追記: `delivered: false` は false negative にもなる
+
+復旧後の再 dispatch（`w1B:pP` 宛て）も `delivered: false` を返したが、これは
+**誤検知**だった。pane では Codex が `working` に遷移して task block を処理して
+おり（`state_change_seq` 889 → 969）、実際には配送されていた。
+
+`notify delegate` の能動確認は「settled → working → settled の往復」を
+10000ms 以内に観測する必要があり、review のように作業が10秒を超えると窓が
+切れて `delivered: false` になる。
+
+つまり `delivered: false` には2種類ある:
+
+| 種類 | 判別方法 |
+|---|---|
+| 真に未着火 | `state_change_seq` が不変 かつ pane に payload の痕跡なし |
+| false negative（着火済み） | `state_change_seq` が増加 または pane が処理中 |
+
+**再送前に必ず `state_change_seq` と pane を見ること。** false negative で再送すると
+実行中の作業に二重投入する。
+
+## 追記: label 承認と GitHub native APPROVE の関係
+
+PR #25 の review は判定 APPROVE（指摘なし）を出したが、GitHub の native
+APPROVE 送信が `Review Can not approve your own pull request` で拒否され
+`blocked` を報告した。active GitHub account (`YosukeIida`) が PR author だから。
+
+ただしこの domain の workflow 承認は**ラベルベース**であり native review を
+要件としていない。実測（`gh pr view --json reviewDecision,latestReviews`）:
+
+| PR | `latestReviews` | `reviewDecision` | label | 結果 |
+|---|---|---|---|---|
+| #21 | `[]` | `""` | `intent-pr-approved` | MERGED |
+| #23 | `[]` | `""` | `intent-pr-approved` | MERGED |
+
+1周目・2周目とも native review はゼロで merge されている。したがって native
+APPROVE の不可は intent-cli workflow を止めない。正しい記録手段は
+`intent-cli automation pr-transition --pr <n> --transition approved --write`。
+
+**ただし残る論点**: チーム全体が単一の GitHub identity で動いているため、
+ラベル承認は GitHub レベルで独立した reviewer を持たない。これは2周分すでに
+そう運用されてきた既存の性質であって今回導入されたものではないが、独立性を
+求めるなら別 reviewer account が必要になる。判断は operator / design に属する。
+
 ## 付随して判明した transport の制約
 
 `intent-cli notify delegate --to <external role>` は task block を
