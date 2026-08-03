@@ -4,3 +4,5 @@
 {"ts":"2026-08-03T12:56:04.558363+00:00","execution_unit":"templates-nixpkgs-2605","event":"closeout-recorded","by":"intent-cli closeout pr","repo":"YosukeIida/dotfiles","pr":21}
 {"ts":"2026-08-03T13:22:21.585472+00:00","execution_unit":"ci-checkout-v7","event":"queue_seeded_from_packet","by":"automation queue-seed-from-packet (G363)","packet_ref":".intent-cli/issues/ci-checkout-v7/"}
 {"ts":"2026-08-03T13:22:33.282385+00:00","execution_unit":"ci-checkout-v7","event":"issue-created","by":"issue-publish-flow","linked_issue":"YosukeIida/dotfiles#22","reason":"https://github.com/YosukeIida/dotfiles/issues/22"}
+{"ts":"2026-08-03T13:35:19.552223+00:00","execution_unit":"ci-checkout-v7","event":"pr-merged","by":"intent-cli closeout pr","repo":"YosukeIida/dotfiles","pr":23}
+{"ts":"2026-08-03T13:35:19.552223+00:00","execution_unit":"ci-checkout-v7","event":"closeout-recorded","by":"intent-cli closeout pr","repo":"YosukeIida/dotfiles","pr":23}
