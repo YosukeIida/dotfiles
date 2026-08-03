@@ -1,0 +1,7 @@
+execution_unit: ci-checkout-v7
+publish_status: issue-created
+packet_path: "/Users/yosuke/.intent-teams/dotfiles/host/.intent-cli/issues/ci-checkout-v7"
+issue_body_path: "/Users/yosuke/.intent-teams/dotfiles/host/.intent-cli/issues/ci-checkout-v7/github-body.md"
+created_issue_number: 22
+created_issue_url: "https://github.com/YosukeIida/dotfiles/issues/22"
+published_label_name: null
