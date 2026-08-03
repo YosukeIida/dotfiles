@@ -4,8 +4,8 @@ description: "Control herdr from inside it. Manage workspaces and tabs, split pa
 allowed-tools: Bash(herdr:*), Bash(python3:*)
 metadata:
     vendor-repo: ogulcancelik/herdr
-    vendor-path: SKILL.md
-    vendor-commit: 0f161fac287011b3e216383e2b8482f049fd6a7b
+    vendor-path: skills/herdr/SKILL.md
+    vendor-commit: f6060cf682f69ef8302c25e8924c0b27aef7ae16
 ---
 
 # Herdr
