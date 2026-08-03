@@ -43,8 +43,10 @@ GIST_JAPANESE_TECH_WRITING="https://gist.github.com/k16shikano/fd287c3133457c4fd
 # commit で「更新あり」になる）。更新確認は agent-skills-outdated が
 # vendor-* metadata を読んで行う。
 HERDR_REPO="ogulcancelik/herdr"
-HERDR_PATH="SKILL.md"
-HERDR_REV="0f161fac287011b3e216383e2b8482f049fd6a7b"
+# 2026-08 に upstream が SKILL.md を repo 直下から skills/herdr/SKILL.md へ移動
+# （gh skill install が要求する <name>/SKILL.md 構造に合わせた再編、と見られる）。
+HERDR_PATH="skills/herdr/SKILL.md"
+HERDR_REV="f6060cf682f69ef8302c25e8924c0b27aef7ae16"
 
 # browser-use は 2026-07 に browser-harness（コマンド名も変更、AXツリー優先の
 # 新設計）へ実質移行した。browser-use/browser-use 本体には SKILL.md が無いため
