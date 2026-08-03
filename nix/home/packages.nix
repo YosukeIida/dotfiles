@@ -1,6 +1,26 @@
 { pkgs, lib, pkgsUnstable, ... }:
 
 let
+  # nixpkgs に未収録のため self-contained release binary を fetchurl で取り込む。
+  # dotnet SDK は入れず、`dotnet tool install -g` 相当のグローバル状態管理外インストールを避ける。
+  # 更新時は https://github.com/J-Tech-Japan/intent-system/releases から
+  # version と osx-arm64 tarball の sha256 を手で更新する。
+  intent-cli = pkgs.stdenvNoCC.mkDerivation rec {
+    pname = "intent-cli";
+    version = "0.8.1";
+    src = pkgs.fetchurl {
+      url = "https://github.com/J-Tech-Japan/intent-system/releases/download/v${version}/intent-cli-${version}-osx-arm64.tar.gz";
+      sha256 = "1e45f71e1b016c962651f8cdd4ea0c3d617039f34f01ec484a6ad068e83c8cd9";
+    };
+    # tarball の中身は単一バイナリ（ディレクトリなし）なので、stdenv の
+    # デフォルト unpackPhase の sourceRoot 自動推定（ディレクトリ前提）が失敗する。
+    unpackPhase = "tar xzf $src";
+    installPhase = ''
+      mkdir -p $out/bin
+      install -m755 intent-cli $out/bin/intent-cli
+    '';
+  };
+
   figma-console-mcp = pkgs.buildNpmPackage {
     pname = "figma-console-mcp";
     version = "1.32.0";
@@ -26,6 +46,7 @@ in
     gh
     git
     ghq
+    intent-cli
     # jq: git clean filter（strip-model）と agent-switch の agsw-codex-identity が使う。
     # macOS 同梱の /usr/bin/jq に依存すると OS バージョンで挙動が変わるので nix で固定する。
     jq
