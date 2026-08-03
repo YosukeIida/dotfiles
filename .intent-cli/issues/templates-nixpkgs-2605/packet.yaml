@@ -1,3 +1,6 @@
+# publish-flow が読むタイトルキーはトップレベルの `title:`。
+# 値は design が authored した implementation_issue_packet.issue_title と逐語一致させる。
+title: "devshell テンプレートの nixpkgs を 26.05-darwin に上げる"
 implementation_issue_packet:
   issue_title: "devshell テンプレートの nixpkgs を 26.05-darwin に上げる"
   issue_kind: chore
