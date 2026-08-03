@@ -7,10 +7,10 @@ let
   # version と osx-arm64 tarball の sha256 を手で更新する。
   intent-cli = pkgs.stdenvNoCC.mkDerivation rec {
     pname = "intent-cli";
-    version = "0.8.1";
+    version = "0.9.1";
     src = pkgs.fetchurl {
       url = "https://github.com/J-Tech-Japan/intent-system/releases/download/v${version}/intent-cli-${version}-osx-arm64.tar.gz";
-      sha256 = "1e45f71e1b016c962651f8cdd4ea0c3d617039f34f01ec484a6ad068e83c8cd9";
+      sha256 = "c95627c79603f0a9d7d4407b4ea9da6261bae0e9356b500a2ea56d30f05b76c0";
     };
     # tarball の中身は単一バイナリ（ディレクトリなし）なので、stdenv の
     # デフォルト unpackPhase の sourceRoot 自動推定（ディレクトリ前提）が失敗する。
