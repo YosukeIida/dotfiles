@@ -1,0 +1,10 @@
+{
+  "artifact_kind": "knowledge-writeback-record",
+  "execution_unit": "ci-checkout-v7",
+  "host_commit": "201de900af382598001ca471aae271223cfe2e38",
+  "recorded_at": "2026-08-03T13:39:19.686573+00:00",
+  "targets": [
+    "intents/dotfiles/features/intent-cli-integration/open-questions.md"
+  ],
+  "note": null
+}
