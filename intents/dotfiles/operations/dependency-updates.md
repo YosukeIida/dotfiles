@@ -40,15 +40,32 @@ agenix.inputs.nixpkgs.follows = "nixpkgs";
 
 devshell テンプレートと CI は本体と連動しないので、独立した execution unit として先に進めてよい。
 
-## 実機検証の分担
+## 実機検証の分担 — `build` と `switch` を分ける
 
-本体 flake input の更新は `darwin-switch` を通すまで検証が終わらない。`darwin-switch` は
-flake を**絶対パス**で指すため（`nix/hosts/darwin/common/default.nix` ほか多数）、
-実装用 worktree からは実行しても本番 checkout の flake を読む。
+**検証の大半は実装用 worktree 内で完結する。** `darwin-rebuild build` と
+`darwin-rebuild switch` を区別すること。
 
-したがって本体更新の slice は、**実装 worktree では編集と PR までが範囲**であり、
-`darwin-switch` による実機検証は design が本番 checkout で行う。受け入れ条件をこの分担に
-合わせて書くこと。
+| コマンド | システムを変えるか | どこで実行できるか |
+|---|---|---|
+| `darwin-rebuild build --flake <path>#<host>` | **変えない**（評価とビルドのみ） | `--flake` が引数なので**任意の checkout**。実装用 worktree 内で完結する |
+| `darwin-switch`（= `darwin-rebuild switch`） | **変える**（世代が進む） | 本番 checkout（design の作業） |
+
+したがって本体更新の slice は、**実装 worktree で `build` まで検証し**、
+`switch` による実機適用だけを design が本番 checkout で行う。受け入れ条件には
+`build` の成功を入れ、`switch` は out of scope とする。
+
+`switch` が失敗しても `darwin-rebuild --rollback` で前の世代に戻せる。
+
+> **2026-08-03 実測**: `flake-inputs-2605`（nixpkgs / nix-darwin / home-manager を
+> 25.11 → 26.05）で、実装用 worktree からの `darwin-rebuild build --flake .#Yosukes-MacBook-Air`
+> が **exit 0** で完走し、受け入れ条件の1つを worktree 内で満たした。
+> 同日 `intent-cli` 0.8.1 → 0.9.1 でも同じ方法で事前検証している。
+> 以前この節は「`darwin-switch` を通すまで検証が終わらない」と書いていたが、
+> それは `build` と `switch` を区別していなかったための誤り。
+
+なお flake が**絶対パス**で本番 checkout を指す箇所は残る
+（`nix/hosts/darwin/common/default.nix` の postActivation ほか）。これは `switch` で
+配備される symlink の宛先であり、`build` の評価には影響しない。
 
 devshell テンプレートの更新は `nix flake check` で完結するため、この制約を受けない。
 
