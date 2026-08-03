@@ -1,0 +1,56 @@
+# publish-flow が読むタイトルキーはトップレベルの `title:`。
+# 値は implementation_issue_packet.issue_title と逐語一致させる（1周目に踏んだ罠）。
+title: "CI の actions/checkout を v7 に上げる"
+implementation_issue_packet:
+  issue_title: "CI の actions/checkout を v7 に上げる"
+  issue_kind: chore
+  source_execution_unit: ci-checkout-v7
+  domain: dotfiles
+  target_repo: YosukeIida/dotfiles
+  target_path: .github/workflows/nix-check.yml
+  target_part: "nix-check ワークフローの actions/checkout ピン（2箇所）"
+  dependencies: []
+  technical_baseline:
+    - "CI は operations/dependency-updates.md が定める3つの更新単位のうち独立した1つ。本体 flake input とは連動しない"
+    - "dependabot PR #14 が同一の変更を提案している"
+    - "actions/checkout は nix-check.yml の2ジョブ（nix / secrets）で使われており、両方を揃えて上げる"
+  intent_references:
+    - intents/dotfiles/operations/dependency-updates.md
+  acceptance_criteria:
+    - ".github/workflows/nix-check.yml の actions/checkout の参照が2箇所とも actions/checkout@v7 である"
+    - "リポジトリ内に actions/checkout@v6 への参照が残っていない"
+    - "PR の CI（nix / secrets の両ジョブ）が green である。CI 実行そのものが検証手段になる"
+    - ".github/workflows/nix-check.yml 以外に差分がない"
+    - "PR 本文に Closes #<issue> がある"
+
+# G461: optional packet-time intent-maintenance metadata. OPTIONAL and
+# backward-compatible — packets that omit this whole block stay valid.
+# Fill it in or explicitly decline each part while the design context is
+# fresh; `improve` (G456 / G460) is the later safety net, not a substitute.
+intent_placement:
+  primary_intent: intents/dotfiles/operations/dependency-updates.md
+  supporting_intents: []
+  new_intent_needed: false
+  placement_rationale: "operations/dependency-updates.md が定める3つの更新単位のうち「CI」に対応する最初の適用例。"
+knowledge_updates:
+  intent_tree:
+    required: false
+    target_paths: []
+    summary: "更新単位の記述は既に operations/dependency-updates.md にあり、この slice が tree に負うものはない。"
+  adr:
+    required: false
+    target_paths: []
+    decision_title: ""
+  diagram:
+    required: false
+    target_paths: []
+    diagram_type: none
+  docs:
+    required: false
+    target_paths: []
+    summary: "checkout のバージョンに言及する docs は存在しない。"
+closeout_learning:
+  expected: "OQ-2 の本命の実測。この slice は1ファイル2行の変更であり、OQ-2 が想定した『1行修正のような典型作業に13セクション contract は過剰か』にちょうど当たる。1周目（4ファイル・設計判断を含む）では過剰さが出なかったため、最小規模での authoring コストと得られた価値を測って OQ-2 の回答を更新する。加えて2周目として、初回のみ必要だった gate（ラベル作成・atomic-seed・title キーの発見）が消えた状態の所要を記録する。"
+  write_back_required: true
+  write_back_targets:
+    - intents/dotfiles/features/intent-cli-integration/open-questions.md
