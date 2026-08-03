@@ -1,0 +1,10 @@
+# intent-cli の managed worktree root。
+# review / implementation が PR ブランチを切り出す一時 worktree を置く場所で、
+# 公式（G549 / guide orchestrator-thread）が git-ignored であることを要件にしている。
+# ここが追跡対象だと worktree を1本切るだけで preflight の
+# 「3つの cwd すべてが git status clean」が落ちる。
+# 実体のパスは .intent-cli/config.toml の [project] worktree_root が正。
+.intent-cli/worktrees/
+
+# macOS
+.DS_Store
