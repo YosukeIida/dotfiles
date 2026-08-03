@@ -1,0 +1,9 @@
+[project]
+domain = "dotfiles"
+artifact_root = ".intent-cli"
+worktree_root = ".intent-cli/worktrees"
+base_branch_policy = "direct-main"
+# トポロジーB（同一repo + metadataブランチ）。host metadata は main-metadata に隔離し、
+# main には実装コードだけを置く（実装PRが metadata を含まないようにするため）。
+metadata_source_branch = "main-metadata"
+metadata_write_branch = "main-metadata"
