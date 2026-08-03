@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-08-03T13:35:19.555646+00:00",
+  "updated_at": "2026-08-03T14:44:56.625175+00:00",
   "items": [
     {
       "execution_unit": "templates-nixpkgs-2605",
@@ -40,6 +40,28 @@
         "repo": "YosukeIida/dotfiles",
         "number": 22,
         "url": "https://github.com/YosukeIida/dotfiles/issues/22"
+      },
+      "worker_role": "Claude",
+      "review_role": "Codex",
+      "priority": "high",
+      "priority_revision": 0
+    },
+    {
+      "execution_unit": "flake-inputs-2605",
+      "title": "\u672C\u4F53 flake input \u3092 26.05 \u7CFB\u306B\u63C3\u3048\u308B",
+      "state": "queued",
+      "dependencies": [],
+      "blocked_by": [],
+      "clarification_return_path": "intents/dotfiles/clarifications/open.md",
+      "packet_paths": {
+        "implementation": ".intent-cli/issues/flake-inputs-2605/implementation.md",
+        "review_context": ".intent-cli/issues/flake-inputs-2605/review-context.md",
+        "yaml": ".intent-cli/issues/flake-inputs-2605/packet.yaml"
+      },
+      "linked_issue": {
+        "repo": "YosukeIida/dotfiles",
+        "number": 24,
+        "url": "https://github.com/YosukeIida/dotfiles/issues/24"
       },
       "worker_role": "Claude",
       "review_role": "Codex",
