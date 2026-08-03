@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-08-03T12:56:04.563227+00:00",
+  "updated_at": "2026-08-03T13:22:33.282385+00:00",
   "items": [
     {
       "execution_unit": "templates-nixpkgs-2605",
@@ -18,6 +18,28 @@
         "repo": "YosukeIida/dotfiles",
         "number": 20,
         "url": "https://github.com/YosukeIida/dotfiles/issues/20"
+      },
+      "worker_role": "Claude",
+      "review_role": "Codex",
+      "priority": "high",
+      "priority_revision": 0
+    },
+    {
+      "execution_unit": "ci-checkout-v7",
+      "title": "CI \u306E actions/checkout \u3092 v7 \u306B\u4E0A\u3052\u308B",
+      "state": "queued",
+      "dependencies": [],
+      "blocked_by": [],
+      "clarification_return_path": "intents/dotfiles/clarifications/open.md",
+      "packet_paths": {
+        "implementation": ".intent-cli/issues/ci-checkout-v7/implementation.md",
+        "review_context": ".intent-cli/issues/ci-checkout-v7/review-context.md",
+        "yaml": ".intent-cli/issues/ci-checkout-v7/packet.yaml"
+      },
+      "linked_issue": {
+        "repo": "YosukeIida/dotfiles",
+        "number": 22,
+        "url": "https://github.com/YosukeIida/dotfiles/issues/22"
       },
       "worker_role": "Claude",
       "review_role": "Codex",
