@@ -1,0 +1,19 @@
+version: "1"
+layout_version: tree-v1
+project_type: infrastructure
+target_repo: YosukeIida/dotfiles
+branch_policy: direct-main
+metadata_policy: host-metadata
+entrypoints:
+  - identity/mission.md
+  - README.md
+categories:
+  identity: identity/
+  environments: environments/
+  features: features/
+  technology: technology/
+  operations: operations/
+  runbooks: runbooks/
+  decisions: decisions/
+  clarifications: clarifications/
+  packets: packets/
