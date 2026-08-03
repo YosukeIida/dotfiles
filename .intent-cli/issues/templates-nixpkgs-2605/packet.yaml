@@ -1,0 +1,54 @@
+implementation_issue_packet:
+  issue_title: "devshell テンプレートの nixpkgs を 26.05-darwin に上げる"
+  issue_kind: chore
+  source_execution_unit: templates-nixpkgs-2605
+  domain: dotfiles
+  target_repo: YosukeIida/dotfiles
+  target_path: templates/node/nix templates/python-uv/nix
+  target_part: "devshell テンプレート2本の flake input（本体 flake は対象外）"
+  dependencies: []
+  technical_baseline:
+    - "templates/node/nix と templates/python-uv/nix は本体 flake とは独立した flake で、`follows` による連動を持たない"
+    - "dependabot PR #10 / #11 が同一の変更を提案している（両者の diff は完全に一致）"
+    - "本体の flake input（#8 / #9 / #12）は `follows` で連動するため別 execution unit に分離してある"
+  intent_references:
+    - intents/dotfiles/operations/dependency-updates.md
+  acceptance_criteria:
+    - "templates/node/nix/flake.nix と templates/python-uv/nix/flake.nix の nixpkgs.url が github:NixOS/nixpkgs/nixpkgs-26.05-darwin を指す"
+    - "両方の flake.lock で nixpkgs の original.ref が nixpkgs-26.05-darwin に更新され、locked.rev が 25.11 系の rev から変わっている"
+    - "各テンプレートディレクトリで nix flake check が成功する（重い場合は nix develop --command true で devshell が起動することを示す）"
+    - "リポジトリ直下の flake.nix と flake.lock に差分がない（更新単位の境界を越えていないことの証明）"
+    - "PR 本文に Closes #<issue> がある"
+
+# G461: optional packet-time intent-maintenance metadata. OPTIONAL and
+# backward-compatible — packets that omit this whole block stay valid.
+# Fill it in or explicitly decline each part while the design context is
+# fresh; `improve` (G456 / G460) is the later safety net, not a substitute.
+intent_placement:
+  primary_intent: intents/dotfiles/operations/dependency-updates.md
+  supporting_intents:
+    - intents/dotfiles/decisions/0004-nix-first-packages.md
+  new_intent_needed: false
+  placement_rationale: "依存更新の運用方針として operations/dependency-updates.md を同じ wake で新設し、この slice をその最初の適用例として紐づけた。"
+knowledge_updates:
+  intent_tree:
+    required: false
+    target_paths: []
+    summary: "operations/dependency-updates.md をこの packet と同じ wake で作成済みのため、この slice がさらに tree に負うものはない。"
+  adr:
+    required: false
+    target_paths: []
+    decision_title: ""
+  diagram:
+    required: false
+    target_paths: []
+    diagram_type: none
+  docs:
+    required: false
+    target_paths: []
+    summary: "templates/node と templates/python-uv に README はなく、nixpkgs のリリース系列に言及する docs も存在しない（grep で確認）。"
+closeout_learning:
+  expected: "この domain における最初の一周であり、issue contract 13セクションの粒度が dotfiles の規模に妥当かを実測する。OQ-2 への回答材料になる。"
+  write_back_required: true
+  write_back_targets:
+    - intents/dotfiles/features/intent-cli-integration/open-questions.md
