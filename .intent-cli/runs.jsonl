@@ -1,2 +1,4 @@
 {"ts":"2026-08-03T12:09:29.475859+00:00","execution_unit":"templates-nixpkgs-2605","event":"queue_seeded_from_packet","by":"automation queue-seed-from-packet (G363)","packet_ref":".intent-cli/issues/templates-nixpkgs-2605/"}
 {"ts":"2026-08-03T12:09:38.925358+00:00","execution_unit":"templates-nixpkgs-2605","event":"issue-created","by":"issue-publish-flow","linked_issue":"YosukeIida/dotfiles#20","reason":"https://github.com/YosukeIida/dotfiles/issues/20"}
+{"ts":"2026-08-03T12:56:04.558363+00:00","execution_unit":"templates-nixpkgs-2605","event":"pr-merged","by":"intent-cli closeout pr","repo":"YosukeIida/dotfiles","pr":21}
+{"ts":"2026-08-03T12:56:04.558363+00:00","execution_unit":"templates-nixpkgs-2605","event":"closeout-recorded","by":"intent-cli closeout pr","repo":"YosukeIida/dotfiles","pr":21}
