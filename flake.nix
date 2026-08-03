@@ -2,14 +2,14 @@
   description = "Yosuke's nix-darwin system";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-25.11-darwin";
-    # stable (nixpkgs-25.11-darwin) にはまだ入っていない/入らない新しいパッケージ用。
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
+    # stable (nixpkgs-26.05-darwin) にはまだ入っていない/入らない新しいパッケージ用。
     # 新規パッケージは基本的に stable リリースブランチにはバックポートされないため、
     # 個別に unstable から引く（例: agent-browser。packages.nix 参照）。
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-25.11";
+    nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-26.05";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
-    home-manager.url = "github:nix-community/home-manager/release-25.11";
+    home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     agenix.url = "github:ryantm/agenix";
     agenix.inputs.nixpkgs.follows = "nixpkgs";
