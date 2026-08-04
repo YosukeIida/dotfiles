@@ -56,9 +56,11 @@ in
     poppler
     python3Packages.twscrape
     rclone
+    rustup
     tmux
     tree
     uv
+    zig
     zsh-autosuggestions
     zsh-syntax-highlighting
     figma-console-mcp
