@@ -4,11 +4,14 @@
 # 扱う2系統:
 #   1. gist 由来（cognitive-rhythm-writing / japanese-tech-writing）
 #      → clone して SKILL.md をコピーする。REV_* で pin。
-#   2. repo 直下の SKILL.md 由来（herdr, browser-harness）
+#   2. repo 内の SKILL.md 由来（herdr, browser-harness, writing-quotation）
 #      → gh api で1ファイルだけ取得し、ローカルのパッチと vendor-* metadata を注入する。
 #        gh skill install は使えない: 発見に `<name>/SKILL.md` のディレクトリ構造を要求し、
 #        リポジトリ直下の裸の SKILL.md を認識しない（`gh skill preview` が
 #        "no standard skills found" を返す。2026-07 実測）。
+#        writing-quotation（mathbullet/skills）は marketplace 構造の repo だが、
+#        `/plugin install` は使わない（~/.claude の mutable state に入り、
+#        nix/dotfiles の宣言的管理から外れるため。判断は dotfiles/CLAUDE.md 参照）。
 #
 # 名前が gist 限定に見えるがリネームしていないのは、
 # nix/hosts/darwin/common/default.nix と CLAUDE.md の両方から参照されているため。
@@ -47,6 +50,12 @@ HERDR_REPO="ogulcancelik/herdr"
 # （gh skill install が要求する <name>/SKILL.md 構造に合わせた再編、と見られる）。
 HERDR_PATH="skills/herdr/SKILL.md"
 HERDR_REV="f6060cf682f69ef8302c25e8924c0b27aef7ae16"
+
+# writing-quotation: 引用ブロックの書式規約（Bash等のツール呼び出しを一切含まない
+# 純粋な書式ガイドなので allowed-tools は付けない）。
+WRITING_QUOTATION_REPO="mathbullet/skills"
+WRITING_QUOTATION_PATH="plugins/writing-quotation/skills/writing-quotation/SKILL.md"
+WRITING_QUOTATION_REV="c1814f2850c2e18624a15206bc8b18b24cf3d3e8"
 
 # browser-use は 2026-07 に browser-harness（コマンド名も変更、AXツリー優先の
 # 新設計）へ実質移行した。browser-use/browser-use 本体には SKILL.md が無いため
@@ -94,10 +103,11 @@ sync_one() {
 # repo 直下の1ファイルを vendor する。gist と違い、ローカルで意図的に持つ差分
 # （allowed-tools と、必要な skill だけ description）をここでパッチとして再適用し、
 # 更新検知用の vendor-* metadata を注入する。手で編集しないこと（次回 sync で上書きされる）。
-# $5 = allowed-tools の値。$6 = description の上書き行（frontmatter の
-# `description: ...` 1行そのもの）。省略時は description を上書きしない。
+# $5 = allowed-tools の値。省略・空文字なら付けない（Bash等のツール呼び出しを
+# 持たない純粋な書式・文章規約 skill 向け）。$6 = description の上書き行
+# （frontmatter の `description: ...` 1行そのもの）。省略時は description を上書きしない。
 sync_repo_file() {
-  local name="$1" repo="$2" path="$3" rev="$4" allowed_tools="$5" desc_override="${6:-}"
+  local name="$1" repo="$2" path="$3" rev="$4" allowed_tools="${5:-}" desc_override="${6:-}"
   local dest="$DEST/$name/SKILL.md"
 
   if [ "$check_mode" -eq 1 ]; then
@@ -113,7 +123,7 @@ sync_repo_file() {
 
   # --- ローカルパッチ1: allowed-tools を足す（upstream には無い） -------------
   # 権限プロンプトを最小限にするため。frontmatter の閉じ `---` の直前に挿入する。
-  if ! grep -q '^allowed-tools:' "$raw"; then
+  if [ -n "$allowed_tools" ] && ! grep -q '^allowed-tools:' "$raw"; then
     awk -v tools="$allowed_tools" '
       NR == 1 && $0 == "---" { print; infm = 1; next }
       infm && $0 == "---" {
@@ -172,3 +182,4 @@ sync_repo_file "herdr" "$HERDR_REPO" "$HERDR_PATH" "$HERDR_REV" \
   'description: "Control herdr from inside it. Manage workspaces and tabs, split panes, spawn agents, read output, and wait for state changes — all via CLI commands that talk to the running herdr instance over a local unix socket. Use when running inside herdr (HERDR_ENV=1)."'
 sync_repo_file "browser-harness" "$BROWSER_HARNESS_REPO" "$BROWSER_HARNESS_PATH" "$BROWSER_HARNESS_REV" \
   "Bash(browser-harness:*)"
+sync_repo_file "writing-quotation" "$WRITING_QUOTATION_REPO" "$WRITING_QUOTATION_PATH" "$WRITING_QUOTATION_REV"
