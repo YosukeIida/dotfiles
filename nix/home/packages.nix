@@ -71,6 +71,12 @@ in
 
   home.sessionVariables = {
     AGMSG_NODE = "${pkgs.nodejs_22}/bin/node";
+    # agent-browser は headed（通常ウィンドウ・ハードウェア GPU）で起動する。
+    # headless だと swiftshader（CPU での GPU エミュレーション）で描画され、
+    # 閉じ忘れた放置ページが数コアを焼き続ける事故が起きた（2026-08-03〜06）。
+    AGENT_BROWSER_HEADED = "1";
+    # 閉じ忘れ保険: 30分アイドルでデーモンごと Chrome を自動終了する（実測で動作確認済み）。
+    AGENT_BROWSER_IDLE_TIMEOUT_MS = "1800000";
   };
 
   home.sessionPath = [ "$HOME/.agents/bin" ];
