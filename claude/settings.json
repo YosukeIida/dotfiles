@@ -23,7 +23,8 @@
       "Bash(rtk git log:*)",
       "Bash(rtk git diff:*)",
       "Bash(rtk git status)",
-      "Bash(rtk git status:*)"
+      "Bash(rtk git status:*)",
+      "Bash(intent-cli:*)"
     ],
     "deny": [
       "Bash(rm -rf *)",
