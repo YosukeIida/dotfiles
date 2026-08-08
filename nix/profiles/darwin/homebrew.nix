@@ -23,6 +23,7 @@
     # 名前で解決する（installer.rb の tap_dependencies）ため、Brewfile 内での行順は問題ない。
     # nix-darwin が trusted オプションに対応したら taps に戻すこと。
     extraConfig = ''
+      tap "can1357/tap", trusted: true
       tap "jundot/omlx", "https://github.com/jundot/omlx", trusted: true
       tap "solarphlare/airmute", trusted: true
       tap "steipete/tap", trusted: true
@@ -37,6 +38,10 @@
       "yosukeiida/casks-personal/backlog-md"
       "bat"
       "brightness"
+      # omp（oh my pi）。formula は release の単体バイナリを置くだけで depends_on ゼロ
+      # （node/bun 非依存）。nixpkgs には無く、derivation を書いても formula と同内容に
+      # なるうえ version/sha256 の手動追随が増えるため homebrew 側で管理する。
+      "can1357/tap/omp"
       "ffmpeg"
       "git-delta"
       "glow"
