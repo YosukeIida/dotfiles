@@ -122,6 +122,25 @@ fi
 # <<< direnv <<<
 
 # =====================================================================
+# ==== omp（oh my pi）のアカウント切り替え =============================
+# =====================================================================
+# omp は --profile / OMP_PROFILE で auth・セッション・設定・キャッシュを丸ごと
+# 分離する（codex に profile の概念が無く cx が CODEX_HOME を差し替えているのとは
+# 違い、omp 側の標準機能）。プロファイルの実体は ~/.omp/profiles/<name>/。
+#
+#   personal = ChatGPT Plus / labteam = Team プラン（同一メールだが別枠）
+#
+# 既定を export しておけば、herdr の pane で起動する omp もこれを継承する。
+# 一時的に切り替えたいときだけ omp-personal / omp-labteam を使う。
+#
+# 注意: 同一プロファイルに両方ログインすると omp はセッションごとに round-robin で
+# 振り分ける（`omp token openai-codex --list` の --account 参照）。分けたいなら
+# プロファイルを必ず分けること。
+export OMP_PROFILE=personal
+alias omp-personal='OMP_PROFILE=personal omp'
+alias omp-labteam='OMP_PROFILE=labteam omp'
+
+# =====================================================================
 # ==== クリップボード整形 ==============================================
 # =====================================================================
 # Claude Code のターミナル出力をコピーした際に行頭2スペースを除去する
