@@ -101,7 +101,6 @@
       "obsidian"
       "onlyoffice"
       "orbstack"
-      "paseo"
       "yosukeiida/casks-personal/pindrop"
       "yosukeiida/casks-personal/powerglance"
       "raycast"
