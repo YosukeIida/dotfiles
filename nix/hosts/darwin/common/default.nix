@@ -165,10 +165,10 @@
     # Codex プラグインを希望リストから冪等にインストール
     su - ${username} -c "bash $pub/codex/install-plugins.sh" || true
 
-    # 外部由来 skill（gist 等）の更新有無を通知のみ表示する（brew outdated 相当）。
+    # 外部由来 skill（gist・GitHub repo 等）の更新有無を通知のみ表示する（brew outdated 相当）。
     # 内容は一切書き換えない（読み取り専用）。ネットワーク不通でも switch を失敗させない。
-    if [ -x "$pub/sync-gist-skills.sh" ]; then
-      su - ${username} -c "bash $pub/sync-gist-skills.sh --check" || true
+    if [ -x "$pub/sync-external-skills.sh" ]; then
+      su - ${username} -c "bash $pub/sync-external-skills.sh --check" || true
     fi
 
     # Asyar（2026-07-30 Raycastから移行）。設定・portals は tauri-plugin-store の

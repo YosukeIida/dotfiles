@@ -19,7 +19,7 @@ private overlay が手元にある場合はそちらのコンテキストも読�
 |---|---|---|
 | 自作・公開できる | `YosukeIida/personal-agent-skills`（別repo、root-level `<skill>/SKILL.md`） | postActivation `_link`（編集即時反映）。他者は `gh skill install` で利用可 |
 | 自作・公開したくない | `dotfiles-private/agents/skills/` | 同上 |
-| 外部・公開 repo/gist 由来 | `agents/skills/<name>`（vendored） | `sync-gist-skills.sh`（rev pin）→ git diff 目視 → commit |
+| 外部・公開 repo/gist 由来 | `agents/skills/<name>`（vendored） | `sync-external-skills.sh`（rev pin）→ git diff 目視 → commit |
 | 外部・研究室（private repo 由来） | `dotfiles-private/agents/skills/tmllab-*`（vendored） | `dotfiles-private/sync-lab-skills.sh`（rev pin・パッチ内蔵）→ git diff 目視 → commit |
 
 判断に迷ったら **private 側に置く**（後で public に昇格させることはできる）。
@@ -39,7 +39,7 @@ flake input にしない（公開 CI が壊れる）。private なものは実�
 （自分のマシンへの配備には）使わない。`gh skill search/preview/publish` のみ使う。
 
 **更新の自動検知（brew outdated 相当）**：`darwin-switch` のたびに
-`sync-gist-skills.sh --check` / `sync-lab-skills.sh --check` が自動実行され、
+`sync-external-skills.sh --check` / `sync-lab-skills.sh --check` が自動実行され、
 upstream に更新があれば通知する（内容は一切書き換えない、読み取り専用）。
 `sync-lab-skills.sh` は各 SKILL.md の frontmatter に
 `metadata.github-repo/github-ref/github-path/github-tree-sha` を自前で注入しており
@@ -53,12 +53,12 @@ descriptionを1行に畳んでパッチのアンカーを壊すため）、こ�
 
 ```
 dotfiles/
-├── agents/skills/    # 外部公開 skill の vendor 先（gist 等、sync-gist-skills.sh 管理）
+├── agents/skills/    # 外部公開 skill の vendor 先（gist・GitHub repo 等、sync-external-skills.sh 管理）
 ├── agents/subagents/ # サブエージェント定義（自作 skill は personal-agent-skills repo へ分離済み）
 ├── nix/              # nix 設定（hosts・profiles・home-manager）
 ├── secrets/          # agenix 暗号化シークレット（*.age）
 ├── flake.nix         # 本体 flake（darwinConfigurations を定義）
-├── sync-gist-skills.sh  # 外部公開 skill の rev pin 更新スクリプト
+├── sync-external-skills.sh  # 外部公開 skill の rev pin 更新スクリプト
 ├── templates/        # devshell テンプレート（python-uv・node）
 └── tools/agent-switch/  # cc/cx アカウント切替（自己完結・将来独立repo化予定）
 ```
@@ -100,7 +100,7 @@ mkdir ~/workspace/github.com/YosukeIida/personal-agent-skills/<name>
 darwin-switch
 
 # 外部の公開 skill（gist/repo）の更新確認と取り込み
-./sync-gist-skills.sh --check
+./sync-external-skills.sh --check
 # REV を書き換えて実行 → git diff を目視 → commit → darwin-switch
 
 # 研究室 skill（tmllab-*）の更新確認と取り込み
