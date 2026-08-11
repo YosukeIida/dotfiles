@@ -155,6 +155,14 @@
       _link "$f" "$home/.claude/agents/$(basename "$f")"
     done
 
+    # subagent を削除・リネームしたあとに残るリンク切れ symlink を掃除する。
+    # 有効な symlink には触れない（skills の掃除ループと同じ安全条件）。
+    for l in "$home/.claude/agents"/*; do
+      if [ -L "$l" ] && [ ! -e "$l" ]; then
+        rm "$l"
+      fi
+    done
+
     # Codex の安定設定（/etc/codex/config.toml）は approval_policy=never・
     # sandbox_mode=danger-full-access という個人の合意前提の危険設定を含むため、
     # common（example にも波及）ではなく host 固有（yosuke-macbook-air.nix）で配備する。
