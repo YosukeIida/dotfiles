@@ -83,6 +83,14 @@ in
     AGENT_BROWSER_HEADED = "1";
     # 閉じ忘れ保険: 30分アイドルでデーモンごと Chrome を自動終了する（実測で動作確認済み）。
     AGENT_BROWSER_IDLE_TIMEOUT_MS = "1800000";
+    # agmsg の codex shim（~/.agents/bin/codex）に実体を直指しさせ、PATH 走査を止める。
+    # 走査させると cmux が panel ごとに $TMPDIR/cmux-cli-shims/<panel-id>/ へ生成する
+    # codex shim を「実体」と誤認する。cmux 側の wrapper も逆に agmsg shim を「実体」と
+    # 判定するため、両者が互いを exec し合って無限再帰し、codex が起動しなくなる
+    # （2026-08-13 に cmux 0.64.22 × agmsg 1.1.6 で実測。herdr では cmux の per-panel
+    # shim が無いので発生しない）。本質は agmsg の resolve_real_codex が他社製 wrapper を
+    # 除外できていない点で、upstream 修正が入ればこの pin は不要になる。
+    AGMSG_REAL_CODEX = "/opt/homebrew/bin/codex";
   };
 
   home.sessionPath = [ "$HOME/.agents/bin" ];
