@@ -50,7 +50,10 @@
       # バイナリはグローバル、アカウントは repo ごと（.envrc）に分離する運用にしている。
       "googleworkspace-cli"
       "herdr"
-      "hermes-agent"
+      # hermes-agent は brew ではなく nix flake input（upstream 自身の uv2nix
+      # packaging）から home.packages 経由で導入する（nix/home/packages.nix の
+      # hermesAgentPkgs.full）。brew formula は node を depends_on して
+      # /opt/homebrew/bin にリンクしてしまう（nodeless 方針違反）ため使わない。
       "hunk"
       "jundot/omlx/omlx"
       "mas"
