@@ -5,6 +5,7 @@ metadata:
     vendor-repo: mattpocock/skills
     vendor-path: skills/engineering/domain-modeling/SKILL.md
     vendor-commit: ee8bae40062cd6b435073368ed0c540f48c35862
+    vendor-extra-paths: skills/engineering/domain-modeling/ADR-FORMAT.md skills/engineering/domain-modeling/CONTEXT-FORMAT.md
 ---
 
 # Domain Modeling

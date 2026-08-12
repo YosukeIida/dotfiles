@@ -51,7 +51,13 @@
       "glow"
       # Google Workspace CLI（gws）。Drive/Sheets/Gmail を1つの CLI で扱う。
       # 認証情報の置き場は GOOGLE_WORKSPACE_CLI_CONFIG_DIR で上書きできるため、
-      # バイナリはグローバル、アカウントは repo ごと（.envrc）に分離する運用にしている。
+      # バイナリはグローバルで1つ、アカウントは ~/.config/gws/<email>/ に分離する
+      # 運用にしている（gws-multi-account skill、agents/skills/gws-multi-account/）。
+      # 2026-08 以前は repo ごとに .envrc で既定アカウントを固定する方式だったが、
+      # direnv の export は Claude Code の Bash ツールには自動で乗らない（実測済み）
+      # ため廃止し、エージェントは常に skill 経由で明示的に CONFIG_DIR を指定する
+      # 運用に一本化した。skill 側の PreToolUse hook が CONFIG_DIR 未指定の
+      # 裸の `gws` 呼び出しを弾く。
       "googleworkspace-cli"
       "herdr"
       # hermes-agent は brew ではなく nix flake input（upstream 自身の uv2nix
