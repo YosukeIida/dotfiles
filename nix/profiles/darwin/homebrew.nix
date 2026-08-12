@@ -104,6 +104,7 @@
       "obsidian"
       "onlyoffice"
       "orbstack"
+      "orchard"
       "yosukeiida/casks-personal/pindrop"
       "yosukeiida/casks-personal/powerglance"
       "raycast"
