@@ -312,6 +312,24 @@ let
           add_report "[$label] $name: $repo:$vpath updated"
           add_report "  pinned $pin -> $latest"
         fi
+
+        # vendor-extra-paths: SKILL.md 以外に extra_files で一緒に vendor した
+        # ファイル（例: gws-multi-account の hooks/hook.js）。SKILL.md 自体は
+        # 変わらずこちらだけ upstream が更新した場合を拾うため、同じ pin
+        # （vendor-commit、全ファイル共通の rev）を基準に個別チェックする。
+        extra_paths="$(sed -nE 's/^[[:space:]]*vendor-extra-paths:[[:space:]]*(.+)$/\1/p' "$skill" | head -n1)"
+        for ep in $extra_paths; do
+          elatest="$(gh api "repos/$repo/commits?path=$ep&per_page=1" --jq '.[0].sha' 2>/dev/null)"
+          if [ -z "$elatest" ]; then
+            add_report "[$label] $name: 未確認（$repo:$ep に到達できず）"
+            continue
+          fi
+          if [ "$elatest" != "$pin" ]; then
+            updates=1
+            add_report "[$label] $name: $repo:$ep updated (extra file)"
+            add_report "  pinned $pin -> $elatest"
+          fi
+        done
       done
     }
 

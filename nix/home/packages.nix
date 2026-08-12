@@ -71,6 +71,12 @@ in
 
   home.sessionVariables = {
     AGMSG_NODE = "${pkgs.nodejs_22}/bin/node";
+    # gws-multi-account skill（agents/skills/gws-multi-account/、vendor元は
+    # indentcorp/gws-multi-account）の PreToolUse hook（hooks/hook.js）と、
+    # SKILL.md 内の accounts.json 更新スニペットが使う。AGMSG_NODE と同じ理由
+    # （nodeless-policy: 裸の node を PATH に常駐させない）で、nix pin 済みの
+    # node をこの専用変数経由でだけ触れるようにしている。
+    GWS_MULTI_ACCOUNT_NODE = "${pkgs.nodejs_22}/bin/node";
     # agent-browser は headed（通常ウィンドウ・ハードウェア GPU）で起動する。
     # headless だと swiftshader（CPU での GPU エミュレーション）で描画され、
     # 閉じ忘れた放置ページが数コアを焼き続ける事故が起きた（2026-08-03〜06）。
