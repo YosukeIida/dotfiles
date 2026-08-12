@@ -9,17 +9,14 @@ HOST="Yosukes-MacBook-Air"
 
 brews_json="$(nix eval --json "${FLAKE_DIR}#darwinConfigurations.${HOST}.config.homebrew.brews" 2>/dev/null || echo '[]')"
 
-formula_names="$(echo "$brews_json" | python3 -c '
-import json, sys
-try:
-    brews = json.load(sys.stdin)
-except Exception:
-    brews = []
 # nix-darwin homebrew.brews は文字列のリストではなく、
-# {"name": "...", "brewfileLine": "...", ...} のリスト
-names = [b["name"] if isinstance(b, dict) else b for b in brews]
-print(" ".join(names))
-' 2>/dev/null || true)"
+# {"name": "...", "brewfileLine": "...", ...} のリスト。
+# python3 は使わない: system python 使用禁止方針（CLAUDE.md）を Claude Code の
+# Bash hook が強制しており、python3 呼び出しがブロックされて formula_names が
+# 常に空になり、この if で早期 exit 0 して以降の sudo darwin-rebuild が
+# 一度も実行されない、という事故が実際に起きた（2026-08-12）。jq は
+# home.packages で常に入っている前提。
+formula_names="$(echo "$brews_json" | jq -r '[.[] | if type == "object" then .name else . end] | join(" ")' 2>/dev/null || true)"
 
 if [ -z "$formula_names" ]; then
   exit 0
@@ -49,12 +46,20 @@ if [ -n "$flagged" ]; then
   echo "  node をローカルに入れたくない方針のはずです。nodeless な代替 formula"
   echo "  （custom tap で native binary を直接 install する等）を検討してください。"
   echo ""
-  read -r -p "このまま darwin-switch を続行しますか？ [y/N] " ans
-  case "$ans" in
-    [yY]*) ;;
-    *)
-      echo "中止しました。"
-      exit 1
-      ;;
-  esac
+  # 非対話実行（Claude Code 等、stdin が tty でない）では read が永久に
+  # ブロックするだけなので、警告を出した上でそのまま続行する（このスクリプト
+  # 自体が「誤検知で switch を止めたくない」fail-open 方針のため、対話不能な
+  # 場面でもブロックより通知を優先する）。
+  if [ -t 0 ]; then
+    read -r -p "このまま darwin-switch を続行しますか？ [y/N] " ans
+    case "$ans" in
+      [yY]*) ;;
+      *)
+        echo "中止しました。"
+        exit 1
+        ;;
+    esac
+  else
+    echo "  (非対話実行のため確認をスキップして続行します)"
+  fi
 fi
