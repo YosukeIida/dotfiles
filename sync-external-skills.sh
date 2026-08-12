@@ -105,12 +105,16 @@ GRILL_WITH_DOCS_REV="658d53e6ded8cc0eaa26a96e0580bee9381ca0e3"
 # gws-multi-account: `gws`（Google Workspace CLI）のマルチアカウント運用規約。
 # SKILL.md が references/auth-login.md を相対参照し、PreToolUse hook 本体は
 # hooks/hook.js（依存バンドル済みの単一ファイル）。3ファイルとも同じ rev で揃える
-# 必要があるため、その時点の repo HEAD（同時にちょうど3ファイル中もっとも新しい
-# 変更コミットでもある）で pin する。
+# 必要があるため、その時点の repo HEAD で pin する（3ファイルそれぞれの
+# 「最後にそのファイルを触ったcommit」は互いに異なる別々の値だが、HEAD の
+# 時点でどれも取り込み済みなので内容としては最新）。
+# 注意: agent-skills-outdated の scan_vendor_pins は「pin が各パスの最新
+# 変更commitを祖先として含むか」を compare API で判定する（単純な文字列一致
+# ではない）。これは1つの pin で複数ファイルを束ねる vendor（このskillのように
+# 各ファイルの最終変更commitがpinと一致しない）に対応するため。
 # hooks/hook.js・references/auth-login.md だけが更新されて SKILL.md に触れられない
 # ケースも、vendor-extra-paths metadata（sync_repo_file が extra_files から自動生成）
-# 経由で agent-skills-outdated の scan_vendor_pins が検知する
-# （nix/hosts/darwin/yosuke-macbook-air.nix）。
+# 経由で同じ scan_vendor_pins が検知する（nix/hosts/darwin/yosuke-macbook-air.nix）。
 GWS_MULTI_ACCOUNT_REPO="indentcorp/gws-multi-account"
 GWS_MULTI_ACCOUNT_PATH="skills/gws-multi-account/SKILL.md"
 GWS_MULTI_ACCOUNT_EXTRA="skills/gws-multi-account/references/auth-login.md:references/auth-login.md hooks/hook.js:hooks/hook.js"

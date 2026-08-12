@@ -275,6 +275,24 @@ let
     # frontmatter に vendor-* を持たせ、その SKILL.md を触った commit だけを比較する。
     # キー名を github-* にしないのは、gh 側がリポジトリルートの tree を見て upstream の
     # 全 commit を「更新あり」と誤検知するのを避けるため。
+    # $1=repo $2=pin $3=latest: pin が latest の変更を既に含んでいるかを判定する。
+    # 単純な文字列完全一致（旧実装）だと、1つの vendor-commit で複数ファイルを
+    # まとめて pin する skill（例: gws-multi-account が SKILL.md・hooks/hook.js・
+    # references/auth-login.md をそれぞれ異なる最終変更commitのまま1つのHEADで
+    # pin している）で、pin が latest より新しいのに文字列としては一致せず
+    # 恒久的に「更新あり」と誤検知する（2026-08-12 darwin-switch で実測）。
+    # compare(pin...latest) の status で「pin が既に latest を含むか」を見る。
+    commit_is_covered() {
+      if [ "$2" = "$3" ]; then
+        return 0
+      fi
+      cmp_status="$(gh api "repos/$1/compare/$2...$3" --jq '.status' 2>/dev/null)"
+      case "$cmp_status" in
+        identical|behind) return 0 ;;
+        *) return 1 ;;
+      esac
+    }
+
     scan_vendor_pins() {
       dir="$1"
       label="$2"
@@ -307,7 +325,7 @@ let
           continue
         fi
 
-        if [ "$latest" != "$pin" ]; then
+        if ! commit_is_covered "$repo" "$pin" "$latest"; then
           updates=1
           add_report "[$label] $name: $repo:$vpath updated"
           add_report "  pinned $pin -> $latest"
@@ -324,7 +342,7 @@ let
             add_report "[$label] $name: 未確認（$repo:$ep に到達できず）"
             continue
           fi
-          if [ "$elatest" != "$pin" ]; then
+          if ! commit_is_covered "$repo" "$pin" "$elatest"; then
             updates=1
             add_report "[$label] $name: $repo:$ep updated (extra file)"
             add_report "  pinned $pin -> $elatest"
