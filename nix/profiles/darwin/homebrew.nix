@@ -42,6 +42,10 @@
       # （node/bun 非依存）。nixpkgs には無く、derivation を書いても formula と同内容に
       # なるうえ version/sha256 の手動追随が増えるため homebrew 側で管理する。
       "can1357/tap/omp"
+      # Apple Container 本体（CLI + XPC バックエンド）。Orchard（cask）はこの GUI フロント
+      # エンドで、本体がないと "XPC connection error" になる。常駐サービス化はせず、
+      # 使うときに `container system start` を手動実行する運用。
+      "container"
       "ffmpeg"
       "git-delta"
       "glow"
