@@ -106,8 +106,7 @@
       "source": {
         "source": "github",
         "repo": "YosukeIida/claude-lualatex-pdf"
-      },
-      "autoUpdate": true
+      }
     },
     "academic-research-skills": {
       "source": {
