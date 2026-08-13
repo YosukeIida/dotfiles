@@ -22,6 +22,11 @@ FIX=0
 # 一時ファイル + rename で更新されるため symlink 共有が最初の書き込みで壊れる。
 # プロファイル固有（per-instance 状態、history.jsonl と同類）と判断（2026-07-06）。
 #
+# ..codex-global-state.json.tmp-<ts>-<uuid>: 上記 atomic write の書きかけ残骸。
+# 先頭ドットが2つのため `\.codex-global-state\.json` には一致せず、--fix が
+# 各プロファイルに symlink を撒いていた（2026-08-13 実測）。rename 前提の
+# 一時ファイルであり共有する意味は無い。
+#
 # state_N.sqlite: setup-codex-account の LINKED_ITEMS に元々含まれておらず、
 # 各プロファイルが独立した実体DBを持つ設計（memories_N.sqlite とは異なり本体も
 # 非共有）。本体が実体ファイルのまま-shm/-walだけ symlink されると、SQLiteが
@@ -30,7 +35,7 @@ FIX=0
 #
 # mcp-oauth-locks: OAuthトークンストア用のlock dir。同様に LINKED_ITEMS に無く、
 # プロファイル固有として扱う（2026-07-10）。
-IGNORE_RE='^(auth\.json|\.credentials\.json|\.codex-global-state\.json(\.bak)?|history\.jsonl|logs?(_[0-9]+)?\.sqlite([-.].*)?|goals_[0-9]+\.sqlite([-.].*)?|state_[0-9]+\.sqlite([-.].*)?|mcp-oauth-locks|log|\.DS_Store|version\.json|\.personality_snapshot.*|\.app-server-state-reconciled.*|config\.toml\.bak.*|ambient-suggestions|app-server-control|app-server-daemon|attachments|browser|chrome-native-hosts.*\.json|computer-use|generated_images|keybindings\.json|node_repl|pets|process_manager|rules|sqlite|vendor_imports|worktrees)$'
+IGNORE_RE='^(auth\.json|\.credentials\.json|\.codex-global-state\.json(\.bak)?|\.\.codex-global-state\.json\.tmp-.*|history\.jsonl|logs?(_[0-9]+)?\.sqlite([-.].*)?|goals_[0-9]+\.sqlite([-.].*)?|state_[0-9]+\.sqlite([-.].*)?|mcp-oauth-locks|log|\.DS_Store|version\.json|\.personality_snapshot.*|\.app-server-state-reconciled.*|config\.toml\.bak.*|ambient-suggestions|app-server-control|app-server-daemon|attachments|browser|chrome-native-hosts.*\.json|computer-use|generated_images|keybindings\.json|node_repl|pets|process_manager|rules|sqlite|vendor_imports|worktrees)$'
 
 # プロファイルの列挙は bin/agsw-list-profiles に一本化する（マーカー付きの dir のみ）。
 # このスクリプトは cx 実行ごとに --fix 付きで呼ばれる「唯一の全自動書き込み経路」なので、
