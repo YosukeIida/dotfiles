@@ -167,6 +167,7 @@
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
   "theme": "dark",
+  "editorMode": "normal",
   "verbose": false,
   "preferredNotifChannel": "auto",
   "autoCompactEnabled": true,
