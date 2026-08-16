@@ -1,0 +1,7 @@
+# Claude Code が作る worktree に、gitignore 済みのローカル設定を持ち込む。
+# claude-memory の autoMemoryDirectory はここに入っており、これが無いと
+# worktree の初回セッションが旧位置に書いてしまう（decision-003）。
+# 適用されるのは Claude Code が git で作る worktree のみ（--worktree / subagent /
+# desktop）。intent-cli の git worktree add には効かないので、そちらは
+# claude 起動前の registrar が拾う。
+.claude/settings.local.json
