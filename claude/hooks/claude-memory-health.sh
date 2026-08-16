@@ -26,7 +26,11 @@ last_success="$(jqf '.last_success // "-"')"
 ahead="$(jqf '.ahead // 0')"
 behind="$(jqf '.behind // 0')"
 last_error="$(jqf '(.last_error // "-") | gsub("[\\n\\r\\t]"; " ")')"
-[ -n "$status" ] || exit 0
+# state はあるのに読めない = 壊れている。黙って消えるより鳴らす方が安全。
+if [ -z "$status" ]; then
+  jq -n '{systemMessage: "⚠ claude-memory の状態ファイルが壊れています。claude-memory.sh state を確認してください"}'
+  exit 0
+fi
 
 days=""
 if [ "$last_success" != "-" ]; then
@@ -41,7 +45,12 @@ case "$status" in
   blocked_auth)
     msg="claude-memory の同期が認証で失敗しています（${last_error}）" ;;
   blocked_identity)
-    msg="claude-memory が identity の不整合で止まっています。claude-memory.sh inventory で確認してください" ;;
+    msg="claude-memory が identity の不整合で止まっています。claude-memory.sh inventory で確認してください（${last_error}）" ;;
+  blocked_content)
+    msg="claude-memory の旧位置と storage で内容が食い違っています。手で突合してください（${last_error}）" ;;
+  # 将来 blocked_* が増えても黙って落とさない
+  blocked_*)
+    msg="claude-memory が ${status} で止まっています（${last_error}）" ;;
 esac
 
 if [ -z "$msg" ] && [ -n "$days" ] && [ "$days" -gt "$STALE_DAYS" ]; then
@@ -58,5 +67,7 @@ else
 fi
 msg="${msg}｜ahead $ahead / behind $behind"
 
-printf '{"systemMessage": "⚠ %s"}\n' "$msg"
+# printf で埋め込むと、conflict したファイル名に " が含まれたときに JSON が壊れる。
+# jq に組ませてエスケープを任せる。
+jq -n --arg m "⚠ $msg" '{systemMessage: $m}'
 exit 0

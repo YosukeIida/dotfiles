@@ -228,8 +228,20 @@ claude() {
   [[ -d "$_rt_bin" ]] && _path="$_rt_bin:$_path"
   [[ -d "$_rt_fallback" ]] && _path="$_rt_fallback:$_path"
 
+  # registrar は **deadline 付きで**走らせる。非0 で失敗するだけなら fail-open できるが、
+  # git rev-parse やファイルシステムが hang すると claude に到達しなくなり、
+  # decision-003 の最重要不変条件（registrar は claude の起動を妨げない）が破れる。
+  # timeout(1) は macOS に無いので、watchdog を背後に置いて wait する。
   local _cm="${CLAUDE_MEMORY_HOME:-$HOME/workspace/github.com/YosukeIida/dotfiles-private}/claude-memory.sh"
-  if [[ -x "$_cm" ]] && ! "$_cm" register "$PWD" >/dev/null 2>&1; then
+  local _cm_ok=1 _cm_pid
+  if [[ -x "$_cm" ]]; then
+    "$_cm" register "$PWD" >/dev/null 2>&1 &
+    _cm_pid=$!
+    { sleep "${CLAUDE_MEMORY_REGISTER_TIMEOUT:-5}"; kill -KILL "$_cm_pid" 2>/dev/null } &!
+    wait "$_cm_pid" 2>/dev/null || _cm_ok=0
+  fi
+
+  if (( ! _cm_ok )); then
     PATH="$_path" CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 command claude "$@"
     return
   fi

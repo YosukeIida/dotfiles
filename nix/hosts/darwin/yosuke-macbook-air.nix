@@ -763,9 +763,10 @@ in
     # root が claude-memory/ 配下や state にファイルを作ると Claude が更新できなくなる。
     # run-locked が host 単位の排他を取り、競合時は retry_wait にして exit 0 する。
     # network 不通・認証失敗も retry_wait 止まりで、switch は失敗させない。
+    # promote と sync は **同じ lock の中で**連続実行する。別々に走らせると、
+    # promote が pending を消費している最中に registrar が追記した行を取りこぼす。
     if [ -x "$priv/claude-memory.sh" ]; then
-      su - ${username} -c "'$priv/claude-memory.sh' promote" || true
-      su - ${username} -c "'$priv/claude-memory.sh' run-locked -- '$priv/claude-memory.sh' sync --push" || true
+      su - ${username} -c "'$priv/claude-memory.sh' run-locked -- sh -c \"'$priv/claude-memory.sh' promote && '$priv/claude-memory.sh' sync --push\"" || true
     fi
 
     # private skills を ~/.claude/skills, ~/.codex/skills に追加（private overlay が無ければ skip）
