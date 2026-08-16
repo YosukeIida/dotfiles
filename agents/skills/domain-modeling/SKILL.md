@@ -1,10 +1,10 @@
 ---
 name: domain-modeling
-description: Build and sharpen a project's domain model. Use when the user wants to pin down domain terminology or a ubiquitous language, record an architectural decision, or when another skill needs to maintain the domain model.
+description: Build and sharpen a project's domain model. Use when discussing codebase terminology, writing or editing a CONTEXT.md, or recording or editing an ADR.
 metadata:
     vendor-repo: mattpocock/skills
     vendor-path: skills/engineering/domain-modeling/SKILL.md
-    vendor-commit: ee8bae40062cd6b435073368ed0c540f48c35862
+    vendor-commit: 54bc6b604075c18293d38e9e294a2c96f365f104
     vendor-extra-paths: skills/engineering/domain-modeling/ADR-FORMAT.md skills/engineering/domain-modeling/CONTEXT-FORMAT.md
 ---
 

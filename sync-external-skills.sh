@@ -62,7 +62,7 @@ HERDR_REPO="ogulcancelik/herdr"
 # 2026-08 に upstream が SKILL.md を repo 直下から skills/herdr/SKILL.md へ移動
 # （gh skill install が要求する <name>/SKILL.md 構造に合わせた再編、と見られる）。
 HERDR_PATH="skills/herdr/SKILL.md"
-HERDR_REV="f6060cf682f69ef8302c25e8924c0b27aef7ae16"
+HERDR_REV="51b7064ef0a02642393bab1d2eea0f4dbd8414d2"
 
 # writing-quotation: 引用ブロックの書式規約（Bash等のツール呼び出しを一切含まない
 # 純粋な書式ガイドなので allowed-tools は付けない）。
@@ -75,7 +75,7 @@ WRITING_QUOTATION_REV="c1814f2850c2e18624a15206bc8b18b24cf3d3e8"
 # （404 実測）、こちらだけを vendor する。
 BROWSER_HARNESS_REPO="browser-use/browser-harness"
 BROWSER_HARNESS_PATH="SKILL.md"
-BROWSER_HARNESS_REV="4000dd16919360ea60c3329403061b15bb730b25"
+BROWSER_HARNESS_REV="2c3a69ad09fd7b6f369f32d3eb5c5ad44d7832ed"
 
 # grill-me系（mattpocock/skills）。3 skill は依存関係がある:
 #   grill-with-docs → /grilling + /domain-modeling に一行委譲
@@ -85,7 +85,7 @@ BROWSER_HARNESS_REV="4000dd16919360ea60c3329403061b15bb730b25"
 # 単体でも自動発動する。パッチ不要。
 GRILLING_REPO="mattpocock/skills"
 GRILLING_PATH="skills/productivity/grilling/SKILL.md"
-GRILLING_REV="1495d014303e041c51c29f9e442485ba06f5878d"
+GRILLING_REV="86cba45f4244b2545112d13e77ba82eb2bfad325"
 
 # domain-modeling: CONTEXT.md / ADR の執筆規律。SKILL.md 本文が同ディレクトリの
 # ADR-FORMAT.md / CONTEXT-FORMAT.md を相対参照するため、この2ファイルも一緒に vendor
@@ -93,14 +93,14 @@ GRILLING_REV="1495d014303e041c51c29f9e442485ba06f5878d"
 DOMAIN_MODELING_REPO="mattpocock/skills"
 DOMAIN_MODELING_PATH="skills/engineering/domain-modeling/SKILL.md"
 DOMAIN_MODELING_EXTRA="skills/engineering/domain-modeling/ADR-FORMAT.md skills/engineering/domain-modeling/CONTEXT-FORMAT.md"
-DOMAIN_MODELING_REV="ee8bae40062cd6b435073368ed0c540f48c35862"
+DOMAIN_MODELING_REV="54bc6b604075c18293d38e9e294a2c96f365f104"
 
 # grill-with-docs: 上記2つへの一行委譲オーケストレータ。upstream の
 # `disable-model-invocation: true` を strip_pattern で落とし、herdr と同様に
 # 自作 skill 全体の方針（disable-model-invocation を使わず自動発動を保つ）に揃える。
 GRILL_WITH_DOCS_REPO="mattpocock/skills"
 GRILL_WITH_DOCS_PATH="skills/engineering/grill-with-docs/SKILL.md"
-GRILL_WITH_DOCS_REV="658d53e6ded8cc0eaa26a96e0580bee9381ca0e3"
+GRILL_WITH_DOCS_REV="447ca70872026d5b79d6073a546dac082117fed7"
 
 # gws-multi-account: `gws`（Google Workspace CLI）のマルチアカウント運用規約。
 # SKILL.md が references/auth-login.md を相対参照し、PreToolUse hook 本体は
