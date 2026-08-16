@@ -4,7 +4,7 @@ description: A relentless interview to sharpen a plan or design, which also crea
 metadata:
     vendor-repo: mattpocock/skills
     vendor-path: skills/engineering/grill-with-docs/SKILL.md
-    vendor-commit: 658d53e6ded8cc0eaa26a96e0580bee9381ca0e3
+    vendor-commit: 447ca70872026d5b79d6073a546dac082117fed7
 ---
 
-Run a `/grilling` session, using the `/domain-modeling` skill.
+Call the Skill tool twice, for "grilling" and "domain-modeling".

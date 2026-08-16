@@ -5,7 +5,7 @@ allowed-tools: Bash(herdr:*), Bash(python3:*)
 metadata:
     vendor-repo: ogulcancelik/herdr
     vendor-path: skills/herdr/SKILL.md
-    vendor-commit: f6060cf682f69ef8302c25e8924c0b27aef7ae16
+    vendor-commit: 51b7064ef0a02642393bab1d2eea0f4dbd8414d2
 ---
 
 # Herdr
