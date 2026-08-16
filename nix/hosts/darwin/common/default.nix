@@ -173,6 +173,19 @@
     # Codex プラグインを希望リストから冪等にインストール
     su - ${username} -c "bash $pub/codex/install-plugins.sh" || true
 
+    # intent-cli 同梱の dispatcher skill を claude / codex 両方へ冪等に配備する。
+    # この skill だけは repo に実体を置けない — release tarball は単一バイナリで、
+    # SKILL.md は CLI に埋め込まれており `intent-cli skill install` が書き出す
+    # （agent-browser のように nix store から _link できない）。vendor すると
+    # packages.nix の version 更新と drift するため、CLI 所有のまま毎 switch で流し直す。
+    # nix の version を上げても CLI 自身は再実行されないので、ここで流さないと静かに古くなる。
+    # --target all は使っていない copilot まで作るため、claude / codex を明示する。
+    su - ${username} -c '
+      command -v intent-cli >/dev/null 2>&1 || { echo "intent-cli: PATH に無いため skill 配備を skip" >&2; exit 0; }
+      intent-cli skill install --target claude --scope user --force
+      intent-cli skill install --target codex  --scope user --force
+    ' || true
+
     # 外部由来 skill（gist・GitHub repo 等）の更新有無を通知のみ表示する（brew outdated 相当）。
     # 内容は一切書き換えない（読み取り専用）。ネットワーク不通でも switch を失敗させない。
     if [ -x "$pub/sync-external-skills.sh" ]; then
