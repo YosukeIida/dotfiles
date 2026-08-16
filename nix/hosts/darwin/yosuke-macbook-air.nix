@@ -758,6 +758,16 @@ in
       fi
     }
 
+    # claude-memory: pending を manifest に確定し、memory を git 同期する。
+    # postActivation は root で走るので **必ず su - でユーザー権限に落とす** —
+    # root が claude-memory/ 配下や state にファイルを作ると Claude が更新できなくなる。
+    # run-locked が host 単位の排他を取り、競合時は retry_wait にして exit 0 する。
+    # network 不通・認証失敗も retry_wait 止まりで、switch は失敗させない。
+    if [ -x "$priv/claude-memory.sh" ]; then
+      su - ${username} -c "'$priv/claude-memory.sh' promote" || true
+      su - ${username} -c "'$priv/claude-memory.sh' run-locked -- '$priv/claude-memory.sh' sync --push" || true
+    fi
+
     # private skills を ~/.claude/skills, ~/.codex/skills に追加（private overlay が無ければ skip）
     if [ -d "$priv/agents/skills" ]; then
       for d in "$priv/agents/skills"/*/; do
