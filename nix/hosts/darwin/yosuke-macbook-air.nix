@@ -767,6 +767,9 @@ in
     # promote が pending を消費している最中に registrar が追記した行を取りこぼす。
     if [ -x "$priv/claude-memory.sh" ]; then
       su - ${username} -c "'$priv/claude-memory.sh' run-locked -- sh -c \"'$priv/claude-memory.sh' promote && '$priv/claude-memory.sh' sync --push\"" || true
+      # 未移行の memory を **通知だけ**する（read-only）。移行は手動という決定
+      # （decision-001）なので、放置に気づけるようにするのがこの行の役目。
+      su - ${username} -c "'$priv/claude-memory.sh' check" || true
     fi
 
     # private skills を ~/.claude/skills, ~/.codex/skills に追加（private overlay が無ければ skip）
