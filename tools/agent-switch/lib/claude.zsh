@@ -212,11 +212,26 @@ cc_status() {
 # IN_NIX_SHELL の有無・pyproject.toml/uv.lock の有無を見て、devShellの本物のpythonに
 # 委譲するか、uv run pythonに委譲するか、拒否するかを判定する
 # （PATH位置だけでは devShell > guard > /usr/bin という優先順位を表現できないため）。
+#
+# あわせて claude-memory の registrar を起動前に走らせる。auto memory の行き先
+# （autoMemoryDirectory）は **セッション開始時に読まれる** ため、SessionStart hook
+# では間に合わない — hook が設定を書いても、そのセッションは旧位置に書いてしまい、
+# 使い捨ての worktree では二度と回収できない。実装は private overlay にあり、
+# 無いマシンでは単に skip する。
+#
+# 不変条件: registrar が何をしようと claude の起動は妨げない。失敗したときだけ
+# CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 を付けて、旧位置に書かれるのを防ぐ。
 claude() {
   local _rt_bin="$HOME/.local/share/claude-runtime/bin"
   local _rt_fallback="$HOME/.local/share/claude-runtime/fallback"
   local _path="$PATH"
   [[ -d "$_rt_bin" ]] && _path="$_rt_bin:$_path"
   [[ -d "$_rt_fallback" ]] && _path="$_rt_fallback:$_path"
+
+  local _cm="${CLAUDE_MEMORY_HOME:-$HOME/workspace/github.com/YosukeIida/dotfiles-private}/claude-memory.sh"
+  if [[ -x "$_cm" ]] && ! "$_cm" register "$PWD" >/dev/null 2>&1; then
+    PATH="$_path" CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 command claude "$@"
+    return
+  fi
   PATH="$_path" command claude "$@"
 }
