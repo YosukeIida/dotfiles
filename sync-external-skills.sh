@@ -114,7 +114,7 @@ GRILL_WITH_DOCS_REV="447ca70872026d5b79d6073a546dac082117fed7"
 # 各ファイルの最終変更commitがpinと一致しない）に対応するため。
 # hooks/hook.js・references/auth-login.md だけが更新されて SKILL.md に触れられない
 # ケースも、vendor-extra-paths metadata（sync_repo_file が extra_files から自動生成）
-# 経由で同じ scan_vendor_pins が検知する（nix/hosts/darwin/yosuke-macbook-air.nix）。
+# 経由で同じ scan_vendor_pins が検知する（nix/hosts/darwin/yosuke/common.nix）。
 GWS_MULTI_ACCOUNT_REPO="indentcorp/gws-multi-account"
 GWS_MULTI_ACCOUNT_PATH="skills/gws-multi-account/SKILL.md"
 GWS_MULTI_ACCOUNT_EXTRA="skills/gws-multi-account/references/auth-login.md:references/auth-login.md hooks/hook.js:hooks/hook.js"

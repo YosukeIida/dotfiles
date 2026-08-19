@@ -32,6 +32,32 @@
       python = if pkgs ? python313 then pkgs.python313 else pkgs.python3;
       uv = if pkgs ? uv then pkgs.uv else pkgs.python3Packages.uv;
       nodejs = if pkgs ? nodejs_22 then pkgs.nodejs_22 else pkgs.nodejs;
+
+      # Yosuke の Mac 1台分の構成。共通の個人設定（yosuke/common.nix）に
+      # 機種固有モジュールを重ねる。darwinHost は darwin-switch / darwin-update が
+      # 指す flake attribute 名で、attr 名と同じ値を渡す。
+      mkYosukeHost =
+        darwinHost: hostModule:
+        nix-darwin.lib.darwinSystem {
+          inherit system;
+          modules = [
+            home-manager.darwinModules.home-manager
+            (import ./nix/hosts/darwin/common {
+              username = "yosuke";
+              homedir = "/Users/yosuke";
+              inherit pkgsUnstable;
+            })
+            agenix.darwinModules.default
+            # agenix CLI（`agenix -e` の編集・`agenix -r` の recipient 追加時の再暗号化に使う）。
+            # nixpkgs には収録されていないため flake input のパッケージを直接入れる。
+            # home.packages ではなくここに置くのは、agenix を import する host だけの依存で、
+            # 他者向けの example 構成や共通 home 層に持ち込みたくないため。
+            { environment.systemPackages = [ agenix.packages.${system}.default ]; }
+            ./nix/hosts/darwin/yosuke/secrets.nix
+            (import ./nix/hosts/darwin/yosuke/common.nix { inherit darwinHost; })
+            hostModule
+          ];
+        };
     in
     {
       formatter.${system} = pkgs.writeShellApplication {
@@ -55,31 +81,27 @@
         homeManagerModule = home-manager.darwinModules.home-manager;
       };
 
-      darwinConfigurations.example = nix-darwin.lib.darwinSystem {
-        inherit system;
-        modules = [
-          home-manager.darwinModules.home-manager
-          (import ./nix/hosts/darwin/common {
-            username = "example";
-            homedir = "/Users/example";
-            inherit pkgsUnstable;
-          })
-        ];
-      };
-
-      darwinConfigurations."Yosukes-MacBook-Air" = nix-darwin.lib.darwinSystem {
-        inherit system;
-        modules = [
-          home-manager.darwinModules.home-manager
-          (import ./nix/hosts/darwin/common {
-            username = "yosuke";
-            homedir = "/Users/yosuke";
-            inherit pkgsUnstable;
-          })
-          agenix.darwinModules.default
-          ./nix/hosts/darwin/secrets.nix
-          ./nix/hosts/darwin/yosuke-macbook-air.nix
-        ];
+      darwinConfigurations = {
+        # 他の人がこのリポジトリを fork するときの土台（agenix を import しない）。
+        example = nix-darwin.lib.darwinSystem {
+          inherit system;
+          modules = [
+            home-manager.darwinModules.home-manager
+            (import ./nix/hosts/darwin/common {
+              username = "example";
+              homedir = "/Users/example";
+              inherit pkgsUnstable;
+            })
+          ];
+        };
+      }
+      # Yosuke の各 Mac。attr 名は必ずその機の `hostname -s` と一致させること
+      # （apply.sh が hostname -s で attr を引く）。macOS の hostname -s は HostName が
+      # 未設定だと DHCP/逆引き DNS 由来で動的に決まるので、新機では
+      # `sudo scutil --set HostName <name>` で固定してから登録する。
+      // builtins.mapAttrs mkYosukeHost {
+        "Yosukes-MacBook-Air" = ./nix/hosts/darwin/yosuke/macbook-air.nix;
+        "Yosukes-Mac-Studio" = ./nix/hosts/darwin/yosuke/mac-studio.nix;
       };
 
       devShells.${system} = {

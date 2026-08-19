@@ -7,7 +7,7 @@
 # Optional parameters:
 # @raycast.icon 🖥️
 # @raycast.description Disable system sleep via sleepctl (pmset -a disablesleep 1,
-# NOPASSWD sudoers rule in nix/hosts/darwin/yosuke-macbook-air.nix). Useful for
+# NOPASSWD sudoers rule in nix/hosts/darwin/yosuke/macbook-air.nix). Useful for
 # remote access (e.g. Chrome Remote Desktop) and long-running local jobs.
 # Restore with Sleepctl OFF. NOTE: closing the lid triggers the sleepctl-watcher
 # launchd agent, which blanks the display — keep the lid open for screen-sharing
