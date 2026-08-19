@@ -129,12 +129,22 @@
 
       # Enable natural scrolling.
       "com.apple.swipescrolldirection" = true;
+
+      # トラックパッドの軌跡の速さ（システム設定のスライダ相当）。
+      "com.apple.trackpad.scaling" = 2.5;
     };
 
     # Screenshot settings.
     screencapture = {
       # Save screenshots as PNG files.
       type = "png";
+    };
+
+    # メニューバーの時計は時刻だけにする（曜日と日付を出さない）。
+    # 24 時間表示はロケール由来なので Show24Hour / ShowAMPM は触らない。
+    menuExtraClock = {
+      ShowDate = 2; # 0=スペースがあるとき 1=常に 2=表示しない
+      ShowDayOfWeek = false;
     };
 
     # Trackpad settings.
@@ -151,6 +161,15 @@
 
     # Defaults without first-class nix-darwin options.
     CustomUserPreferences = {
+      NSGlobalDomain = {
+        # マウスの軌跡の速さ。nix-darwin に第一級オプションが無い
+        # （トラックパッド側の com.apple.trackpad.scaling だけ存在する）。
+        "com.apple.mouse.scaling" = 1.5;
+
+        # スクロールホイールの速さ。
+        "com.apple.scrollwheel.scaling" = 0.75;
+      };
+
       "com.apple.AppleMultitouchTrackpad" = {
         # Click pressure: medium.
         FirstClickThreshold = 1;
@@ -198,16 +217,22 @@
     };
   };
 
-  # Menu bar spacing is stored in the current-host global domain.
-  # nix-darwin writes NSGlobalDomain to the regular global domain, so keep
-  # these two ByHost keys in a small idempotent activation script.
+  # ByHost（-currentHost）にしか書けない設定。nix-darwin の system.defaults は
+  # 通常ドメインにしか書かないため、ここだけ冪等な activation スクリプトで扱う。
   system.activationScripts.postActivation.text = ''
     echo >&2 "current-host macOS defaults..."
-    launchctl asuser "$(id -u -- ${username})" \
-      sudo --user=${username} -- \
-      defaults -currentHost write -globalDomain NSStatusItemSpacing -int 1
-    launchctl asuser "$(id -u -- ${username})" \
-      sudo --user=${username} -- \
-      defaults -currentHost write -globalDomain NSStatusItemSelectionPadding -int 1
+
+    _byhost() {
+      launchctl asuser "$(id -u -- ${username})" \
+        sudo --user=${username} -- \
+        defaults -currentHost write "$@"
+    }
+
+    # メニューバーのアイコン間隔を詰める。
+    _byhost -globalDomain NSStatusItemSpacing -int 1
+    _byhost -globalDomain NSStatusItemSelectionPadding -int 1
+
+    # Spotlight の虫眼鏡アイコンをメニューバーから消す（検索機能自体は Raycast に寄せている）。
+    _byhost com.apple.Spotlight MenuItemHidden -int 1
   '';
 }
