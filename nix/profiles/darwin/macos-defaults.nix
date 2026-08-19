@@ -262,12 +262,26 @@
     #
     # 副作用: 強制インストールなのでユーザーが削除・無効化できなくなる。
     # 将来 MDM を入れるならこのファイルは MDM が管理するので、ここでの書き込みは外すこと。
+    # plist は heredoc で直接書く。`defaults write` は cfprefsd 経由で
+    # /Library/Managed Preferences には書き込めず、ファイルが作られなかった
+    # （2026-08-19、Mac Studio で chmod が No such file or directory で失敗）。
     if [ -d /Applications/Arc.app ]; then
       mkdir -p "/Library/Managed Preferences"
-      defaults write "/Library/Managed Preferences/company.thebrowser.Browser" \
-        ExtensionInstallForcelist -array \
-        "nngceckbapebfimnlniiiahkandclblb;https://clients2.google.com/service/update2/crx"
+      cat > "/Library/Managed Preferences/company.thebrowser.Browser.plist" <<'ARCPOLICY'
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+    <dict>
+      <key>ExtensionInstallForcelist</key>
+      <array>
+        <string>nngceckbapebfimnlniiiahkandclblb;https://clients2.google.com/service/update2/crx</string>
+      </array>
+    </dict>
+    </plist>
+    ARCPOLICY
       chmod 644 "/Library/Managed Preferences/company.thebrowser.Browser.plist"
+      plutil -lint "/Library/Managed Preferences/company.thebrowser.Browser.plist" >/dev/null \
+        || echo >&2 "warning: Arc policy plist is malformed"
     fi
   '';
 }
