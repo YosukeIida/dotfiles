@@ -252,5 +252,22 @@
         done
       fi
     fi
+
+    # Arc の全プロファイルに Bitwarden 拡張を入れる。
+    #
+    # Arc は Chromium ベースで、ArcCore.framework に ExtensionInstallForcelist の
+    # 文字列が含まれている（＝ポリシー機構は組み込まれている）。machine ポリシーなので
+    # プロファイルごとの手作業が不要になる。実際 Air では 7 プロファイル中 5 つにしか
+    # 入っておらず、手動では抜けが出ていた。
+    #
+    # 副作用: 強制インストールなのでユーザーが削除・無効化できなくなる。
+    # 将来 MDM を入れるならこのファイルは MDM が管理するので、ここでの書き込みは外すこと。
+    if [ -d /Applications/Arc.app ]; then
+      mkdir -p "/Library/Managed Preferences"
+      defaults write "/Library/Managed Preferences/company.thebrowser.Browser" \
+        ExtensionInstallForcelist -array \
+        "nngceckbapebfimnlniiiahkandclblb;https://clients2.google.com/service/update2/crx"
+      chmod 644 "/Library/Managed Preferences/company.thebrowser.Browser.plist"
+    fi
   '';
 }
