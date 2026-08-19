@@ -176,6 +176,7 @@
   "verbose": false,
   "preferredNotifChannel": "auto",
   "autoCompactEnabled": true,
+  "autoContinueAtUsageLimit": true,
   "autoScrollEnabled": true,
   "fileCheckpointingEnabled": true,
   "remoteControlAtStartup": true,
