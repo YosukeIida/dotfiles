@@ -80,7 +80,10 @@
     casks = [
       "adobe-acrobat-reader"
       "affinity"
-      "airmute"
+      # tap 修飾必須: upstream が solarphlare/tap から solarphlare/airmute へ移行した際、
+      # 旧 tap がローカルに残っていると裸の "airmute" が両方に解決して
+      # 「exists in multiple taps」で bundle 全体が止まる（2026-08-19 に遭遇）。
+      "solarphlare/airmute/airmute"
       "arc"
       "xoshbin/asyar/asyar"
       "chatgpt"
