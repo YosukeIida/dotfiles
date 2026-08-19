@@ -16,7 +16,12 @@ set -uo pipefail # -e は外す（skip しながら続行するため）
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PRIVATE_DIR="$HOME/workspace/github.com/YosukeIida/dotfiles-private"
-DARWIN_HOST="Yosukes-MacBook-Air"
+SKILLS_PUB_DIR="$HOME/workspace/github.com/YosukeIida/personal-agent-skills"
+
+# flake attribute は各機の `hostname -s` と一致させる規約（flake.nix 参照）。
+# HostName 未設定の macOS では hostname -s が DHCP/逆引き DNS 由来で動的に決まるため、
+# Step 0 で固定を促す。DARWIN_HOST=... で明示的に上書きもできる。
+DARWIN_HOST="${DARWIN_HOST:-$(hostname -s)}"
 
 # ── ユーティリティ ─────────────────────────────────────────────────────
 ask() {
@@ -40,6 +45,18 @@ warn() { echo "  ! $*"; }
 # bootstrap 自体は clone 済みが前提だが、その先の darwin-switch には Nix 本体と、
 # cask 導入のため Homebrew 本体が必要。工場出荷 Mac では未導入なのでここで確認する。
 step 0 "前提レイヤの確認（Xcode CLT / Nix / Homebrew）"
+
+# flake attr が存在しないホスト名のまま進むと Step 2 が必ず失敗するので、先に照合する。
+if nix eval --raw "$DOTFILES_DIR#darwinConfigurations.$DARWIN_HOST.system" &>/dev/null; then
+  ok "flake attribute が見つかりました: #$DARWIN_HOST"
+else
+  warn "flake attribute #$DARWIN_HOST が flake.nix にありません（hostname -s = $DARWIN_HOST）。"
+  warn "  macOS の hostname -s は HostName 未設定だと DHCP/逆引き DNS 由来で動的に決まります。"
+  warn "  新しいマシンでは先にホスト名を固定してください:"
+  warn "     sudo scutil --set HostName <Yosukes-Mac-Studio 等>"
+  warn "  そのうえで flake.nix の darwinConfigurations に同名の attr を追加してから再実行します。"
+  warn "  （Nix 未導入の初回はこの照合自体ができないため、この警告は無視して構いません）"
+fi
 
 if xcode-select -p &>/dev/null; then
   ok "Xcode Command Line Tools は導入済み"
@@ -125,7 +142,8 @@ if command -v darwin-rebuild &>/dev/null; then
 else
   warn "darwin-rebuild が未導入です（初回はこれが正常）。"
   if command -v nix &>/dev/null && ask "初回の nix-darwin 適用を実行しますか？（nix run 経由・初回のみ）"; then
-    sudo nix run nix-darwin/nix-darwin-25.11#darwin-rebuild -- switch --flake "$DOTFILES_DIR#$DARWIN_HOST" \
+    # ブランチは flake.nix の nix-darwin input と揃えること（ズレると別バージョンで初回適用される）。
+    sudo nix run nix-darwin/nix-darwin-26.05#darwin-rebuild -- switch --flake "$DOTFILES_DIR#$DARWIN_HOST" \
       && ok "初回 nix-darwin 適用が完了（以後は darwin-switch コマンドが使えます）" \
       || warn "初回 nix-darwin 適用に失敗（Nix 導入・agenix 鍵・Homebrew を確認して再実行）"
   else
@@ -134,7 +152,7 @@ else
 fi
 
 # ── Step 3: private overlay（個人 skills）の clone ────────────────────
-step 3 "private overlay（dotfiles-private）の取得"
+step 3 "skills リポジトリの取得（dotfiles-private / personal-agent-skills）"
 # gh は darwin-switch（Step 2）でしか入らないため、初回はここで未導入 or 未認証のことがある。
 # Step 3/4 は gh を使うので、認証だけ先に済ませる。
 if command -v gh &>/dev/null; then
@@ -156,6 +174,18 @@ elif command -v gh &>/dev/null && ask "gh で dotfiles-private を clone しま�
     || warn "clone 失敗（gh auth login 済みか確認）"
 else
   skip "private overlay の clone（個人 skills が無くても本体は動作します）"
+fi
+
+# 自作の公開 skills。activation（yosuke/common.nix）が skillsPubDir を symlink 元にするが、
+# clone が無いと「リンク切れが自動掃除されるだけ」で静かに skills が丸ごと欠ける。
+if [[ -d "$SKILLS_PUB_DIR/.git" ]]; then
+  ok "$SKILLS_PUB_DIR は既に存在します"
+elif command -v gh &>/dev/null && ask "gh で personal-agent-skills を clone しますか？（自作の公開 skills）"; then
+  gh repo clone YosukeIida/personal-agent-skills "$SKILLS_PUB_DIR" \
+    && ok "clone 完了。darwin-switch を再実行すると skills が symlink されます" \
+    || warn "clone 失敗（gh auth login 済みか確認）"
+else
+  skip "personal-agent-skills の clone（自作の公開 skills が配備されません）"
 fi
 
 # ── Step 4: GitHub remote を SSH に切替 ───────────────────────────────
@@ -213,7 +243,9 @@ echo "    → Raycast 導入後に Step 5（.rayconfig import）を再実行"
 echo ""
 echo "  個別に再実行できます:"
 echo "    Step 2: darwin-switch"
-echo "    Step 3: gh repo clone YosukeIida/dotfiles-private $PRIVATE_DIR && darwin-switch"
+echo "    Step 3: gh repo clone YosukeIida/dotfiles-private $PRIVATE_DIR"
+echo "            gh repo clone YosukeIida/personal-agent-skills $SKILLS_PUB_DIR"
+echo "            → darwin-switch"
 echo "    Step 4: gh ssh-key add ~/.ssh/id_ed25519.pub && git remote set-url ..."
 echo ""
 echo "  darwin-switch 後の手動ステップ（詳細は README.md の移行チェックリスト）:"
