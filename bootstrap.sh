@@ -24,8 +24,9 @@ SKILLS_PUB_DIR="$HOME/workspace/github.com/YosukeIida/personal-agent-skills"
 DARWIN_HOST="${DARWIN_HOST:-$(hostname -s)}"
 
 # ── ユーティリティ ─────────────────────────────────────────────────────
+# 確認プロンプト。既定は No（y 以外は空 Enter も含めてすべて skip 扱い）。
 ask() {
-  local msg="$1"
+  local msg="$1" yn
   read -rp "$msg [y/N] " yn
   [[ "$yn" =~ ^[Yy]$ ]]
 }
@@ -248,7 +249,7 @@ echo "            gh repo clone YosukeIida/personal-agent-skills $SKILLS_PUB_DIR
 echo "            → darwin-switch"
 echo "    Step 4: gh ssh-key add ~/.ssh/id_ed25519.pub && git remote set-url ..."
 echo ""
-echo "  darwin-switch 後の手動ステップ（詳細は README.md の移行チェックリスト）:"
+echo "  darwin-switch 後の手動ステップ（詳細は docs/new-machine-setup.md）:"
 echo "    - TCC 権限付与（Hammerspoon / Karabiner / Raycast 等）"
 echo "    - Claude/Codex/gh の再ログイン、Tailscale(headscale) 再認証"
 echo "    - App Store にサインイン（Bitwarden 導入のため）"
