@@ -234,5 +234,23 @@
 
     # Spotlight の虫眼鏡アイコンをメニューバーから消す（検索機能自体は Raycast に寄せている）。
     _byhost com.apple.Spotlight MenuItemHidden -int 1
+
+    # デフォルトブラウザ（Arc）。LaunchServices の割り当ては nix-darwin の
+    # system.defaults では扱えないので duti で行う。
+    # 既に Arc なら叩かない: macOS はデフォルトブラウザの変更時に確認ダイアログを
+    # 出すことがあり、switch のたびに出ると鬱陶しいため。
+    # Arc 未導入・duti 未配備でも switch は止めない（fail-soft）。
+    _duti="/etc/profiles/per-user/${username}/bin/duti"
+    if [ -d /Applications/Arc.app ] && [ -x "$_duti" ]; then
+      _asuser() {
+        launchctl asuser "$(id -u -- ${username})" sudo --user=${username} -- "$@"
+      }
+      if ! _asuser "$_duti" -x html 2>/dev/null | grep -qi 'company.thebrowser.Browser'; then
+        echo >&2 "setting default browser to Arc..."
+        for _scheme in http https public.html; do
+          _asuser "$_duti" -s company.thebrowser.Browser "$_scheme" all || true
+        done
+      fi
+    fi
   '';
 }
