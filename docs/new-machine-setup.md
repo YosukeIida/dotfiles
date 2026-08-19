@@ -272,6 +272,12 @@ nix / agenix で再現できない、マシン固有の状態・権限・デー�
 - [ ] **Tailscale (headscale)** の認証（`tailscale login --login-server <URL>`）と旧ノードの失効
 - [ ] GUI アプリ（Slack / Notion / Google Drive 等）の再ログイン
 - [ ] 入力ソース（Kotoeri Romaji / ABC）の再設定
+- [ ] **Arc のプロファイル作成と Google ログイン**。Arc が同期するのは Space だけで、
+      プロファイルは Chromium のローカルコンテナなので同期されない。新マシンでは
+      全 Space が `Default` にぶら下がった状態で来る。どのプロファイルにどのアカウントを
+      入れるかは private overlay の `docs/arc-profiles.md` を参照（個人のメールアドレスを
+      含むため public には置かない）。Bitwarden 拡張は machine ポリシーで自動配備されるので
+      プロファイルを作れば勝手に入る
 - [ ] **VSCode**: Settings Sync の「設定」「キーボードショートカット」を**オフ**にする
       （dotfiles が管理するため。拡張機能等の同期は維持してよい）
 - [ ] 画面ロックの待ち時間を実機で確認（`system.defaults.screensaver.*` が書き込む
