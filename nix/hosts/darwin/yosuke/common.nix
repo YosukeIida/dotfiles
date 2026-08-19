@@ -710,9 +710,25 @@ in
     skillsPub="${skillsPubDir}"
     home="${homedir}"
 
+    # postActivation は root で走る。素の mkdir でディレクトリを作ると root 所有になり、
+    # 以後ユーザー権限で動く CLI が書き込めなくなる。実際 ~/.codex が root 所有で作られ、
+    # codex が marketplace ディレクトリを作れず失敗した（2026-08-19、Mac Studio 初回）。
+    # 既存機ではディレクトリが先にユーザー所有で存在するため顕在化しない。
+    _userdir() {
+      install -d -o ${username} -g staff "$1"
+    }
+
+    # 既に root 所有で作られてしまった場合の自己修復。
+    for _d in "$home/.claude" "$home/.codex" "$home/.config" "$home/.local"; do
+      if [ -d "$_d" ] && [ "$(stat -f %Su "$_d")" != "${username}" ]; then
+        echo >&2 "repairing ownership: $_d"
+        chown -R ${username}:staff "$_d" || true
+      fi
+    done
+
     _link() {
       local src="$1" dst="$2"
-      mkdir -p "$(dirname "$dst")"
+      _userdir "$(dirname "$dst")"
       if [ -L "$dst" ]; then
         rm "$dst"
       elif [ -e "$dst" ]; then
