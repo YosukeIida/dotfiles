@@ -34,8 +34,17 @@ for name, config in s.get("extraKnownMarketplaces", {}).items():
         )
 PYEOF
 
-# 現在インストール済みのプラグイン
-INSTALLED=$(claude plugins list 2>/dev/null | grep -oE '[a-z-]+@[a-z-]+' || true)
+# marketplace add は登録するだけで、ローカルの索引が古いままのことがある。その状態だと
+# enabledPlugins にあるプラグインが「marketplace に見つからない」で落ちる
+# （新マシンの初回 darwin-switch で agmsg@fujibee-agmsg が実際に失敗した。上流の
+# marketplace.json には存在していた）。install の前に全 marketplace を上流に合わせる。
+# 名前を省略すると全件が対象。
+claude plugins marketplace update >/dev/null 2>&1 || true
+
+# 現在インストール済みのプラグイン。
+# 文字クラスに大文字・数字を含めること: 小文字だけだと lualatex-pdf@YosukeIida のような
+# 大文字を含む ID が既存判定から漏れ、毎回インストールを試みる無駄が出る。
+INSTALLED=$(claude plugins list 2>/dev/null | grep -oE '[A-Za-z0-9._-]+@[A-Za-z0-9._-]+' || true)
 
 # enabledPlugins を順にインストール
 python3 -c "
