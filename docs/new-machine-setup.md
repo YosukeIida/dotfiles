@@ -97,13 +97,51 @@ GUI のダイアログが出るので進める（数分〜十数分）。
 
 Xcode 本体（数十 GB）は不要。
 
-### 2-2. Nix 本体
+### 2-2. Nix 本体（**上流 Nix** であること）
 
 ```sh
-curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+curl -fsSL https://install.determinate.systems/nix | sh -s -- install --prefer-upstream-nix
 ```
 
-**導入後は必ず新しいシェルを開く**（PATH が反映されないため）。
+**導入後は必ず新しいシェルを開き**（PATH が反映されないため）、種類を確認する:
+
+```sh
+nix --version
+#  OK : nix (Nix) 2.35.x
+#  NG : nix (Determinate Nix 3.x.y) 2.35.x   ← 入れ替えが必要
+```
+
+#### Determinate Nix を入れてはいけない
+
+Determinate Systems は 2 つのものを出しており、区別が要る。
+
+| | 中身 |
+|---|---|
+| **Determinate Nix Installer** | インストーラ。macOS のアップグレードを生き延びる APFS ボリューム構成と、きれいな uninstall を提供する。**これは使ってよい** |
+| **Determinate Nix** | `NixOS/nix` の fork（`DeterminateSystems/nix-src`）。独自デーモン `determinate-nixd` で Nix 自身を管理する。**nix-darwin と競合する** |
+
+nix-darwin も Nix の管理者になろうとするため二重管理になり、
+`/usr/local/bin/determinate-nixd` の存在を検出して activation を中断する
+（nix-darwin `modules/system/checks.nix`）。回避するには `nix.enable = false` が要るが、
+そうすると `nix.settings`（cachix substituter・`always-allow-substitutes`）と
+`nix.gc`（自動 GC）が効かなくなり、設定が Determinate 側に分岐する。
+
+`--prefer-upstream-nix` はこの「インストーラの利点だけ借りて中身は上流」を実現するフラグ。
+ただし **2026-01-01 で提供終了とアナウンスされている**ので、拒否されたら公式インストーラに
+フォールバックする:
+
+```sh
+sh <(curl -L https://nixos.org/nix/install) --daemon
+```
+
+#### 既に Determinate Nix を入れてしまった場合
+
+```sh
+sudo /nix/nix-installer uninstall
+# → 上の手順で入れ直す
+```
+
+`/nix` を作り直すので、**store が空に近い初期セットアップ中ほど安い**。後回しにするほど高くつく。
 
 ### 2-3. Homebrew 本体
 
