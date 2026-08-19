@@ -56,8 +56,11 @@ dotfiles/
 ├── agents/skills/    # 外部公開 skill の vendor 先（gist・GitHub repo 等、sync-external-skills.sh 管理）
 ├── agents/subagents/ # サブエージェント定義（自作 skill は personal-agent-skills repo へ分離済み）
 ├── nix/              # nix 設定（hosts・profiles・home-manager）
+│   └── hosts/darwin/
+│       ├── common/   # 他人も fork して使える層（example 構成が import）
+│       └── yosuke/   # Yosuke 専用層（common.nix=全機共通 / macbook-air.nix / mac-studio.nix）
 ├── secrets/          # agenix 暗号化シークレット（*.age）
-├── flake.nix         # 本体 flake（darwinConfigurations を定義）
+├── flake.nix         # 本体 flake（darwinConfigurations を定義。attr 名 = hostname -s）
 ├── sync-external-skills.sh  # 外部公開 skill の rev pin 更新スクリプト
 ├── templates/        # devshell テンプレート（python-uv・node）
 └── tools/agent-switch/  # cc/cx アカウント切替（自己完結・将来独立repo化予定）
@@ -74,8 +77,8 @@ zsh プラグイン）。設計・検証記録は `tools/agent-switch/README.md`
 `~/.claude/` や `~/.codex/` 以下のファイルは dotfiles からの symlink で管理されている。
 symlink の定義はコードが正。参照先：
 
-- public: `nix/hosts/darwin/common/default.nix` の `postActivation`
-- private overlay: `nix/hosts/darwin/yosuke-macbook-air.nix` の `postActivation`
+- public: `nix/hosts/darwin/common/default.nix` の `postActivation`（他人も使える層）
+- private overlay: `nix/hosts/darwin/yosuke/common.nix` の `postActivation`（Yosuke 専用層・全機共通）
 
 ### 覚えておくべき原則
 
