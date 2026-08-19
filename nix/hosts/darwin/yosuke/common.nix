@@ -61,10 +61,31 @@ let
     directory = /Users/yosuke/workspace/github.com/TMLlaboratory/s-code
   '';
 
+  # Homebrew の cask には .pkg やシステム拡張を使うものがあり（Acrobat・Chrome Remote
+  # Desktop Host・Cloudflare WARP・ScanSnap・Karabiner 等）、Homebrew はその都度
+  # sudo を呼ぶ。sudo の timestamp は既定 5 分で切れるので、巨大な cask のダウンロードを
+  # 挟むと何度もパスワードを聞かれ、switch の間ずっと端末に張り付く羽目になる。
+  #
+  # 最初に一度だけ認証し、実行中はバックグラウンドで timestamp を延命することで
+  # 無人実行にする。sudoers は緩めない（NOPASSWD を足すと installer 経由で任意の
+  # root 実行を許すことになるため、こちらは採らない）。
+  #
+  # Touch ID があれば体感の負担は小さいが（macos-defaults.nix の touchIdAuth）、
+  # Mac Studio にはセンサーが無いので実際に問題になる。
+  sudoKeepalive = ''
+    # 非対話実行（Claude Code 等）では sudo -v がパスワード待ちで固まるので何もしない。
+    if [ -t 0 ]; then
+      sudo -v
+      # $$ は exec 後も同じ PID を指すので、darwin-rebuild が終われば このループも抜ける。
+      while true; do sudo -n true; sleep 50; kill -0 "$$" || exit; done 2>/dev/null &
+    fi
+  '';
+
   darwinSwitch = pkgs.writeShellScriptBin "darwin-switch" ''
     export DARWIN_HOST=${lib.escapeShellArg darwinHost}
     ${builtins.readFile ../scripts/check-node-deps.sh}
     check_node_deps || exit 1
+    ${sudoKeepalive}
     exec sudo darwin-rebuild switch --flake ${publicDir}#${darwinHost} "$@"
   '';
 
@@ -74,6 +95,7 @@ let
     echo "==> nix flake update"
     nix flake update
     echo "==> darwin-switch"
+    ${sudoKeepalive}
     exec sudo darwin-rebuild switch --flake ${publicDir}#${darwinHost}
   '';
 
