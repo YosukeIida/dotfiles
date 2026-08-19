@@ -8,10 +8,12 @@
 # 復旧手順: Bitwarden から秘密鍵を取り出し `age -d -i <keyfile> <secret>.age` で復号。
 let
   yosukeMacBookAir = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINstqhN9Z1f6A/AE5l5OjqN5i8EObp4f2RaQAVNS5FP7";
+  yosukeMacStudio = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKiAbI4Vog7vdoNRjZ9uEuidHXdqSaSpbz1kc5RULZbb";
   backupBitwarden = "age1ljc2ucyfu8af9ahr6rg8er9d2x8gvgem28wfvv22vw32khky05vqvzm7qa";
 
   all = [
     yosukeMacBookAir
+    yosukeMacStudio
     backupBitwarden
   ];
 in
