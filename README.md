@@ -30,13 +30,22 @@ Yosuke の Mac 環境の本体 flake。nix-darwin / home-manager・Homebrew・ag
 ## セットアップ（自分の新しい Mac）
 
 ```sh
-# 0. 前提を満たす（上記）。リポジトリを clone:
+# 0. ホスト名を固定する（flake attribute 名と一致させる規約）
+sudo scutil --set HostName Yosukes-Mac-Studio   # 例。新しいシェルで hostname -s を確認
+
+# 1. 前提を満たす（上記）。リポジトリを clone:
 git clone https://github.com/YosukeIida/dotfiles \
   ~/workspace/github.com/YosukeIida/dotfiles
 
-# 1. bootstrap を実行（Step 0〜5 を対話的に進める）
+# 2. bootstrap を実行（Step 0〜5 を対話的に進める）
 bash ~/workspace/github.com/YosukeIida/dotfiles/bootstrap.sh
 ```
+
+> **ホスト名を先に固定する理由**: macOS の `hostname -s` は `HostName` が未設定だと
+> DHCP / 逆引き DNS 由来で**動的に決まる**（`LocalHostName` と一致する保証はない）。
+> `bootstrap.sh` と `apply.sh` はこの値で flake attribute を引くため、固定していないと
+> ネットワーク次第で解決先が変わる。`scutil --set HostName` で 3 系統
+> （`ComputerName` / `LocalHostName` / `HostName`）を揃えてから登録する。
 
 `bootstrap.sh` が進める内容:
 
@@ -45,7 +54,7 @@ bash ~/workspace/github.com/YosukeIida/dotfiles/bootstrap.sh
 | 0 | Xcode CLT / Nix / Homebrew の確認・導入、git filter 設定 |
 | 1 | agenix 復号鍵（`~/.ssh/id_ed25519`）の確認 or 新規生成 |
 | 2 | nix-darwin の初回適用（`nix run nix-darwin#darwin-rebuild -- switch`）。以後は `darwin-switch` |
-| 3 | `gh auth login` → `dotfiles-private`（個人 skills）を clone |
+| 3 | `gh auth login` → `dotfiles-private`（private skills）と `personal-agent-skills`（自作の公開 skills）を clone |
 | 4 | GitHub に公開鍵登録・両 repo の remote を SSH に切替 |
 | 5 | Raycast 設定（`.rayconfig`）の import（メイン。要 dotfiles-private・Raycast 導入済み）。Asyar は併用インストールのみ（settings.dat は symlink 済みなら自動反映、自動起動は無効化済み） |
 
@@ -93,7 +102,7 @@ dotfiles / agenix では再現できない、マシン固有の状態・権限�
 
 秘密値（SSH config・Cloudflare token・Headscale IP・プリンタ・Raycast パスワード・Figma PAT・
 Anthropic API キー）は [`secrets/*.age`](./secrets/) に暗号化して置き、`darwin-switch` 時に
-`~/.config` 等の安定パスへ復号配置する。詳細は [`nix/hosts/darwin/secrets.nix`](./nix/hosts/darwin/secrets.nix)。
+`~/.config` 等の安定パスへ復号配置する。詳細は [`nix/hosts/darwin/yosuke/secrets.nix`](./nix/hosts/darwin/yosuke/secrets.nix)。
 
 - 復号 identity は `~/.ssh/id_ed25519` と `~/.config/agenix/key.txt`（Bitwarden 保管の共通鍵）の
   いずれか。2 台目を足すときはその公開鍵を [`secrets/secrets.nix`](./secrets/secrets.nix) の
@@ -104,9 +113,9 @@ Anthropic API キー）は [`secrets/*.age`](./secrets/) に暗号化して置�
 
 ## 他の人がこのリポジトリを使う場合
 
-このリポジトリは公開しているが、`darwinConfigurations."Yosukes-MacBook-Air"` は Yosuke 専用。
-他の人は **`darwinConfigurations.example`**（agenix を import しない構成）を土台にし、fork して
-以下を自分の値に書き換える:
+このリポジトリは公開しているが、`nix/hosts/darwin/yosuke/` 以下（`Yosukes-MacBook-Air` /
+`Yosukes-Mac-Studio`）は Yosuke 専用。他の人は **`darwinConfigurations.example`**
+（agenix を import しない構成）を土台にし、fork して以下を自分の値に書き換える:
 
 - [`flake.nix`](./flake.nix) の `example`: `username` / `homedir`
 - [`nix/hosts/darwin/common/default.nix`](./nix/hosts/darwin/common/default.nix) 冒頭の
@@ -119,6 +128,6 @@ agenix 暗号化ファイルは他人の鍵では復号できないが、`exampl
 Homebrew cask（nimbus / pindrop / powerglance）は公開されているので解決はするが、不要なら
 [`nix/profiles/darwin/homebrew.nix`](./nix/profiles/darwin/homebrew.nix) から外してよい。
 
-> 注: `apply.sh` は `hostname -s` で構成を選ぶため、ホスト名が
-> `Yosukes-MacBook-Air` 以外の環境では使えない。`bootstrap.sh` / `darwin-switch` は
-> flake attribute を明示指定するので影響しない。
+> 注: `apply.sh` は `hostname -s` で構成を選ぶため、flake に同名の attr がない環境では
+> 使えない。`darwin-switch` は flake attribute を埋め込み済み、`bootstrap.sh` は
+> `DARWIN_HOST=...` で上書きできる。

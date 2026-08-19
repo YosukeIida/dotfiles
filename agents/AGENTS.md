@@ -35,12 +35,15 @@
 
 ```bash
 darwin-switch
-# 実体: sudo darwin-rebuild switch --flake /Users/yosuke/workspace/github.com/YosukeIida/dotfiles#Yosukes-MacBook-Air
+# 実体: sudo darwin-rebuild switch --flake <dotfiles>#<そのマシンの flake attr>
+# attr は各機の `hostname -s` と一致させる規約（darwin-switch 自体に埋め込み済み）
 ```
 
 設定エントリ: `~/workspace/github.com/YosukeIida/dotfiles/flake.nix` の
-`darwinConfigurations."Yosukes-MacBook-Air"`（host 固有設定は
-`nix/hosts/darwin/yosuke-macbook-air.nix`、秘密値は agenix で `secrets/*.age`）。
+`darwinConfigurations`（`Yosukes-MacBook-Air` / `Yosukes-Mac-Studio`）。
+個人設定は `nix/hosts/darwin/yosuke/` にあり、`common.nix` が機種共通、
+`macbook-air.nix` / `mac-studio.nix` が機種固有。秘密値は agenix で `secrets/*.age`。
+対比として `nix/hosts/darwin/common/` は他人も fork して使える層（`example` 構成）。
 
 > 2026-06 に単一 public repo 化。個人 skills だけ private overlay（dotfiles-private）
 > にローカルパス symlink で取り込む。
