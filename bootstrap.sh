@@ -65,11 +65,26 @@ else
   warn "Xcode CLT が未導入。次を実行してから再実行してください: xcode-select --install"
 fi
 
+# **上流 Nix** であることが必要。Determinate Nix（Determinate Systems の fork）は
+# 独自デーモン determinate-nixd で Nix 自身を管理するため nix-darwin と競合し、
+# nix-darwin は activation でこれを検出して中断する（modules/system/checks.nix）。
+# Step 2 まで進んでから失敗すると原因が分かりにくいので、ここで先に知らせる。
 if command -v nix &>/dev/null; then
-  ok "Nix は導入済み（$(nix --version 2>/dev/null)）"
+  if [ -e /usr/local/bin/determinate-nixd ]; then
+    warn "Determinate Nix が入っています（$(nix --version 2>/dev/null)）。"
+    warn "  nix-darwin と Nix 管理が競合するため Step 2 は必ず失敗します。上流 Nix に入れ替えてください:"
+    warn "    sudo /nix/nix-installer uninstall"
+    warn "    curl -fsSL https://install.determinate.systems/nix | sh -s -- install --prefer-upstream-nix"
+    warn "  --prefer-upstream-nix が使えない場合（提供終了アナウンス済み）は公式インストーラ:"
+    warn "    sh <(curl -L https://nixos.org/nix/install) --daemon"
+    warn "  入れ替え後、nix --version に 'Determinate Nix' が出ないことを確認すること。"
+  else
+    ok "Nix は導入済み（$(nix --version 2>/dev/null)）"
+  fi
 else
-  warn "Nix が未導入です。Determinate Systems installer を推奨:"
-  warn "  curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install"
+  warn "Nix が未導入です。**上流 Nix** を入れてください（Determinate Nix は nix-darwin と競合する）:"
+  warn "  curl -fsSL https://install.determinate.systems/nix | sh -s -- install --prefer-upstream-nix"
+  warn "  上記が使えない場合は公式インストーラ: sh <(curl -L https://nixos.org/nix/install) --daemon"
   warn "  導入後、新しいシェルを開いてから bootstrap を再実行してください。"
 fi
 

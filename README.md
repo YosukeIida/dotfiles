@@ -17,8 +17,8 @@ sudo scutil --set HostName Yosukes-Mac-Studio   # 例。新しいシェルで ho
 
 # 1. 前提レイヤ（bootstrap が面倒を見きれない本体）
 xcode-select --install
-curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
-#    → 新しいシェルを開く
+curl -fsSL https://install.determinate.systems/nix | sh -s -- install --prefer-upstream-nix
+#    → 新しいシェルを開き、nix --version に "Determinate Nix" が出ないことを確認する
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # 2. clone して bootstrap（Step 0〜5 を対話的に進める）
@@ -31,6 +31,8 @@ bash ~/workspace/github.com/YosukeIida/dotfiles/bootstrap.sh
 
 - **ホスト名を先に固定する。** `hostname -s` は `HostName` 未設定だと DHCP / 逆引き DNS
   由来で動的に決まり、`LocalHostName` と一致する保証がない。
+- **Nix は上流 Nix を入れる。** Determinate Nix（`NixOS/nix` の fork）は独自デーモンで
+  Nix を管理するため nix-darwin と競合し、初回適用が必ず失敗する。
 - **新しい機種は先に flake へ登録する**（既存機で `darwinConfigurations` に追加して push）。
 - **Step 2 が終わるまで `gh` / `raycast` / `claude` は 1 つも入らない。**
   `Step 2 → 新しいシェル → gh auth login → Step 3/4 → Raycast 導入後に Step 5` の順。
