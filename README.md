@@ -5,62 +5,35 @@ Yosuke の Mac 環境の本体 flake。nix-darwin / home-manager・Homebrew・ag
 
 ---
 
-## 前提（工場出荷状態の Mac で最初に必要なもの）
-
-`bootstrap.sh` は「このリポジトリが clone 済み」から始まる。その手前と、bootstrap が
-面倒を見きれない本体レイヤは以下。`bootstrap.sh` の **Step 0** が存在確認と導入案内を行う。
-
-1. **Xcode Command Line Tools**（`git` に必要）
-   ```sh
-   xcode-select --install
-   ```
-2. **Nix 本体**（Determinate Systems installer 推奨）
-   ```sh
-   curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
-   ```
-   導入後は**新しいシェルを開く**（PATH 反映のため）。
-3. **Homebrew 本体**（nix-darwin の homebrew モジュールは brew 自体を入れない。cask 群に必須）
-   ```sh
-   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-   ```
-   （bootstrap Step 0 が未導入時にインストールを提案する）
-
----
-
 ## セットアップ（自分の新しい Mac）
+
+**完全な手順は [`docs/new-machine-setup.md`](./docs/new-machine-setup.md)。**
+工場出荷状態からの前提レイヤ・順序・agenix 鍵の通し方・手動チェックリスト・
+トラブルシュートまでまとまっている。以下は要約。
 
 ```sh
 # 0. ホスト名を固定する（flake attribute 名と一致させる規約）
 sudo scutil --set HostName Yosukes-Mac-Studio   # 例。新しいシェルで hostname -s を確認
 
-# 1. 前提を満たす（上記）。リポジトリを clone:
+# 1. 前提レイヤ（bootstrap が面倒を見きれない本体）
+xcode-select --install
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+#    → 新しいシェルを開く
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# 2. clone して bootstrap（Step 0〜5 を対話的に進める）
 git clone https://github.com/YosukeIida/dotfiles \
   ~/workspace/github.com/YosukeIida/dotfiles
-
-# 2. bootstrap を実行（Step 0〜5 を対話的に進める）
 bash ~/workspace/github.com/YosukeIida/dotfiles/bootstrap.sh
 ```
 
-> **ホスト名を先に固定する理由**: macOS の `hostname -s` は `HostName` が未設定だと
-> DHCP / 逆引き DNS 由来で**動的に決まる**（`LocalHostName` と一致する保証はない）。
-> `bootstrap.sh` と `apply.sh` はこの値で flake attribute を引くため、固定していないと
-> ネットワーク次第で解決先が変わる。`scutil --set HostName` で 3 系統
-> （`ComputerName` / `LocalHostName` / `HostName`）を揃えてから登録する。
+引っかかりやすい 3 点:
 
-`bootstrap.sh` が進める内容:
-
-| Step | 内容 |
-|---|---|
-| 0 | Xcode CLT / Nix / Homebrew の確認・導入、git filter 設定 |
-| 1 | agenix 復号鍵（`~/.ssh/id_ed25519`）の確認 or 新規生成 |
-| 2 | nix-darwin の初回適用（`nix run nix-darwin#darwin-rebuild -- switch`）。以後は `darwin-switch` |
-| 3 | `gh auth login` → `dotfiles-private`（private skills）と `personal-agent-skills`（自作の公開 skills）を clone |
-| 4 | GitHub に公開鍵登録・両 repo の remote を SSH に切替 |
-| 5 | Raycast 設定（`.rayconfig`）の import（メイン。要 dotfiles-private・Raycast 導入済み）。Asyar は併用インストールのみ（settings.dat は symlink 済みなら自動反映、自動起動は無効化済み） |
-
-**初回の順序に注意**: Step 2（初回適用）が終わるまで `gh` / `raycast` / `claude` 等の
-cask/CLI は入らない。`Step 2 → 新しいシェル → gh auth login → Step 3/4 → Raycast 導入後に Step 5`
-の順で進める（bootstrap 完了メッセージにも表示される）。
+- **ホスト名を先に固定する。** `hostname -s` は `HostName` 未設定だと DHCP / 逆引き DNS
+  由来で動的に決まり、`LocalHostName` と一致する保証がない。
+- **新しい機種は先に flake へ登録する**（既存機で `darwinConfigurations` に追加して push）。
+- **Step 2 が終わるまで `gh` / `raycast` / `claude` は 1 つも入らない。**
+  `Step 2 → 新しいシェル → gh auth login → Step 3/4 → Raycast 導入後に Step 5` の順。
 
 日常運用:
 ```sh
@@ -68,33 +41,6 @@ darwin-switch        # nix 設定・homebrew を変更したあと
 darwin-update        # nix flake update + switch
 brew-upgrade-all     # brew の一括更新
 ```
-
----
-
-## darwin-switch 後の手動ステップ（新マシン移行チェックリスト）
-
-dotfiles / agenix では再現できない、マシン固有の状態・権限・データ。**旧マシンを初期化する前**に
-上段（データ退避）を必ず済ませること。
-
-### 旧マシンを消す前（データ消失を防ぐ・最優先）
-- [ ] すべての git リポジトリの未 push / 未 commit / stash を push・退避（`~/workspace` 配下）
-- [ ] FileVault の**回復キー**の保管場所を確認・記録（agenix identity の at-rest 保護が FileVault 依存）
-- [ ] iCloud / git 外のローカルデータ（`~/Documents`・`~/Pictures` のルーズファイル等）を退避
-
-### 新マシンで（認証・権限。多くはアプリ導入後）
-- [ ] **App Store にサインイン** → Bitwarden が入る（agenix バックアップ鍵の回収に必要）
-- [ ] **agenix 鍵**: 既存マシンの `~/.ssh/id_ed25519` を持ち込む、または Bitwarden 保管の共通鍵を
-      `~/.config/agenix/key.txt` に置く（`identityPaths` に配線済み・どちらでも復号できる）
-- [ ] **TCC 権限の付与**（システム設定 → プライバシーとセキュリティ）:
-      Hammerspoon = アクセシビリティ / Raycast = アクセシビリティ /
-      Karabiner-Elements = 入力監視 + **ドライバ拡張（システム機能拡張）の承認**
-- [ ] **各 CLI の再ログイン**: `gh auth login` / Claude Code は各アカウントで `/login`
-      （OAuth は Keychain 保存でファイル移行不可）/ Codex は `codex login`・MCP は `codex mcp login exa` 等
-- [ ] **Tailscale(headscale)** の再認証（`tailscale login --login-server <URL>`）と旧ノードの失効
-- [ ] GUI アプリ（Slack / Notion / Google Drive 等）の再ログイン
-- [ ] 入力ソース（Kotoeri Romaji / ABC）の再設定
-- [ ] **VSCode**: Settings Sync の「設定」「キーボードショートカット」カテゴリを**オフ**にする
-      （settings/keybindings は dotfiles が管理するため。拡張機能等の同期は維持してよい）
 
 ---
 
