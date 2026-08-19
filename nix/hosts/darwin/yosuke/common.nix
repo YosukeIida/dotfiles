@@ -764,7 +764,20 @@ in
       su - ${username} -c "'$priv/claude-memory.sh' check" || true
     fi
 
-    # private skills を ~/.claude/skills, ~/.codex/skills に追加（private overlay が無ければ skip）
+    # skills リポジトリが未 clone なら **通知する**。clone 自体は activation ではやらない
+    # （private repo には gh の Keychain 認証が要り、root の非対話 activation からは
+    # ログインキーチェーンを開けない。bootstrap.sh の Step 3 の担当）。
+    # 黙って skip すると「skills が丸ごと無い」状態に気づけないので、毎回目に入るようにする。
+    if [ ! -d "$priv/agents/skills" ]; then
+      echo >&2 "warning: private skills が未配備（$priv が無い）"
+      echo >&2 "  gh repo clone YosukeIida/dotfiles-private $priv && darwin-switch"
+    fi
+    if [ ! -d "$skillsPub" ]; then
+      echo >&2 "warning: 自作の公開 skills が未配備（$skillsPub が無い）"
+      echo >&2 "  gh repo clone YosukeIida/personal-agent-skills $skillsPub && darwin-switch"
+    fi
+
+    # private skills を ~/.claude/skills, ~/.codex/skills に追加
     if [ -d "$priv/agents/skills" ]; then
       for d in "$priv/agents/skills"/*/; do
         [ -d "$d" ] || continue
@@ -773,9 +786,8 @@ in
       done
     fi
 
-    # public skills（personal-agent-skills repo）を ~/.claude/skills, ~/.codex/skills に追加
-    # （clone が無ければ skip）。root-level レイアウト（<skill>/SKILL.md）なので
-    # README.md 等のファイルは */ glob で自然に除外される。
+    # public skills（personal-agent-skills repo）を ~/.claude/skills, ~/.codex/skills に追加。
+    # root-level レイアウト（<skill>/SKILL.md）なので README.md 等は */ glob で自然に除外される。
     if [ -d "$skillsPub" ]; then
       for d in "$skillsPub"/*/; do
         [ -d "$d" ] || continue
