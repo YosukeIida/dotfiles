@@ -165,7 +165,7 @@
 
     # Codex の安定設定（/etc/codex/config.toml）は approval_policy=never・
     # sandbox_mode=danger-full-access という個人の合意前提の危険設定を含むため、
-    # common（example にも波及）ではなく host 固有（yosuke-macbook-air.nix）で配備する。
+    # common（example にも波及）ではなく host 固有（yosuke/common.nix）で配備する。
 
     # Claude Code プラグインを自動インストール（ユーザー権限で実行）
     su - ${username} -c "bash $pub/claude/install-plugins.sh" || true

@@ -1,5 +1,5 @@
 # 個人 identity（user.name/email）と lab 固有の safe.directory は host 側で
-# ~/.gitconfig.local に生成する（yosuke-macbook-air.nix の postActivation）。
+# ~/.gitconfig.local に生成する（yosuke/common.nix の postActivation）。
 # public にはここで include するだけ。他者環境ではこのファイルが無く git は無視するので、
 # その人自身の identity が使われる（この dotfiles を流用しても Yosuke 名義にならない）。
 [include]

@@ -191,7 +191,7 @@ account_id は `auth.json` の `.tokens.account_id`（平文 JSON）で識別す
 - **doctor 自動修復** — `cx`（状態表示）実行のたびに `bin/codex-auth-doctor --fix` が走る。(b) 実ファイルの account_id が既存プロファイルの**ただ1つ**と一致すれば、同一アカウントの新しいトークンとみなして `mv`＋symlink 復元する（上書きで安全）。複数一致・未知アカウントの場合は自動では触らず案内のみ。
 - **起動時チェック** — 新しいインタラクティブシェルを開いたとき、App 用 auth.json が (b) または (c) の場合だけ `codex-auth-doctor`（`--fix` 無し・警告のみ）を呼ぶ。正常時は lstat 数回で即抜け、ファイルは一切変更しない。
 - **login ガード** — `codex()` ラッパーが `codex login`/`codex logout` を捕捉し、書き込み先が共有 symlink（`CODEX_HOME` 未設定 or `$HOME/.codex`）になるときだけ警告する。インタラクティブなら続行確認、非インタラクティブなら拒否。`codex login status`（読み取りのみ）と `codex mcp login/logout`（MCP サーバの OAuth 操作で auth.json に触れない）は対象外。`AGSW_ALLOW_RAW_LOGIN=1` でバイパス可。正しい手順は `cx <name>` でアカウントを選んでから `codex login`。
-- **launchd 通知** — `bin/codex-auth-watch` を launchd(`WatchPaths`) が `~/.codex/auth.json` の変更のたびに起動し、実ファイル化していたら macOS 通知を出す（修復はしない・`cx` 実行で自動修復される旨を通知）。nix 側の定義は `nix/hosts/darwin/yosuke-macbook-air.nix` の `launchd.user.agents."codex-auth-watch"`。
+- **launchd 通知** — `bin/codex-auth-watch` を launchd(`WatchPaths`) が `~/.codex/auth.json` の変更のたびに起動し、実ファイル化していたら macOS 通知を出す（修復はしない・`cx` 実行で自動修復される旨を通知）。nix 側の定義は `nix/hosts/darwin/yosuke/common.nix` の `launchd.user.agents."codex-auth-watch"`。
 - **adopt** — 実ファイル化した `~/.codex/auth.json` を明示的にプロファイルへ取り込むコマンド。未知アカウント（doctor が自動修復しないケース）の受け皿。
 
 ```bash
