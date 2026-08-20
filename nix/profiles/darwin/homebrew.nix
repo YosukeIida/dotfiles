@@ -25,7 +25,7 @@
     extraConfig = ''
       tap "can1357/tap", trusted: true
       tap "jundot/omlx", "https://github.com/jundot/omlx", trusted: true
-      tap "solarphlare/airmute", trusted: true
+      tap "solarphlare/tap", trusted: true
       tap "steipete/tap", trusted: true
       tap "xoshbin/asyar", trusted: true
       tap "yosukeiida/casks-personal", trusted: true
@@ -80,10 +80,13 @@
     casks = [
       "adobe-acrobat-reader"
       "affinity"
-      # tap 修飾必須: upstream が solarphlare/tap から solarphlare/airmute へ移行した際、
-      # 旧 tap がローカルに残っていると裸の "airmute" が両方に解決して
-      # 「exists in multiple taps」で bundle 全体が止まる（2026-08-19 に遭遇）。
-      "solarphlare/airmute/airmute"
+      # tap 修飾必須、かつ **solarphlare/tap** を使うこと（solarphlare/airmute ではない）。
+      # solarphlare/homebrew-airmute は GitHub 上で homebrew-tap にリネームされており、
+      # 参照すると Homebrew が「Redirected tap solarphlare/airmute to tap solarphlare/tap」
+      # と言ってリダイレクト先も tap するため、両方が存在して裸の "airmute" が
+      # 「exists in multiple taps」で bundle 全体を止める。trusted: の宣言も
+      # リダイレクト後の名前と一致せず「Untrusted tap」になる（2026-08-20 に遭遇）。
+      "solarphlare/tap/airmute"
       "arc"
       "xoshbin/asyar/asyar"
       "chatgpt"
