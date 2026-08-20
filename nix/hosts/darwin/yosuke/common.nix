@@ -720,7 +720,11 @@ in
 
     # 既に root 所有で作られてしまった場合の自己修復。
     for _d in "$home/.claude" "$home/.codex" "$home/.config" "$home/.local"; do
-      if [ -d "$_d" ] && [ "$(stat -f %Su "$_d")" != "${username}" ]; then
+      # stat は絶対パスで呼ぶ。activation の PATH では GNU coreutils の stat に
+      # 解決されることがあり、-f がファイルシステム指定として解釈されて
+      # 「cannot read file system information for '%Su'」で失敗する（実測）。
+      # 失敗すると比較が常に真になり、毎回 chown -R が走る。
+      if [ -d "$_d" ] && [ "$(/usr/bin/stat -f %Su "$_d")" != "${username}" ]; then
         echo >&2 "repairing ownership: $_d"
         chown -R ${username}:staff "$_d" || true
       fi
