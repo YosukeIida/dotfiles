@@ -201,6 +201,39 @@
         "wvous-br-modifier" = 0;
       };
 
+      # Magic Mouse。トラックパッドと同じく有線/内蔵側と Bluetooth 側の 2 ドメインに書く。
+      # nix-darwin に第一級オプションが無いのでここで扱う（速度は NSGlobalDomain 側）。
+      "com.apple.AppleMultitouchMouse" = {
+        # 副ボタンを使う（右クリック有効）。
+        MouseButtonMode = "OneButton";
+
+        # 右クリックの境界位置。
+        MouseButtonDivision = 55;
+
+        # スクロールと慣性を有効化。
+        MouseVerticalScroll = 1;
+        MouseHorizontalScroll = 1;
+        MouseMomentumScroll = 1;
+
+        # 1本指ダブルタップは無効、2本指ダブルタップはスマートズーム。
+        MouseOneFingerDoubleTapGesture = 0;
+        MouseTwoFingerDoubleTapGesture = 3;
+
+        # 2本指の横スワイプでページ間を移動。
+        MouseTwoFingerHorizSwipeGesture = 2;
+      };
+
+      "com.apple.driver.AppleBluetoothMultitouch.mouse" = {
+        MouseButtonMode = "OneButton";
+        MouseButtonDivision = 55;
+        MouseVerticalScroll = 1;
+        MouseHorizontalScroll = 1;
+        MouseMomentumScroll = 1;
+        MouseOneFingerDoubleTapGesture = 0;
+        MouseTwoFingerDoubleTapGesture = 3;
+        MouseTwoFingerHorizSwipeGesture = 2;
+      };
+
       "com.apple.driver.AppleBluetoothMultitouch.trackpad" = {
         # Click pressure: medium.
         FirstClickThreshold = 1;
