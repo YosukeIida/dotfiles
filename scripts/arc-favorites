@@ -35,6 +35,8 @@ usage:
                                （Favorites を持っている旧マシンで実行する）
   arc-favorites open <対象>    Favorites を Arc で順に開く
                                対象はプロファイル名（"Profile 3"）でもメールアドレスでもよい
+  arc-favorites restore <対象> StorableSidebar.json に直接書き込んで登録する（要 Arc 終了）
+                               先に対象プロファイルで Favorites を 1 件手で登録しておくこと
 
 open の前に、対象アカウントのプロファイルに割り当てた Space を Arc でアクティブに
 しておくこと（open はアクティブな Space にタブを開く）。開いたタブを Favorites 領域へ
@@ -240,6 +242,132 @@ case "${1:-list}" in
       sleep 1
     done
     echo "開き終えました。各タブを Favorites 領域にドラッグして登録してください。" >&2
+    ;;
+
+  restore)
+    # StorableSidebar.json に item を直接書く。Arc には Favorites を作るコマンドが
+    # 一切無いため（メニュー・AppleScript・CLI すべて確認済み）、これが唯一の自動化手段。
+    #
+    # 安全策:
+    #   - Arc が動いていたら拒否（起動中に書くと Arc の書き戻しで消える）
+    #   - 書き込み前にバックアップを取る
+    #   - 書き込み後に JSON として妥当か、item 数が期待どおり増えたかを検証し、
+    #     おかしければバックアップから戻す
+    #   - 「ローカルのコンテナ」を判定するため、対象プロファイルで **手で 1 件登録済み**
+    #     であることを要求する。Favorites は同期されないので、item を持つコンテナは
+    #     このマシンのものだと確定できる（旧マシンのコンテナは 0 件で来る）
+    [ $# -ge 2 ] || {
+      usage
+      exit 64
+    }
+    prof="$(resolve "$2")"
+    [ -n "$prof" ] || die "\"$2\" に対応するプロファイルが対応表にありません"
+
+    pgrep -x Arc >/dev/null 2>&1 && die "Arc が起動中です。終了してから実行してください（osascript -e 'quit app \"Arc\"'）"
+    [ -w "$SIDEBAR" ] || die "$SIDEBAR に書き込めません"
+
+    # 復元したい URL（TSV 優先。live だとこのマシン自身の分になってしまう）
+    saved="$(read_file)"
+    [ -n "$saved" ] || die "$FAV_FILE がありません。旧マシンで 'arc-favorites export' を実行してください"
+    want="$(printf '%s\n' "$saved" | awk -F'\t' '$1 == p { print $2 }' p="$prof")"
+    [ -n "$want" ] || die "$(annotate "$prof") の Favorites が $FAV_FILE にありません"
+
+    # このマシンの Favorites コンテナを特定する（item を 1 件以上持つもの）
+    cand="$(jq -r --arg prof "$prof" '
+      [ .sidebar.containers | to_entries[]
+        | .key as $idx
+        | (.value.items // [])[] | select(type == "object")
+        | select(.data.itemContainer.containerType.topApps._0.custom._0.directoryBasename == $prof)
+        | { idx: $idx, id: .id,
+            machine: .data.itemContainer.containerType.topApps._0.custom._0.machineID,
+            n: (.childrenIds | length) } ]
+      | map(select(.n > 0)) | .[] | "\(.idx)\t\(.id)\t\(.machine)\t\(.n)"
+    ' "$SIDEBAR" 2>/dev/null)"
+
+    cnt="$(printf '%s\n' "$cand" | grep -c . || true)"
+    if [ "${cnt:-0}" -eq 0 ]; then
+      die "$(annotate "$prof") に item を持つ Favorites コンテナがありません。
+  Arc で対象プロファイルの Space を開き、**Favorites を 1 件だけ手でドラッグ登録**してから
+  もう一度実行してください。それが「このマシンのコンテナ」を特定する目印になります
+  （旧マシンのコンテナは item が 0 件で同期されてくるため区別が必要）。"
+    fi
+    if [ "$cnt" -gt 1 ]; then
+      echo "候補が複数あります。手で 1 件だけ登録した状態で実行してください:" >&2
+      printf '%s\n' "$cand" | awk -F'\t' '{ printf "  idx=%s id=%s machine=%s items=%s\n", $1,$2,$3,$4 }' >&2
+      die "曖昧なため中止しました"
+    fi
+
+    IDX="$(printf '%s' "$cand" | cut -f1)"
+    CID="$(printf '%s' "$cand" | cut -f2)"
+    MACHINE="$(printf '%s' "$cand" | cut -f3)"
+    echo "対象コンテナ: $CID (machineID=$MACHINE, containers[$IDX])" >&2
+
+    # 既に入っている URL は飛ばす
+    have="$(jq -r --arg cid "$CID" --argjson idx "$IDX" '
+      (.sidebar.containers[$idx].items // [])[] | select(type == "object")
+      | select(.parentID == $cid) | .data.tab.savedURL // empty' "$SIDEBAR" 2>/dev/null)"
+    add="$(printf '%s\n' "$want" | grep -vxF -f <(printf '%s\n' "$have") 2>/dev/null || printf '%s\n' "$want")"
+    add="$(printf '%s\n' "$add" | grep . || true)"
+    if [ -z "$add" ]; then
+      echo "追加するものがありません（すべて登録済み）。" >&2
+      exit 0
+    fi
+    nadd="$(printf '%s\n' "$add" | grep -c .)"
+
+    # CFAbsoluteTime = UNIX 時刻 - 978307200（2001-01-01 起点）
+    now=$(( $(date +%s) - 978307200 ))
+
+    new_json="$(
+      printf '%s\n' "$add" | while IFS= read -r u; do
+        [ -z "$u" ] && continue
+        jq -n --arg id "$(uuidgen)" --arg url "$u" --arg dev "$MACHINE" \
+              --arg cid "$CID" --argjson t "$now" '
+          { createdAt: $t, originatingDevice: $dev, parentID: $cid,
+            isUnread: false, title: null,
+            data: { tab: { savedTitle: $url, savedURL: $url,
+                           savedMuteStatus: "allowAudio", timeLastActiveAt: $t } },
+            id: $id, childrenIds: [] }'
+      done | jq -s '.'
+    )"
+    [ -n "$new_json" ] || die "追加する item を組み立てられませんでした"
+
+    backup="$SIDEBAR.bak.$(date +%Y%m%d%H%M%S)"
+    cp -p "$SIDEBAR" "$backup" || die "バックアップに失敗しました"
+    echo "バックアップ: $backup" >&2
+
+    before="$(jq -r --argjson idx "$IDX" '.sidebar.containers[$idx].items | length' "$SIDEBAR")"
+    tmp="$SIDEBAR.new.$$"
+    if ! jq --arg cid "$CID" --argjson idx "$IDX" --argjson new "$new_json" '
+      # items は [id文字列, オブジェクト, ...] の並びなので、両方を追記する
+      .sidebar.containers[$idx].items =
+        ((.sidebar.containers[$idx].items // [])
+         + (reduce $new[] as $i ([]; . + [$i.id, $i])))
+      # コンテナの childrenIds にも登録する
+      | .sidebar.containers[$idx].items |= map(
+          if type == "object" and .id == $cid
+          then .childrenIds += ($new | map(.id))
+          else . end)
+    ' "$SIDEBAR" > "$tmp"; then
+      rm -f "$tmp"
+      die "書き込みに失敗しました（元ファイルは無変更）"
+    fi
+
+    after="$(jq -r --argjson idx "$IDX" '.sidebar.containers[$idx].items | length' "$tmp" 2>/dev/null)"
+    kids="$(jq -r --arg cid "$CID" --argjson idx "$IDX" '
+      (.sidebar.containers[$idx].items // [])[] | select(type=="object")
+      | select(.id == $cid) | .childrenIds | length' "$tmp" 2>/dev/null)"
+    expect=$(( before + nadd * 2 ))
+    if [ "${after:-0}" != "$expect" ] || [ -z "$kids" ]; then
+      rm -f "$tmp"
+      die "検証に失敗しました（期待 $expect 要素 / 実際 ${after:-?}）。元ファイルは無変更"
+    fi
+
+    mv "$tmp" "$SIDEBAR" || die "置き換えに失敗しました。バックアップ: $backup"
+    echo "$nadd 件を追加しました（コンテナの childrenIds は $kids 件）。" >&2
+    printf '%s\n' "$add" | sed 's/^/  + /' >&2
+    echo "" >&2
+    echo "Arc を起動して確認してください。想定と違う場合は次で戻せます:" >&2
+    echo "  cp \"$backup\" \"$SIDEBAR\"" >&2
     ;;
 
   -h | --help | help) usage ;;
