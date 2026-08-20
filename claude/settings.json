@@ -166,6 +166,7 @@
     }
   },
   "language": "Japanese",
+  "outputStyle": "Concise",
   "sandbox": {
     "filesystem": {
       "allowWrite": [
