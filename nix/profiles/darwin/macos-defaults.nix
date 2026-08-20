@@ -232,6 +232,65 @@
         "wvous-br-modifier" = 0;
       };
 
+      # 日本語入力（ことえり）。ライブ変換や句読点の種類はここ。
+      # 反映には入力メソッドの再起動（ログアウト or 再ログイン）が必要な場合がある。
+      "com.apple.inputmethod.Kotoeri" = {
+        # ライブ変換（打ちながら自動で変換される機能）を切る。
+        JIMPrefLiveConversionKey = 0;
+
+        # 句読点の種類。3 = カンマ・ピリオド（，．）。
+        JIMPrefPunctuationTypeKey = 3;
+
+        # 自動修正と予測候補を切る。
+        JIMPrefAutocorrectionKey = 0;
+        JIMPrefPredictiveCandidateKey = 0;
+
+        # 句読点の入力で変換を確定させない。
+        JIMPrefConvertWithPunctuationKey = 0;
+
+        # 数字は半角。
+        JIMPrefFullWidthNumeralCharactersKey = 0;
+
+        # Windows 風のキー操作。
+        JIMPrefWindowsModeKey = 1;
+
+        # Shift キーの動作。
+        JIMPrefShiftKeyActionKey = 1;
+      };
+
+      # 入力ソースの構成（ABC + ことえりローマ字入力）。nix-darwin の hitoolbox には
+      # AppleFnUsageType しか無いのでここで扱う。反映には再ログインが必要。
+      "com.apple.HIToolbox" = {
+        AppleEnabledInputSources = [
+          {
+            InputSourceKind = "Keyboard Layout";
+            "KeyboardLayout ID" = 252;
+            "KeyboardLayout Name" = "ABC";
+          }
+          {
+            "Bundle ID" = "com.apple.inputmethod.Kotoeri.RomajiTyping";
+            "Input Mode" = "com.apple.inputmethod.Japanese";
+            InputSourceKind = "Input Mode";
+          }
+          {
+            "Bundle ID" = "com.apple.inputmethod.Kotoeri.RomajiTyping";
+            InputSourceKind = "Keyboard Input Method";
+          }
+          {
+            "Bundle ID" = "com.apple.CharacterPaletteIM";
+            InputSourceKind = "Non Keyboard Input Method";
+          }
+          {
+            "Bundle ID" = "com.apple.50onPaletteIM";
+            InputSourceKind = "Non Keyboard Input Method";
+          }
+          {
+            "Bundle ID" = "com.apple.PressAndHold";
+            InputSourceKind = "Non Keyboard Input Method";
+          }
+        ];
+      };
+
       # Magic Mouse。トラックパッドと同じく有線/内蔵側と Bluetooth 側の 2 ドメインに書く。
       # nix-darwin に第一級オプションが無いのでここで扱う（速度は NSGlobalDomain 側）。
       "com.apple.AppleMultitouchMouse" = {
