@@ -272,35 +272,43 @@ case "${1:-list}" in
     want="$(printf '%s\n' "$saved" | awk -F'\t' '$1 == p { print $2 }' p="$prof")"
     [ -n "$want" ] || die "$(annotate "$prof") の Favorites が $FAV_FILE にありません"
 
-    # このマシンの Favorites コンテナを特定する（item を 1 件以上持つもの）
-    cand="$(jq -r --arg prof "$prof" '
+    # このマシンの machineID。Arc が自分の ID を defaults に持っている
+    # （ハードウェア UUID とは別物で、Arc が独自に生成する）。これを使えば
+    # 「どのコンテナがこのマシンのものか」を手がかり無しに確定できる。
+    MACHINE="$(defaults read company.thebrowser.Browser machineID 2>/dev/null)"
+    [ -n "$MACHINE" ] || die "Arc の machineID を読めません（company.thebrowser.Browser machineID）"
+    echo "このマシンの machineID: $MACHINE" >&2
+
+    # 書き込み先の items 配列。Favorites コンテナが載っている container を使い、
+    # 無ければ最も要素数の多いものを選ぶ。
+    IDX="$(jq -r --arg prof "$prof" --arg mid "$MACHINE" '
       [ .sidebar.containers | to_entries[]
-        | .key as $idx
-        | (.value.items // [])[] | select(type == "object")
-        | select(.data.itemContainer.containerType.topApps._0.custom._0.directoryBasename == $prof)
-        | { idx: $idx, id: .id,
-            machine: .data.itemContainer.containerType.topApps._0.custom._0.machineID,
-            n: (.childrenIds | length) } ]
-      | map(select(.n > 0)) | .[] | "\(.idx)\t\(.id)\t\(.machine)\t\(.n)"
-    ' "$SIDEBAR" 2>/dev/null)"
-
-    cnt="$(printf '%s\n' "$cand" | grep -c . || true)"
-    if [ "${cnt:-0}" -eq 0 ]; then
-      die "$(annotate "$prof") に item を持つ Favorites コンテナがありません。
-  Arc で対象プロファイルの Space を開き、**Favorites を 1 件だけ手でドラッグ登録**してから
-  もう一度実行してください。それが「このマシンのコンテナ」を特定する目印になります
-  （旧マシンのコンテナは item が 0 件で同期されてくるため区別が必要）。"
+        | select((.value.items // []) | any(type == "object"
+            and .data.itemContainer.containerType.topApps._0.custom._0.directoryBasename == $prof
+            and .data.itemContainer.containerType.topApps._0.custom._0.machineID == $mid)) ]
+      | (.[0].key // empty)' "$SIDEBAR" 2>/dev/null)"
+    if [ -z "$IDX" ]; then
+      IDX="$(jq -r '[.sidebar.containers | to_entries[] | {key, n: ((.value.items // []) | length)}]
+                    | max_by(.n) | .key' "$SIDEBAR" 2>/dev/null)"
     fi
-    if [ "$cnt" -gt 1 ]; then
-      echo "候補が複数あります。手で 1 件だけ登録した状態で実行してください:" >&2
-      printf '%s\n' "$cand" | awk -F'\t' '{ printf "  idx=%s id=%s machine=%s items=%s\n", $1,$2,$3,$4 }' >&2
-      die "曖昧なため中止しました"
-    fi
+    [ -n "$IDX" ] || die "書き込み先の sidebar.containers を特定できません"
 
-    IDX="$(printf '%s' "$cand" | cut -f1)"
-    CID="$(printf '%s' "$cand" | cut -f2)"
-    MACHINE="$(printf '%s' "$cand" | cut -f3)"
-    echo "対象コンテナ: $CID (machineID=$MACHINE, containers[$IDX])" >&2
+    CID="$(jq -r --arg prof "$prof" --arg mid "$MACHINE" --argjson idx "$IDX" '
+      (.sidebar.containers[$idx].items // [])[] | select(type == "object")
+      | select(.data.itemContainer.containerType.topApps._0.custom._0.directoryBasename == $prof
+               and .data.itemContainer.containerType.topApps._0.custom._0.machineID == $mid)
+      | .id' "$SIDEBAR" 2>/dev/null | head -1)"
+
+    # このマシンの Favorites コンテナがまだ無ければ作る。Arc は初回の登録時に
+    # 作るので、一度も登録していないプロファイルでは存在しない。
+    CREATE_CONTAINER=0
+    if [ -z "$CID" ]; then
+      CID="$(uuidgen)"
+      CREATE_CONTAINER=1
+      echo "このマシンの Favorites コンテナが無いので新規作成します: $CID" >&2
+    else
+      echo "対象コンテナ: $CID (containers[$IDX])" >&2
+    fi
 
     # 既に入っている URL は飛ばす
     have="$(jq -r --arg cid "$CID" --argjson idx "$IDX" '
@@ -337,11 +345,31 @@ case "${1:-list}" in
 
     before="$(jq -r --argjson idx "$IDX" '.sidebar.containers[$idx].items | length' "$SIDEBAR")"
     tmp="$SIDEBAR.new.$$"
-    if ! jq --arg cid "$CID" --argjson idx "$IDX" --argjson new "$new_json" '
+    if ! jq --arg cid "$CID" --arg prof "$prof" --arg mid "$MACHINE" \
+            --argjson idx "$IDX" --argjson new "$new_json" \
+            --argjson t "$now" --argjson mk "$CREATE_CONTAINER" '
+      # 必要ならこのマシンの Favorites コンテナを先に作る。
+      # 構造は実測に一致させる（data.itemContainer.containerType.topApps._0.custom._0）。
+      (if $mk == 1 then
+        { createdAt: $t, childrenIds: [], originatingDevice: $mid, id: $cid,
+          isUnread: false, parentID: null, title: null,
+          data: { itemContainer: { containerType: { topApps: { _0: { custom: { _0:
+            { directoryBasename: $prof, machineID: $mid } } } } } } } }
+       else null end) as $container
+      | (if $mk == 1
+         then .sidebar.containers[$idx].items =
+                ((.sidebar.containers[$idx].items // []) + [$cid, $container])
+         else . end)
+      # 新規コンテナは topAppsContainerIDs にも登録する（Arc が引くのはこの索引）。
+      | (if $mk == 1
+         then .sidebar.containers[$idx].topAppsContainerIDs =
+                ((.sidebar.containers[$idx].topAppsContainerIDs // [])
+                 + [ { custom: { _0: { directoryBasename: $prof, machineID: $mid } } }, $cid ])
+         else . end)
       # items は [id文字列, オブジェクト, ...] の並びなので、両方を追記する
-      .sidebar.containers[$idx].items =
-        ((.sidebar.containers[$idx].items // [])
-         + (reduce $new[] as $i ([]; . + [$i.id, $i])))
+      | .sidebar.containers[$idx].items =
+          ((.sidebar.containers[$idx].items // [])
+           + (reduce $new[] as $i ([]; . + [$i.id, $i])))
       # コンテナの childrenIds にも登録する
       | .sidebar.containers[$idx].items |= map(
           if type == "object" and .id == $cid
@@ -356,7 +384,8 @@ case "${1:-list}" in
     kids="$(jq -r --arg cid "$CID" --argjson idx "$IDX" '
       (.sidebar.containers[$idx].items // [])[] | select(type=="object")
       | select(.id == $cid) | .childrenIds | length' "$tmp" 2>/dev/null)"
-    expect=$(( before + nadd * 2 ))
+    # items には [id文字列, オブジェクト] の 2 要素ずつ入る。コンテナを作った場合はその分も。
+    expect=$(( before + nadd * 2 + CREATE_CONTAINER * 2 ))
     if [ "${after:-0}" != "$expect" ] || [ -z "$kids" ]; then
       rm -f "$tmp"
       die "検証に失敗しました（期待 $expect 要素 / 実際 ${after:-?}）。元ファイルは無変更"
