@@ -35,12 +35,14 @@ usage:
                                （Favorites を持っている旧マシンで実行する）
   arc-favorites open <対象>    Favorites を Arc で順に開く
                                対象はプロファイル名（"Profile 3"）でもメールアドレスでもよい
-  arc-favorites restore <対象> StorableSidebar.json に直接書き込んで登録する（要 Arc 終了）
-                               先に対象プロファイルで Favorites を 1 件手で登録しておくこと
+  arc-favorites restore <対象> [--dry-run]
+                               TSV の状態へ収束させる（要 Arc 終了）。追加・削除・並べ替えを
+                               行うので、何度実行しても同じ結果になる。
+                               --dry-run は計画を表示するだけで書き込まない。
 
 open の前に、対象アカウントのプロファイルに割り当てた Space を Arc でアクティブに
 しておくこと（open はアクティブな Space にタブを開く）。開いたタブを Favorites 領域へ
-ドラッグして登録する。
+ドラッグして登録する。restore を使うならこの手作業は不要。
 USAGE
 }
 
@@ -269,8 +271,17 @@ case "${1:-list}" in
     }
     prof="$(resolve "$2")"
     [ -n "$prof" ] || die "\"$2\" に対応するプロファイルが対応表にありません"
+    DRY_RUN=0
+    case "${3:-}" in
+      --dry-run) DRY_RUN=1 ;;
+      "") ;;
+      *) die "不明なオプション: $3" ;;
+    esac
 
-    pgrep -x Arc >/dev/null 2>&1 && die "Arc が起動中です。終了してから実行してください（osascript -e 'quit app \"Arc\"'）"
+    # dry-run では読むだけなので Arc の起動を許す。
+    if [ "$DRY_RUN" != "1" ]; then
+      pgrep -x Arc >/dev/null 2>&1 && die "Arc が起動中です。終了してから実行してください（osascript -e 'quit app \"Arc\"'）"
+    fi
     [ -w "$SIDEBAR" ] || die "$SIDEBAR に書き込めません"
 
     # 復元したい URL（TSV 優先。live だとこのマシン自身の分になってしまう）
@@ -317,18 +328,52 @@ case "${1:-list}" in
       echo "対象コンテナ: $CID (containers[$IDX])" >&2
     fi
 
-    # 既に入っている URL は飛ばす
-    have="$(jq -r --arg cid "$CID" --argjson idx "$IDX" '
+    # **TSV の状態へ収束させる**（追加だけでなく削除と並べ替えも行う）。
+    # 何度実行しても同じ結果になることを保証する。dotfiles の設定として扱うなら
+    # 「追記していくだけ」では宣言的にならない。
+    #
+    # 現在このコンテナに入っている item（id と URL、子の数）。
+    cur="$(jq -r --arg cid "$CID" --argjson idx "$IDX" '
       (.sidebar.containers[$idx].items // [])[] | select(type == "object")
-      | select(.parentID == $cid) | .data.tab.savedURL // empty' "$SIDEBAR" 2>/dev/null)"
-    add="$(printf '%s\n' "$want" | grep -vxF -f <(printf '%s\n' "$have") 2>/dev/null || printf '%s\n' "$want")"
-    add="$(printf '%s\n' "$add" | grep . || true)"
-    nadd="$(printf '%s\n' "$add" | grep -c . || true)"
-    # 追加が無くても並び順の修正だけは行う（順序は childrenIds が持つので後から直せる）。
-    [ -n "$add" ] || echo "追加するものはありません。並び順のみ確認します。" >&2
+      | select(.parentID == $cid)
+      | "\(.id)\t\(.data.tab.savedURL // "")\t\(.childrenIds | length)"' "$SIDEBAR" 2>/dev/null)"
+    have="$(printf '%s\n' "$cur" | awk -F'\t' 'NF>1 && $2 != "" { print $2 }')"
 
-    # 期待する並び順（TSV の記述順）。restore を再実行すればこの順に揃う。
+    add="$(printf '%s\n' "$want" | grep . | grep -vxF -f <(printf '%s\n' "$have" | grep . || echo '__none__') || true)"
+    nadd="$(printf '%s\n' "$add" | grep -c . || true)"
+
+    # TSV に無いものは削除対象。ただし子を持つ item（フォルダ等）は触らない。
+    del_ids=""
+    del_urls=""
+    skipped=""
+    while IFS=$'\t' read -r iid iurl ikids; do
+      [ -z "$iid" ] && continue
+      if printf '%s\n' "$want" | grep -qxF -- "$iurl"; then continue; fi
+      if [ "${ikids:-0}" != "0" ]; then
+        skipped="$skipped$iurl"$'\n'
+        continue
+      fi
+      del_ids="$del_ids$iid"$'\n'
+      del_urls="$del_urls$iurl"$'\n'
+    done <<< "$cur"
+    ndel="$(printf '%s' "$del_ids" | grep -c . || true)"
+
     order_json="$(printf '%s\n' "$want" | grep . | jq -R . | jq -s '.')"
+    del_json="$(printf '%s' "$del_ids" | grep . | jq -R . | jq -s '.' 2>/dev/null || echo '[]')"
+
+    echo "収束計画（$(annotate "$prof")）:" >&2
+    printf '%s\n' "$add" | grep . | sed 's/^/  + /' >&2 || true
+    printf '%s' "$del_urls" | grep . | sed 's/^/  - /' >&2 || true
+    printf '%s' "$skipped" | grep . | sed 's/^/  ! 子を持つため残す: /' >&2 || true
+    printf '%s\n' "$want" | grep . | sed 's/^/  = /' >&2
+    if [ "${nadd:-0}" -eq 0 ] && [ "${ndel:-0}" -eq 0 ]; then
+      echo "  （追加・削除なし。並び順のみ揃えます）" >&2
+    fi
+
+    if [ "${DRY_RUN:-0}" = "1" ]; then
+      echo "--dry-run のため書き込みません。" >&2
+      exit 0
+    fi
 
     # CFAbsoluteTime = UNIX 時刻 - 978307200（2001-01-01 起点）
     now=$(( $(date +%s) - 978307200 ))
@@ -356,7 +401,7 @@ case "${1:-list}" in
     if ! jq --arg cid "$CID" --arg prof "$prof" --arg mid "$MACHINE" \
             --argjson idx "$IDX" --argjson new "$new_json" \
             --argjson t "$now" --argjson mk "$CREATE_CONTAINER" \
-            --argjson order "$order_json" '
+            --argjson order "$order_json" --argjson del "$del_json" '
       # 必要ならこのマシンの Favorites コンテナを先に作る。
       # 構造は実測に一致させる（data.itemContainer.containerType.topApps._0.custom._0）。
       (if $mk == 1 then
@@ -375,6 +420,18 @@ case "${1:-list}" in
                 ((.sidebar.containers[$idx].topAppsContainerIDs // [])
                  + [ { custom: { _0: { directoryBasename: $prof, machineID: $mid } } }, $cid ])
          else . end)
+      # TSV に無い item を取り除く。items は [id文字列, オブジェクト, ...] の並びなので
+      # id 文字列と対応するオブジェクトの両方を落とす。
+      # 要素を $e に束縛してから判定する。`$del | index(.x)` と書くとパイプの中で
+      # `.` が $del（配列）になり "Cannot index array with string" で落ちる。
+      | .sidebar.containers[$idx].items |= [ .[] | . as $e
+          | select( if ($e | type) == "string" then ($del | index($e)) == null
+                    elif ($e | type) == "object" then ($del | index($e.id // "")) == null
+                    else true end ) ]
+      | .sidebar.containers[$idx].items |= map(
+          if type == "object" and .id == $cid
+          then .childrenIds = (.childrenIds - $del)
+          else . end)
       # items は [id文字列, オブジェクト, ...] の並びなので、両方を追記する
       | .sidebar.containers[$idx].items =
           ((.sidebar.containers[$idx].items // [])
@@ -404,7 +461,7 @@ case "${1:-list}" in
       (.sidebar.containers[$idx].items // [])[] | select(type=="object")
       | select(.id == $cid) | .childrenIds | length' "$tmp" 2>/dev/null)"
     # items には [id文字列, オブジェクト] の 2 要素ずつ入る。コンテナを作った場合はその分も。
-    expect=$(( before + nadd * 2 + CREATE_CONTAINER * 2 ))
+    expect=$(( before + nadd * 2 - ndel * 2 + CREATE_CONTAINER * 2 ))
     if [ "${after:-0}" != "$expect" ] || [ -z "$kids" ]; then
       rm -f "$tmp"
       die "検証に失敗しました（期待 $expect 要素 / 実際 ${after:-?}）。元ファイルは無変更"
