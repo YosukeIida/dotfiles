@@ -371,15 +371,21 @@
     _byhost com.apple.Spotlight MenuItemHidden -int 1
 
     # 設定を読み直させる。どちらも起動中のプロセスが値をメモリに保持しており、
-    # defaults write しただけでは反映されない（プロセス終了時に古い値で書き戻すこともある）。
-    # macOS が自動で起動し直すので kill するだけでよい。
+    # defaults write しただけでは反映されない。macOS が自動で起動し直すので kill
+    # するだけでよい。送るシグナルはプロセスごとに違う。
     #
-    # JapaneseIM: ことえりの設定（ライブ変換・句読点の種類）が反映されなかったため。
-    # SystemUIServer: メニューバーのアイコン間隔（上の ByHost 設定）を反映させるため。
-    for _proc in JapaneseIM-RomajiTyping SystemUIServer; do
-      launchctl asuser "$(id -u -- ${username})" \
-        sudo --user=${username} -- killall "$_proc" 2>/dev/null || true
-    done
+    # JapaneseIM（ことえりのライブ変換・句読点の種類）は SIGTERM を無視する。
+    # killall は signal 送信に成功して exit 0 を返すのにプロセスは生き残り、
+    # 前日から起動したままの JapaneseIM-RomajiTyping が古い値を保持し続けていた
+    # （2026-08-21 に実測。SystemUIServer だけ再起動していたので気づけなかった）。
+    # SIGKILL なら落ちるうえ、終了処理で古い値を書き戻すこともない。
+    launchctl asuser "$(id -u -- ${username})" \
+      sudo --user=${username} -- killall -9 JapaneseIM-RomajiTyping 2>/dev/null || true
+
+    # SystemUIServer（メニューバーのアイコン間隔。上の ByHost 設定）は SIGTERM で
+    # 正しく再起動するので -9 は使わない。
+    launchctl asuser "$(id -u -- ${username})" \
+      sudo --user=${username} -- killall SystemUIServer 2>/dev/null || true
 
     # デフォルトブラウザ（Arc）。LaunchServices の割り当ては nix-darwin の
     # system.defaults では扱えないので duti で行う。
