@@ -42,11 +42,12 @@
   # tailnet 以外からの接続を全部落とす。共用スペースの機なので、少なくとも
   # 研究室 LAN や外からは触らせない。
   #
-  # パスワード認証はまだ開けてある（Air から ssh-copy-id で公開鍵を入れるため）。
-  # 鍵を登録したら PasswordAuthentication no を足して閉じること。
+  # 公開鍵は Air から ssh-copy-id で登録済み（2026-08-21）。パスワード認証は閉じる。
   services.openssh = {
     enable = true;
     extraConfig = ''
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
       PermitRootLogin no
 
       Match Address *,!100.64.0.0/10
