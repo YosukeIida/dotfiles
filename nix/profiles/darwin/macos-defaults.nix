@@ -189,9 +189,36 @@
 
         # Disable three-finger tap lookup.
         TrackpadThreeFingerTapGesture = 0;
+
+        # 3本指ドラッグ（trackpad.TrackpadThreeFingerDrag）を使うため、3本指スワイプは
+        # 無効にして 4本指へ寄せる。この対応関係を宣言しないと、新マシンでは
+        # 3本指スワイプが有効・4本指が無効という既定に戻る。
+        TrackpadThreeFingerHorizSwipeGesture = 0;
+        TrackpadThreeFingerVertSwipeGesture = 0;
+
+        # 4本指: 横スワイプでデスクトップ切替、縦スワイプで Mission Control。
+        TrackpadFourFingerHorizSwipeGesture = 2;
+        TrackpadFourFingerVertSwipeGesture = 2;
+
+        # ピンチで Launchpad / デスクトップを表示。
+        TrackpadFourFingerPinchGesture = 2;
+        TrackpadFiveFingerPinchGesture = 2;
+
+        # ピンチズームと回転。
+        TrackpadPinch = 1;
+        TrackpadRotate = 1;
+
+        # 右端から2本指スワイプで通知センター。
+        TrackpadTwoFingerFromRightEdgeSwipeGesture = 3;
       };
 
       "com.apple.dock" = {
+        # トラックパッドのジェスチャに対応する Mission Control 側のスイッチ。
+        # 上の Trackpad*Gesture だけでは有効にならない。
+        showMissionControlGestureEnabled = 1;
+        showAppExposeGestureEnabled = 1;
+        showDesktopGestureEnabled = 1;
+
         # Top-left hot corner: no modifier.
         "wvous-tl-modifier" = 0;
 
@@ -250,6 +277,18 @@
 
         # Keep Force Click enabled.
         ForceSuppressed = 0;
+
+        # ジェスチャは内蔵側と同一に揃える（Magic Trackpad 用）。
+        TrackpadThreeFingerTapGesture = 0;
+        TrackpadThreeFingerHorizSwipeGesture = 0;
+        TrackpadThreeFingerVertSwipeGesture = 0;
+        TrackpadFourFingerHorizSwipeGesture = 2;
+        TrackpadFourFingerVertSwipeGesture = 2;
+        TrackpadFourFingerPinchGesture = 2;
+        TrackpadFiveFingerPinchGesture = 2;
+        TrackpadPinch = 1;
+        TrackpadRotate = 1;
+        TrackpadTwoFingerFromRightEdgeSwipeGesture = 3;
       };
     };
   };
