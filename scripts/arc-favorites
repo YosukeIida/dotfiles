@@ -339,7 +339,10 @@ case "${1:-list}" in
       | "\(.id)\t\(.data.tab.savedURL // "")\t\(.childrenIds | length)"' "$SIDEBAR" 2>/dev/null)"
     have="$(printf '%s\n' "$cur" | awk -F'\t' 'NF>1 && $2 != "" { print $2 }')"
 
-    add="$(printf '%s\n' "$want" | grep . | grep -vxF -f <(printf '%s\n' "$have" | grep . || echo '__none__') || true)"
+    # awk で差集合を取る。grep -vxF は「該当なし」で exit 1 になり、pipefail と
+    # フォールバックの組み合わせで壊れやすいので使わない。
+    add="$(awk 'NR==FNR { h[$0]; next } $0 != "" && !($0 in h)' \
+           <(printf '%s\n' "$have") <(printf '%s\n' "$want"))"
     nadd="$(printf '%s\n' "$add" | grep -c . || true)"
 
     # TSV に無いものは削除対象。ただし子を持つ item（フォルダ等）は触らない。
@@ -358,8 +361,11 @@ case "${1:-list}" in
     done <<< "$cur"
     ndel="$(printf '%s' "$del_ids" | grep -c . || true)"
 
-    order_json="$(printf '%s\n' "$want" | grep . | jq -R . | jq -s '.')"
-    del_json="$(printf '%s' "$del_ids" | grep . | jq -R . | jq -s '.' 2>/dev/null || echo '[]')"
+    # grep を挟まず jq 側で空行を落とす。`grep . | ... || echo '[]'` と書くと
+    # pipefail のせいで grep の exit 1 が拾われ、正常な "[]" に続けて
+    # フォールバックの "[]" も出力されて JSON が 2 個になる（実際に踏んだ）。
+    order_json="$(printf '%s\n' "$want" | jq -R . | jq -s 'map(select(. != ""))')"
+    del_json="$(printf '%s' "$del_ids" | jq -R . | jq -s 'map(select(. != ""))')"
 
     echo "収束計画（$(annotate "$prof")）:" >&2
     printf '%s\n' "$add" | grep . | sed 's/^/  + /' >&2 || true
