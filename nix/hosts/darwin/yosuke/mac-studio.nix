@@ -27,4 +27,30 @@
     askForPassword = true;
     askForPasswordDelay = 60;
   };
+
+  # Air から `herdr --remote yosuke@100.64.0.12` で attach するための sshd。
+  # 常設機なのでこちらだけがサーバーになる（Air 側では開けない）。
+  #
+  # nix-darwin の services.openssh は activation で launchctl enable +
+  # launchctl bootstrap system /System/Library/LaunchDaemons/ssh.plist を行うので、
+  # darwin-switch だけでリモートログインが有効になる（モジュール側が
+  # `systemsetup -setremotelogin` を避けているのは Full Disk Access を要求するため）。
+  #
+  # tailnet 限定にするのに ListenAddress は使えない。ssh.plist は Sockets
+  # （SockServiceName = ssh）による launchd socket activation で bind は launchd が
+  # 所有し、sshd_config の ListenAddress は無視される。代わりに Match Address で
+  # tailnet 以外からの接続を全部落とす。共用スペースの機なので、少なくとも
+  # 研究室 LAN や外からは触らせない。
+  #
+  # パスワード認証はまだ開けてある（Air から ssh-copy-id で公開鍵を入れるため）。
+  # 鍵を登録したら PasswordAuthentication no を足して閉じること。
+  services.openssh = {
+    enable = true;
+    extraConfig = ''
+      PermitRootLogin no
+
+      Match Address *,!100.64.0.0/10
+        DenyUsers *
+    '';
+  };
 }
