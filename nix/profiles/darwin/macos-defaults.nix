@@ -370,6 +370,17 @@
     # Spotlight の虫眼鏡アイコンをメニューバーから消す（検索機能自体は Raycast に寄せている）。
     _byhost com.apple.Spotlight MenuItemHidden -int 1
 
+    # 設定を読み直させる。どちらも起動中のプロセスが値をメモリに保持しており、
+    # defaults write しただけでは反映されない（プロセス終了時に古い値で書き戻すこともある）。
+    # macOS が自動で起動し直すので kill するだけでよい。
+    #
+    # JapaneseIM: ことえりの設定（ライブ変換・句読点の種類）が反映されなかったため。
+    # SystemUIServer: メニューバーのアイコン間隔（上の ByHost 設定）を反映させるため。
+    for _proc in JapaneseIM-RomajiTyping SystemUIServer; do
+      launchctl asuser "$(id -u -- ${username})" \
+        sudo --user=${username} -- killall "$_proc" 2>/dev/null || true
+    done
+
     # デフォルトブラウザ（Arc）。LaunchServices の割り当ては nix-darwin の
     # system.defaults では扱えないので duti で行う。
     # 既に Arc なら叩かない: macOS はデフォルトブラウザの変更時に確認ダイアログを
