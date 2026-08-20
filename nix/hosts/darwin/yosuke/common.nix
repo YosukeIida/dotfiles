@@ -489,8 +489,7 @@ let
       if [ ! -x "$warp_cli" ]; then
         return 0
       fi
-      if ! command -v curl >/dev/null 2>&1; then
-        echo "warning: curl not found; skipping DERP sync" >&2
+      if [ ! -x "$tailscale_bin" ]; then
         return 0
       fi
 
@@ -498,11 +497,14 @@ let
       local state_file="$state_dir/vpn-derp-exclusions.txt"
       mkdir -p "$state_dir"
 
+      # DERP マップは tailscale CLI からローカルに取る。以前は controlplane.tailscale.com へ
+      # curl していたが、研究室ネットワークの FortiGate が tailscale.com を TLS 復号した
+      # うえで 403 で遮断するため一度も成功しなかった（証明書の issuer が Fortinet になり、
+      # 検証を無効化して通しても 403）。CLI 経由なら境界のフィルタに影響されない。
       local derp_json
-      derp_json="$(curl -fsSL --max-time 15 \
-        https://controlplane.tailscale.com/derpmap/default 2>/dev/null || true)"
+      derp_json="$("$tailscale_bin" debug derp-map 2>/dev/null || true)"
       if [ -z "$derp_json" ]; then
-        echo "warning: could not fetch DERP map; keeping previous state" >&2
+        echo "warning: could not read DERP map from tailscale; keeping previous state" >&2
         return 0
       fi
 
