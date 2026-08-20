@@ -59,13 +59,18 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash '/Users/yosuke/.claude/hooks/herdr-agent-state.sh' session",
-            "timeout": 10
-          },
-          {
-            "type": "command",
             "command": "bash /Users/yosuke/workspace/github.com/YosukeIida/dotfiles/claude/hooks/claude-memory-health.sh",
             "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/yosuke/.claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10
           }
         ]
       }
