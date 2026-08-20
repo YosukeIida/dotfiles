@@ -466,7 +466,7 @@ let
       fi
 
       local current_ranges failed=0
-      current_ranges="$("$warp_cli" tunnel ip list --no-ansi 2>/dev/null || true)"
+      current_ranges="$("$warp_cli" tunnel ip list --no-paginate 2>/dev/null || true)"
 
       for range in $warp_exclude_ranges; do
         case "$current_ranges" in
@@ -536,7 +536,7 @@ let
       done
 
       local current_ranges
-      current_ranges="$("$warp_cli" tunnel ip list --no-ansi 2>/dev/null || true)"
+      current_ranges="$("$warp_cli" tunnel ip list --no-paginate 2>/dev/null || true)"
       for ip in $new_ips; do
         case "$current_ranges" in
           *"$ip"*) ;;
