@@ -83,12 +83,19 @@ extract_live() {
                             else "Default" end),
             value: $ids[. + 1] }]
        | from_entries) as $map
-    | ([.. | objects | select(has("items")) | .items[] | select(type == "object")]
+    # id が null の item が混じるので除外する（from_entries が
+    # 「Cannot use null as object key」で落ち、出力が途中で切れる）。
+    | ([.. | objects | select(has("items")) | .items[] | select(type == "object")
+        | select(.id != null)]
        | unique_by(.id)) as $items
+    | ($items | map({ key: .id, value: . }) | from_entries) as $byid
     | $map | to_entries[]
     | .key as $prof | .value as $cid
-    | ($items | map(select(.parentID == $cid))
-              | map(.data.tab.savedURL // .data.tab.activeTabURL // empty)) as $urls
+    # **並び順は コンテナの childrenIds が持つ。** items 配列の出現順ではないので、
+    # childrenIds を辿って解決する（順序を取り違えると復元時に並びが崩れる）。
+    | (($byid[$cid].childrenIds // [])
+       | map($byid[.] // empty)
+       | map(.data.tab.savedURL // .data.tab.activeTabURL // empty)) as $urls
     | select($urls | length > 0)
     | $urls[] | "\($prof)\t\(.)"
   ' "$SIDEBAR" 2>/dev/null
@@ -316,11 +323,12 @@ case "${1:-list}" in
       | select(.parentID == $cid) | .data.tab.savedURL // empty' "$SIDEBAR" 2>/dev/null)"
     add="$(printf '%s\n' "$want" | grep -vxF -f <(printf '%s\n' "$have") 2>/dev/null || printf '%s\n' "$want")"
     add="$(printf '%s\n' "$add" | grep . || true)"
-    if [ -z "$add" ]; then
-      echo "追加するものがありません（すべて登録済み）。" >&2
-      exit 0
-    fi
-    nadd="$(printf '%s\n' "$add" | grep -c .)"
+    nadd="$(printf '%s\n' "$add" | grep -c . || true)"
+    # 追加が無くても並び順の修正だけは行う（順序は childrenIds が持つので後から直せる）。
+    [ -n "$add" ] || echo "追加するものはありません。並び順のみ確認します。" >&2
+
+    # 期待する並び順（TSV の記述順）。restore を再実行すればこの順に揃う。
+    order_json="$(printf '%s\n' "$want" | grep . | jq -R . | jq -s '.')"
 
     # CFAbsoluteTime = UNIX 時刻 - 978307200（2001-01-01 起点）
     now=$(( $(date +%s) - 978307200 ))
@@ -347,7 +355,8 @@ case "${1:-list}" in
     tmp="$SIDEBAR.new.$$"
     if ! jq --arg cid "$CID" --arg prof "$prof" --arg mid "$MACHINE" \
             --argjson idx "$IDX" --argjson new "$new_json" \
-            --argjson t "$now" --argjson mk "$CREATE_CONTAINER" '
+            --argjson t "$now" --argjson mk "$CREATE_CONTAINER" \
+            --argjson order "$order_json" '
       # 必要ならこのマシンの Favorites コンテナを先に作る。
       # 構造は実測に一致させる（data.itemContainer.containerType.topApps._0.custom._0）。
       (if $mk == 1 then
@@ -374,6 +383,16 @@ case "${1:-list}" in
       | .sidebar.containers[$idx].items |= map(
           if type == "object" and .id == $cid
           then .childrenIds += ($new | map(.id))
+          else . end)
+      # **並び順を TSV の順に揃える。** 表示順は childrenIds が持つので、ここで
+      # 並べ替えれば追加後でも順序を直せる（restore の再実行で修正できる）。
+      # $order に無い id は末尾に残す。
+      | ( [ .sidebar.containers[$idx].items[]
+            | select(type == "object" and .parentID == $cid) ] ) as $kids
+      | ( $order | map(. as $u | ($kids | map(select(.data.tab.savedURL == $u)) | .[0].id // empty)) ) as $ordered
+      | .sidebar.containers[$idx].items |= map(
+          if type == "object" and .id == $cid
+          then .childrenIds = ($ordered + (.childrenIds - $ordered))
           else . end)
     ' "$SIDEBAR" > "$tmp"; then
       rm -f "$tmp"
