@@ -52,6 +52,10 @@
         "/System/Applications/System Settings.app/"
       ];
 
+      # フォルダのスタックは Dock に置かない。工場出荷状態では Downloads が
+      # 入っており、宣言していないと新マシンにだけ残る（Mac Studio で発覚）。
+      persistent-others = [ ];
+
       # Magnify Dock icons on hover.
       magnification = true;
 
