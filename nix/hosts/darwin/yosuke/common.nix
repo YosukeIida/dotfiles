@@ -860,6 +860,10 @@ in
     # delegate-browser も同様に配置（従来は手動 symlink 依存だった）
     _link "$pub/scripts/delegate-browser" "$home/.local/bin/delegate-browser"
 
+    # arc-favorites: 新マシンで Arc の Favorites を移すときに使う（Favorites は
+    # machineID 紐づきで同期されないため。詳細は private の docs/arc-profiles.md）。
+    _link "$pub/scripts/arc-favorites" "$home/.local/bin/arc-favorites"
+
     # 明示的に許可したアプリだけ quarantine 属性を解除する（quarantineAllowlist 参照）。
     # 再インストール／更新でダウンロードするたびに quarantine が再付与されるため毎 switch 実行する。
     # shellcheck disable=SC2043  # リストが1件でも将来増える前提の for ループ

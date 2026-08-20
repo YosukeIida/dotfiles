@@ -1,0 +1,206 @@
+#!/usr/bin/env bash
+# Arc の Favorites を新しいマシンへ移すための補助。
+#
+# Arc の Favorites と Space→プロファイルの割り当ては、どちらも
+# 「プロファイル名 × machineID」の組で保存される。そのため別のマシンでは引き継げない
+# （データ自体は同期されてくるが、自分の machineID のコンテナは空で作られる）。
+# 登録そのものは手動（開いたタブを Favorites 領域へドラッグ）。Arc には Favorites を
+# 作る AppleScript も CLI も無いので、そこは自動化できない。
+#
+# 設計上の約束:
+#   - URL やメールアドレスをこのスクリプトに埋め込まない（public リポジトリに置くため）。
+#     Favorites は同期されてきた StorableSidebar.json から実行時に読む。
+#   - プロファイル番号とアカウントの対応は個人情報なので private overlay に置く。
+#     $ARC_PROFILE_MAP（既定: dotfiles-private/arc/profile-accounts.tsv、
+#     "Profile 3<TAB>foo@example.com" 形式）があれば表示に使い、無ければ番号のみ表示する。
+set -uo pipefail
+
+ARC_SUPPORT="$HOME/Library/Application Support/Arc"
+SIDEBAR="$ARC_SUPPORT/StorableSidebar.json"
+AUTH="$ARC_SUPPORT/StorableAuthState.json"
+LOCAL_STATE="$ARC_SUPPORT/User Data/Local State"
+PROFILE_MAP="${ARC_PROFILE_MAP:-$HOME/workspace/github.com/YosukeIida/dotfiles-private/arc/profile-accounts.tsv}"
+
+usage() {
+  cat >&2 <<'USAGE'
+usage:
+  arc-favorites                前提チェックと Favorites 一覧
+  arc-favorites open <対象>    その Favorites を Arc で順に開く
+                               対象はプロファイル名（"Profile 3"）でもメールアドレスでもよい
+
+open の前に、対象アカウントのプロファイルに割り当てた Space を Arc でアクティブに
+しておくこと（open はアクティブな Space にタブを開く）。開いたタブを Favorites 領域へ
+ドラッグして登録する。
+USAGE
+}
+
+die() {
+  echo "error: $*" >&2
+  exit 1
+}
+
+command -v jq >/dev/null 2>&1 || die "jq が見つかりません"
+[ -r "$SIDEBAR" ] || die "$SIDEBAR が読めません（Arc 未導入、または未起動）"
+
+# --- プロファイル名 → アカウント の対応（あれば） ------------------------------
+# 引数のプロファイル名を注釈付きで返す。
+annotate() {
+  local prof="$1" mail=""
+  if [ -r "$PROFILE_MAP" ]; then
+    mail="$(awk -F'\t' -v p="$prof" '$1 == p { print $2; exit }' "$PROFILE_MAP")"
+  fi
+  if [ -n "$mail" ]; then
+    printf '%s (%s)' "$prof" "$mail"
+  else
+    printf '%s' "$prof"
+  fi
+}
+
+# 対象指定（プロファイル名 or メールアドレス）をプロファイル名に解決する。
+resolve() {
+  local want="$1"
+  case "$want" in
+    *@*)
+      [ -r "$PROFILE_MAP" ] || die "メールアドレスで指定するには $PROFILE_MAP が必要です"
+      awk -F'\t' -v m="$want" '$2 == m { print $1; exit }' "$PROFILE_MAP"
+      ;;
+    *) printf '%s' "$want" ;;
+  esac
+}
+
+# --- 同期されてきた Favorites の抽出 ------------------------------------------
+# topAppsContainerIDs は [プロファイル指定, コンテナID, ...] の平坦な配列。
+# プロファイル指定は {"default":true} か
+# {"custom":{"_0":{"directoryBasename":"Profile 3","machineID":"..."}}}。
+# 複数ある配列のうち最長のものが全プロファイル分を持つ。
+extract() {
+  jq -r '
+    ([.. | objects | select(has("topAppsContainerIDs"))] | map(.topAppsContainerIDs) | max_by(length)) as $ids
+    | ([range(0; ($ids | length); 2)
+        | { key: ($ids[.] | if type == "object" and has("custom")
+                            then .custom._0.directoryBasename
+                            else "Default" end),
+            value: $ids[. + 1] }]
+       | from_entries) as $map
+    | ([.. | objects | select(has("items")) | .items[] | select(type == "object")]
+       | unique_by(.id)) as $items
+    | $map | to_entries[]
+    | .key as $prof | .value as $cid
+    | ($items | map(select(.parentID == $cid))
+              | map(.data.tab.savedURL // .data.tab.activeTabURL // empty)) as $urls
+    | select($urls | length > 0)
+    | $urls[] | "\($prof)\t\(.)"
+  ' "$SIDEBAR"
+}
+
+# --- 前提チェック --------------------------------------------------------------
+doctor() {
+  local ng=0
+
+  # 1. Arc アカウントにサインインしているか（していないと何も同期されてこない）
+  local mail=""
+  [ -r "$AUTH" ] && mail="$(jq -r '.session.user.email // empty' "$AUTH" 2>/dev/null)"
+  if [ -n "$mail" ]; then
+    echo "  ✓ Arc にサインイン済み: $mail"
+  else
+    echo "  ✗ Arc にサインインしていません。先に Settings からサインインしてください"
+    ng=1
+  fi
+
+  # 2. ローカルにプロファイルが作られているか。番号とアカウントの対応は
+  #    マシンごとに違いうるので、**このマシンの Local State を正として**表示する。
+  local locals=""
+  if [ -r "$LOCAL_STATE" ]; then
+    locals="$(jq -r '.profile.info_cache // {} | to_entries[]
+                     | select(.key != "Default") | "\(.key)\t\(.value.name // "-")"' \
+              "$LOCAL_STATE" 2>/dev/null)"
+  fi
+  if [ -n "$locals" ]; then
+    echo "  ✓ このマシンのプロファイル:"
+    printf '%s\n' "$locals" | awk -F'\t' '{ printf "      %-10s %s\n", $1, $2 }'
+  else
+    echo "  ✗ このマシンにプロファイルがありません（Default のみ）。"
+    echo "      Arc の Settings → Profiles で先に作ってください。Favorites は"
+    echo "      プロファイルに属するので、作る前に開いても登録先がありません"
+    ng=1
+  fi
+
+  # 3. Space がプロファイルに割り当てられているか。割り当ても machineID 紐づきなので、
+  #    別マシンの分しか無い場合は「未割り当て」として扱う。
+  local assigned
+  assigned="$(jq -r '[.. | objects | select(has("profile")) | .profile
+                     | select(type == "object" and has("custom"))] | length' "$SIDEBAR" 2>/dev/null)"
+  if [ "${assigned:-0}" -gt 0 ]; then
+    echo "  i Space の割り当て記録が $assigned 件あります。ただし割り当ても machineID"
+    echo "      紐づきなので、旧マシン分はこのマシンには効きません。Arc で各 Space を"
+    echo "      対象プロファイルに割り当て直す必要があります（Favorites の登録先を決めるため）"
+  fi
+
+  # 4. 対応表の有無
+  if [ -r "$PROFILE_MAP" ]; then
+    echo "  ✓ プロファイル対応表: $PROFILE_MAP"
+  else
+    echo "  i プロファイル対応表がありません（番号のみ表示します）"
+    echo "      用意する場合: $PROFILE_MAP に \"Profile 3<TAB>foo@example.com\" 形式で記述"
+  fi
+
+  return "$ng"
+}
+
+case "${1:-list}" in
+  list)
+    echo "== 前提チェック =="
+    doctor || echo "  → 上の ✗ を解消してから open を実行してください"
+    echo ""
+    echo "== 同期されてきた Favorites =="
+    out="$(extract)"
+    if [ -z "$out" ]; then
+      echo "  (見つかりません。Arc の同期が済んでいない可能性があります)"
+      exit 1
+    fi
+    prev=""
+    while IFS=$'\t' read -r prof url; do
+      if [ "$prof" != "$prev" ]; then
+        [ -n "$prev" ] && echo ""
+        echo "  === $(annotate "$prof") ==="
+        prev="$prof"
+      fi
+      echo "    $url"
+    done <<< "$out"
+    echo ""
+    echo "登録するには: arc-favorites open \"<プロファイル名 または メールアドレス>\"" >&2
+    ;;
+  open)
+    [ $# -ge 2 ] || {
+      usage
+      exit 64
+    }
+    prof="$(resolve "$2")"
+    [ -n "$prof" ] || die "\"$2\" に対応するプロファイルが対応表にありません"
+
+    urls="$(extract | awk -F'\t' -v p="$prof" '$1 == p { print $2 }')"
+    [ -n "$urls" ] || die "$(annotate "$prof") の Favorites が見つかりません。一覧は arc-favorites で確認してください"
+
+    # プロファイルが未作成のまま開いても登録先が無いので止める。
+    if ! doctor >/dev/null; then
+      doctor
+      die "前提が満たされていません（上を参照）"
+    fi
+
+    n="$(printf '%s\n' "$urls" | grep -c .)"
+    echo "$(annotate "$prof") の Favorites を $n 件開きます。" >&2
+    echo "対象の Space が Arc でアクティブになっていることを確認してください。" >&2
+    printf '%s\n' "$urls" | while IFS= read -r u; do
+      [ -z "$u" ] && continue
+      echo "  → $u" >&2
+      open -a Arc "$u" || true
+      sleep 1
+    done
+    echo "開き終えました。各タブを Favorites 領域にドラッグして登録してください。" >&2
+    ;;
+  -h | --help | help) usage ;;
+  *)
+    usage
+    exit 64
+    ;;
+esac
