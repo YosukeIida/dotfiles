@@ -337,21 +337,42 @@ case "${1:-list}" in
       (.sidebar.containers[$idx].items // [])[] | select(type == "object")
       | select(.parentID == $cid)
       | "\(.id)\t\(.data.tab.savedURL // "")\t\(.childrenIds | length)"' "$SIDEBAR" 2>/dev/null)"
-    have="$(printf '%s\n' "$cur" | awk -F'\t' 'NF>1 && $2 != "" { print $2 }')"
+    # **URL ごとに残す item を 1 つだけ決める。** 同じ URL の item が複数あっても
+    # 1 つに畳む（過去の実行で重複が入った状態からも収束させる）。
+    #   final_ids … TSV の順に並べた「残す/作る」item の id
+    #   add       … 新規に作る URL
+    #   del_ids   … このコンテナ配下でどれにも選ばれなかった item（重複と余剰）
+    final_ids=""
+    add=""
+    used_ids=""
+    while IFS= read -r u; do
+      [ -z "$u" ] && continue
+      hit=""
+      while IFS=$'\t' read -r iid iurl ikids; do
+        [ -z "$iid" ] && continue
+        [ "$iurl" != "$u" ] && continue
+        case "$used_ids" in *"$iid"*) continue ;; esac
+        hit="$iid"
+        break
+      done <<< "$cur"
+      if [ -n "$hit" ]; then
+        final_ids="$final_ids$hit"$'\n'
+        used_ids="$used_ids$hit"$'\n'
+      else
+        nid="$(uuidgen)"
+        final_ids="$final_ids$nid"$'\n'
+        add="$add$nid"$'\t'"$u"$'\n'
+      fi
+    done <<< "$want"
+    nadd="$(printf '%s' "$add" | grep -c . || true)"
 
-    # awk で差集合を取る。grep -vxF は「該当なし」で exit 1 になり、pipefail と
-    # フォールバックの組み合わせで壊れやすいので使わない。
-    add="$(awk 'NR==FNR { h[$0]; next } $0 != "" && !($0 in h)' \
-           <(printf '%s\n' "$have") <(printf '%s\n' "$want"))"
-    nadd="$(printf '%s\n' "$add" | grep -c . || true)"
-
-    # TSV に無いものは削除対象。ただし子を持つ item（フォルダ等）は触らない。
+    # 選ばれなかった item は削除対象。ただし子を持つもの（フォルダ等）は残す。
     del_ids=""
     del_urls=""
     skipped=""
     while IFS=$'\t' read -r iid iurl ikids; do
       [ -z "$iid" ] && continue
-      if printf '%s\n' "$want" | grep -qxF -- "$iurl"; then continue; fi
+      case "$used_ids" in *"$iid"*) continue ;; esac
       if [ "${ikids:-0}" != "0" ]; then
         skipped="$skipped$iurl"$'\n'
         continue
@@ -364,14 +385,14 @@ case "${1:-list}" in
     # grep を挟まず jq 側で空行を落とす。`grep . | ... || echo '[]'` と書くと
     # pipefail のせいで grep の exit 1 が拾われ、正常な "[]" に続けて
     # フォールバックの "[]" も出力されて JSON が 2 個になる（実際に踏んだ）。
-    order_json="$(printf '%s\n' "$want" | jq -R . | jq -s 'map(select(. != ""))')"
+    order_json="$(printf '%s' "$final_ids" | jq -R . | jq -s 'map(select(. != ""))')"
     del_json="$(printf '%s' "$del_ids" | jq -R . | jq -s 'map(select(. != ""))')"
 
     echo "収束計画（$(annotate "$prof")）:" >&2
-    printf '%s\n' "$add" | grep . | sed 's/^/  + /' >&2 || true
-    printf '%s' "$del_urls" | grep . | sed 's/^/  - /' >&2 || true
-    printf '%s' "$skipped" | grep . | sed 's/^/  ! 子を持つため残す: /' >&2 || true
-    printf '%s\n' "$want" | grep . | sed 's/^/  = /' >&2
+    printf '%s' "$add" | awk -F'\t' 'NF>1 { print "  + " $2 }' >&2
+    printf '%s' "$del_urls" | awk 'NF { print "  - " $0 }' >&2
+    printf '%s' "$skipped" | awk 'NF { print "  ! 子を持つため残す: " $0 }' >&2
+    printf '%s\n' "$want" | awk 'NF { print "  = " $0 }' >&2
     if [ "${nadd:-0}" -eq 0 ] && [ "${ndel:-0}" -eq 0 ]; then
       echo "  （追加・削除なし。並び順のみ揃えます）" >&2
     fi
@@ -384,10 +405,11 @@ case "${1:-list}" in
     # CFAbsoluteTime = UNIX 時刻 - 978307200（2001-01-01 起点）
     now=$(( $(date +%s) - 978307200 ))
 
+    # id は上で決めてあるので（final_ids と一致させるため）ここでは生成しない。
     new_json="$(
-      printf '%s\n' "$add" | while IFS= read -r u; do
-        [ -z "$u" ] && continue
-        jq -n --arg id "$(uuidgen)" --arg url "$u" --arg dev "$MACHINE" \
+      printf '%s' "$add" | while IFS=$'\t' read -r nid u; do
+        [ -z "$nid" ] && continue
+        jq -n --arg id "$nid" --arg url "$u" --arg dev "$MACHINE" \
               --arg cid "$CID" --argjson t "$now" '
           { createdAt: $t, originatingDevice: $dev, parentID: $cid,
             isUnread: false, title: null,
@@ -447,15 +469,13 @@ case "${1:-list}" in
           if type == "object" and .id == $cid
           then .childrenIds += ($new | map(.id))
           else . end)
-      # **並び順を TSV の順に揃える。** 表示順は childrenIds が持つので、ここで
-      # 並べ替えれば追加後でも順序を直せる（restore の再実行で修正できる）。
-      # $order に無い id は末尾に残す。
-      | ( [ .sidebar.containers[$idx].items[]
-            | select(type == "object" and .parentID == $cid) ] ) as $kids
-      | ( $order | map(. as $u | ($kids | map(select(.data.tab.savedURL == $u)) | .[0].id // empty)) ) as $ordered
+      # **childrenIds を $order（決定済みの id 列）でそのまま置き換える。**
+      # 以前は URL で item を引き直していたため、同じ URL の item が複数あると
+      # childrenIds に無い方を掴んで二重登録になっていた（実際に 9 件が 18 件に増えた）。
+      # 残す id は呼び出し側で URL ごとに 1 つに畳んであるので、ここは代入で足りる。
       | .sidebar.containers[$idx].items |= map(
           if type == "object" and .id == $cid
-          then .childrenIds = ($ordered + (.childrenIds - $ordered))
+          then .childrenIds = $order
           else . end)
     ' "$SIDEBAR" > "$tmp"; then
       rm -f "$tmp"
