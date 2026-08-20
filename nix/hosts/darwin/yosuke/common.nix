@@ -689,6 +689,45 @@ in
     };
   };
 
+  # herdr server を Aqua セッション限定で常駐させる。
+  #
+  # `brew services start herdr` は使わない。brew services は sudo 経由・SSH 経由
+  # （HOMEBREW_SSH_TTY かつ /dev/console 非所有）・uid≠euid のいずれかを踏むと
+  # gui/$UID ではなく user/$UID = Background セッションへ bootstrap する
+  # （Homebrew/Library/Homebrew/services/system.rb の domain_target）。そして
+  # /opt/homebrew/opt/herdr/homebrew.mxcl.herdr.plist は LimitLoadToSessionType に
+  # Aqua だけでなく Background も並べているため、その user/ domain へのロードが
+  # 実際に成功してしまう。Background セッションで起動した herdr server 配下の pane では
+  # DNS 解決と keychain アクセスが壊れる（`launchctl managername` が Background を返す状態）。
+  #
+  # nix-darwin の launchd.user.agents は LimitLoadToSessionType を出力しないので既定の
+  # Aqua のみでロードされ（既存 agent が gui/501 にのみ存在し user/501 には無いことを実測）、
+  # この経路が構造的に塞がる。バイナリは brew 管理（homebrew.nix の brews に "herdr"）
+  # なのでパスを直に指す。
+  #
+  # PATH を明示するのは、launchd 起動では最小 PATH になり server 自身が呼ぶ nix 側の
+  # git（/etc/profiles/per-user/... にあり /usr/bin/git とは別物）を見失うため。
+  # 先頭の agent-switch/shims は、herdr が自プロセスの env のまま claude/codex を直接
+  # spawn する経路（login shell を経由しない）のために必要（nix/home/files.nix の shims
+  # 導入の経緯。かつて hook が `node: command not found` で落ちた）。pane 内で login shell
+  # を経る場合の PATH は zshenv/zprofile が再構築するのでここには依存しない。
+  launchd.user.agents.herdr = {
+    serviceConfig = {
+      Label = "com.yosuke.herdr";
+      ProgramArguments = [
+        "/opt/homebrew/bin/herdr"
+        "server"
+      ];
+      RunAtLoad = true;
+      KeepAlive = true;
+      EnvironmentVariables = {
+        PATH = "${homedir}/.local/share/agent-switch/shims:${homedir}/.nix-profile/bin:/etc/profiles/per-user/${username}/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin";
+      };
+      StandardOutPath = "${homedir}/Library/Logs/herdr.log";
+      StandardErrorPath = "${homedir}/Library/Logs/herdr.log";
+    };
+  };
+
   # cctag spoke は launchd 常駐をやめ、1つのターミナルで手動起動する運用に変更した
   # (2026-07-27)。同じ owner の Spoke が2つ繋がると Hub が古い接続を切り、KeepAlive で
   # 蘇った側と手動起動側が永久に蹴り合う再接続ストームになったため。ログも
