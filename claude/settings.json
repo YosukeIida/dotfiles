@@ -163,6 +163,12 @@
         "source": "github",
         "repo": "pbakaus/impeccable"
       }
+    },
+    "anthropic-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/skills"
+      }
     }
   },
   "outputStyle": "Concise",
