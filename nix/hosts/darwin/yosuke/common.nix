@@ -637,6 +637,18 @@ in
     vpnCoexistenceApply
   ];
 
+  # nix-direnv は share/nix-direnv/direnvrc しか持たず bin を持たないため、
+  # nix-darwin の pathsToLink 既定値では systemPath に何一つリンクされない。
+  # リンクされない = buildEnv が参照しない = closure に入らずビルドもされないので、
+  # direnv/direnvrc が source する
+  # /run/current-system/sw/share/nix-direnv/direnvrc が永久に生えなかった。
+  # これが無いと direnv は組み込みの use_flake に無言で落ち、print-dev-env が
+  # export する TMPDIR=.../nix-shell.XXXXXX が復元されないまま残る（nix-direnv 版は
+  # NIX_BUILD_TOP/TMP/TMPDIR/TEMP/TEMPDIR を退避復元して nix-shell.* を消す）。
+  # 実害: herdr --remote の ssh ControlMaster ソケットのパスが AF_UNIX の
+  # 103 バイト上限を超えて接続できなくなる（macOS の $TMPDIR は既に 48 文字）。
+  environment.pathsToLink = [ "/share/nix-direnv" ];
+
   # sleepctl 関連の sudo ルールは蓋のある機種だけ（macbook-air.nix）。
   # security.sudo.extraConfig は types.lines なので、複数モジュールの指定は連結される。
   security.sudo.extraConfig = ''
