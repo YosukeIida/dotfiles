@@ -22,11 +22,19 @@ if [[ -n "${IN_NIX_SHELL:-}" ]]; then
   done 3< <(type -ap "$prog" 2>/dev/null)
 fi
 
-# 2. devShellが無くても、pyproject.toml/uv.lock があれば uv run python に委譲する
+# 2. python プロジェクト内かどうかを判定する。ただし **委譲はしない** — 使うのは
+#    拒否メッセージの選択だけ。ここで `exec uv run python` すると、uv が PATH の
+#    インタプリタを列挙してこのガードを probe したときに2段目の uv を呼び返し、
+#    それが1段目の uv が保持するロックを待って無音でデッドロックする
+#    （.venv の無い初回 `uv sync` が必ず固まる。2026-08-21 Mac Studio で実測）。
+#    uv は候補が非ゼロ終了すれば素通りして managed python に進むので、
+#    「使えない」と正直に 1 を返すのが正しい振る舞い。
 dir="$PWD"
+in_project=
 while [[ "$dir" != "/" && "$dir" != "$HOME" ]]; do
   if [[ -f "$dir/pyproject.toml" || -f "$dir/uv.lock" ]]; then
-    exec uv run python "$@"
+    in_project=1
+    break
   fi
   dir="$(dirname "$dir")"
 done
@@ -40,7 +48,14 @@ if [[ -n "${HERDR_HOOK_INPUT_FILE:-}" && -x "/usr/bin/$prog" ]]; then
   exec "/usr/bin/$prog" "$@"
 fi
 
-# 3. どちらの根拠も無ければ拒否する（/usr/bin の system python への無自覚なフォールバックを防ぐ）
-echo "この場所はpythonプロジェクトとして認識されていません（pyproject.toml/uv.lockが見つかりません）。" >&2
-echo "system pythonは方針上使用しません。'uv run python' か 'uvx' を使ってください。" >&2
+# 3. どちらの根拠も無ければ拒否する（/usr/bin の system python への無自覚な
+#    フォールバックを防ぐ）。uv からの probe もここに落ちて 1 を返し、uv は
+#    この候補を諦めて managed python に進む。
+if [[ -n "$in_project" ]]; then
+  echo "このプロジェクトでは素の $prog を使いません（pyproject.toml/uv.lock があります）。" >&2
+  echo "'uv run $prog' を使ってください（依存が入った .venv で実行されます）。" >&2
+else
+  echo "この場所はpythonプロジェクトとして認識されていません（pyproject.toml/uv.lockが見つかりません）。" >&2
+  echo "system pythonは方針上使用しません。'uv run python' か 'uvx' を使ってください。" >&2
+fi
 exit 1
