@@ -51,10 +51,20 @@ let
   # git identity + lab 固有 safe.directory。public の git/gitconfig は [include] するだけで、
   # 実体はここで生成する（他者環境ではこのファイルが無く、その人自身の identity が使われる）。
   # identity は秘密ではない（コミットに載る公開情報）ため agenix ではなく通常ファイルで扱う。
+  #
+  # GitHub は常に SSH で叩く。HTTPS remote だと credential helper（osxkeychain）が要り、
+  # Claude Code のような非対話セッションからは keychain のプロンプトを出せず
+  # 「could not read Username for https://github.com: Device not configured」で push が
+  # 落ちる（2026-08-21 実測）。insteadOf なら remote URL の書き換え無しに全リポジトリへ
+  # 効くので、`ghq get owner/repo`（省略形は HTTPS になる）でも SSH 経路になる。
+  # public 側の git/gitconfig に置かないのは、GitHub の SSH 鍵を前提にする設定であり、
+  # HTTPS + PAT を使う fork 利用者を壊すため（この層は Yosuke 専用）。
   gitconfigLocal = pkgs.writeText "gitconfig-local" ''
     [user]
     name = i2
     email = 95607264+YosukeIida@users.noreply.github.com
+    [url "git@github.com:"]
+    insteadOf = https://github.com/
     [safe]
     directory = /Users/yosuke/workspace/github.com/TMLlaboratory/llm-kie-sorimachi
     directory = /Users/yosuke/workspace/github.com/TMLlaboratory/llm-kie
