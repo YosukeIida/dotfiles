@@ -1,10 +1,10 @@
 # One plugin selector per line. Blank lines and comments are ignored.
+#
+# openai-primary-runtime / openai-bundled は codex-cli 0.149.0 で消滅した
+# （`codex plugin marketplace list` に出ず、`marketplace add` も owner/repo を要求して
+# 受け付けない）。かつてここにあった documents / spreadsheets / presentations / pdf /
+# template-creator / browser は install 時に必ず失敗し、install-plugins.sh は set -e で
+# そこで打ち切られるため、以降の行（impeccable）が丸ごと無視されていた。復活したら足す。
 github@openai-curated
 google-drive@openai-curated
-documents@openai-primary-runtime
-spreadsheets@openai-primary-runtime
-presentations@openai-primary-runtime
-pdf@openai-primary-runtime
-browser@openai-bundled
-template-creator@openai-primary-runtime
 impeccable@impeccable
