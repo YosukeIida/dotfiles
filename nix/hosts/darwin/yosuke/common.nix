@@ -624,6 +624,20 @@ in
     fi
   '';
 
+  # HuggingFace のモデルキャッシュ。値は huggingface_hub の既定と同じ場所だが、
+  # 「未設定」と「既定の場所を選んだ」を区別するために明示する。irireshi は
+  # HF_HOME の有無で分岐しており（tests/test_engine.py は未設定だと slow テストを
+  # 無言で skip、scripts/demo_e2e.sh は :? で hard-fail）、未設定のままだと
+  # golden ベクタ照合が「通った」のか「走らなかった」のか区別できない。
+  #
+  # 実体は数GB規模になるので、置き場所は機ごとに変わりうる（Studio に外付けを
+  # 生やす／Air は内蔵に留める、等）。mkDefault にしてあるので、変えたい機は
+  # macbook-air.nix / mac-studio.nix で同じ属性を素の値で上書きすればよい。
+  # 共通層（nix/home/packages.nix）ではなくここに置くのは、他人が fork する層に
+  # 個人の機材事情を持ち込まないため。
+  home-manager.users.${username}.home.sessionVariables.HF_HOME =
+    lib.mkDefault "$HOME/.cache/huggingface";
+
   environment.systemPackages = with pkgs; [
     vim
     direnv

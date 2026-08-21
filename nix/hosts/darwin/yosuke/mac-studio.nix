@@ -8,6 +8,10 @@
 #   平文で、at-rest 保護は FileVault 依存（yosuke/secrets.nix 冒頭を参照）。研究室は
 #   他人が物理アクセスしうるので、初回セットアップ時に手動で有効化を確認すること。
 # - リモートログイン(SSH): 必要になってから足す。開けっ放しにはしない。
+#
+# HF_HOME（HuggingFace のモデルキャッシュ）を外付けへ移すなら、この機の設定として
+# `home-manager.users.yosuke.home.sessionVariables.HF_HOME = "...";` を素の値で書く。
+# 既定は yosuke/common.nix が mkDefault で与えているので、そのまま上書きされる。
 { ... }:
 
 {

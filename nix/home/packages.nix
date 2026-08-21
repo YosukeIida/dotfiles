@@ -91,6 +91,8 @@ in
     # shim が無いので発生しない）。本質は agmsg の resolve_real_codex が他社製 wrapper を
     # 除外できていない点で、upstream 修正が入ればこの pin は不要になる。
     AGMSG_REAL_CODEX = "/opt/homebrew/bin/codex";
+    # HF_HOME は機ごとに置き場所が変わりうるので、ここ（他人も fork して使う共通層）
+    # ではなく nix/hosts/darwin/yosuke/common.nix に置いてある。
   };
 
   home.sessionPath = [ "$HOME/.agents/bin" ];

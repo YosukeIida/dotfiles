@@ -3,6 +3,10 @@
 # 蓋（clamshell）のある機種だけに意味がある sleepctl 一式をここに隔離する。
 # Mac Studio には蓋がなく AppleClamshellState が存在しないため、watcher を入れても
 # 発火せずループが常駐するだけになる（mac-studio.nix には入れない）。
+#
+# HF_HOME（HuggingFace のモデルキャッシュ）を内蔵以外へ移すなら、この機の設定として
+# `home-manager.users.yosuke.home.sessionVariables.HF_HOME = "...";` を素の値で書く。
+# 既定は yosuke/common.nix が mkDefault で与えているので、そのまま上書きされる。
 { pkgs, ... }:
 
 let
