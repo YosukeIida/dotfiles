@@ -62,7 +62,7 @@ HERDR_REPO="ogulcancelik/herdr"
 # 2026-08 に upstream が SKILL.md を repo 直下から skills/herdr/SKILL.md へ移動
 # （gh skill install が要求する <name>/SKILL.md 構造に合わせた再編、と見られる）。
 HERDR_PATH="skills/herdr/SKILL.md"
-HERDR_REV="51b7064ef0a02642393bab1d2eea0f4dbd8414d2"
+HERDR_REV="9eb521456ac0d19d3ab3d9d7cea3cca10baa8a4c"
 
 # writing-quotation: 引用ブロックの書式規約（Bash等のツール呼び出しを一切含まない
 # 純粋な書式ガイドなので allowed-tools は付けない）。
@@ -85,7 +85,7 @@ BROWSER_HARNESS_REV="2c3a69ad09fd7b6f369f32d3eb5c5ad44d7832ed"
 # 単体でも自動発動する。パッチ不要。
 GRILLING_REPO="mattpocock/skills"
 GRILLING_PATH="skills/productivity/grilling/SKILL.md"
-GRILLING_REV="86cba45f4244b2545112d13e77ba82eb2bfad325"
+GRILLING_REV="85f83d3fde1d3a90d5c9a657f6998c79a6c37308"
 
 # domain-modeling: CONTEXT.md / ADR の執筆規律。SKILL.md 本文が同ディレクトリの
 # ADR-FORMAT.md / CONTEXT-FORMAT.md を相対参照するため、この2ファイルも一緒に vendor
@@ -93,7 +93,7 @@ GRILLING_REV="86cba45f4244b2545112d13e77ba82eb2bfad325"
 DOMAIN_MODELING_REPO="mattpocock/skills"
 DOMAIN_MODELING_PATH="skills/engineering/domain-modeling/SKILL.md"
 DOMAIN_MODELING_EXTRA="skills/engineering/domain-modeling/ADR-FORMAT.md skills/engineering/domain-modeling/CONTEXT-FORMAT.md"
-DOMAIN_MODELING_REV="54bc6b604075c18293d38e9e294a2c96f365f104"
+DOMAIN_MODELING_REV="321658273cb1d20b76026717d027d505790106d4"
 
 # grill-with-docs: 上記2つへの一行委譲オーケストレータ。upstream の
 # `disable-model-invocation: true` を strip_pattern で落とし、herdr と同様に

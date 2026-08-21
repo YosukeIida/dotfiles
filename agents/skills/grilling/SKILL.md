@@ -4,17 +4,23 @@ description: Grill the user relentlessly about a plan, decision, or idea. Use wh
 metadata:
     vendor-repo: mattpocock/skills
     vendor-path: skills/productivity/grilling/SKILL.md
-    vendor-commit: 86cba45f4244b2545112d13e77ba82eb2bfad325
+    vendor-commit: 85f83d3fde1d3a90d5c9a657f6998c79a6c37308
 ---
 
 Interview the user relentlessly until you reach a shared understanding. Map this as a **design tree**: every decision branches into the decisions that hang off it.
 
 Work the tree in **rounds**. The **frontier** is every decision whose prerequisites are already settled: the questions you can ask _now_ without guessing at answers you haven't heard yet. Ask the whole frontier in one round: number each question and give your recommended answer. Then wait for the user's answers before the next round.
 
-Each question should be formatted like so:
+Format a round like so:
 
 ```
 ❓ **Q1** - **<question title>**: <question body, might be multiple paragraphs, including multiple choices>
+
+➡️ <your recommended answer>
+
+---
+
+❓ **Q2** - **<question title>**: <question body, might be multiple paragraphs, including multiple choices>
 
 ➡️ <your recommended answer>
 ```
