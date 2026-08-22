@@ -944,9 +944,9 @@ in
     # git identity を ~/.gitconfig.local に生成（public gitconfig が include する）。
     install -m 644 -o ${username} -g staff ${gitconfigLocal} "$home/.gitconfig.local"
 
-    # Codex の安定設定を system layer（/etc/codex/config.toml）で管理する。
-    # approval_policy=never・sandbox_mode=danger-full-access を含むため common ではなく
-    # ここ（host 固有）で配備し、example を使う他者には渡さない。
+    # Codex の個人用安定設定を system layer（/etc/codex/config.toml）で管理する。
+    # 個人の permission profile や MCP 設定を含むため、example に波及しない
+    # ここ（host 固有）で配備する。
     # ~/.codex/config.toml は projects/trust/UI 等のローカル状態として Codex に所有させる。
     _link "$pub/codex/config.toml" "/etc/codex/config.toml"
     # 旧 activation が ~/.codex/config.toml にコピーした安定設定を除去する

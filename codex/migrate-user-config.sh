@@ -18,8 +18,9 @@ trap 'rm -f "$tmp"' EXIT
 
 awk '
   # Keep these lists in sync with the durable settings managed in
-  # codex/config.toml. Any managed key left in ~/.codex/config.toml has higher
-  # precedence than /etc/codex/config.toml and will silently override it.
+  # codex/config.toml and retired model overrides that must remain absent. Any
+  # matching key left in ~/.codex/config.toml has higher precedence than
+  # /etc/codex/config.toml and will silently override it.
   function managed_table(header) {
     return header == "[mcp_servers.exa]"
   }
@@ -39,7 +40,7 @@ awk '
   }
 
   current_table == "" &&
-  /^(model|model_reasoning_effort|personality|web_search|model_context_window|model_auto_compact_token_limit|approval_policy|sandbox_mode|cli_auth_credentials_store|mcp_oauth_credentials_store)[[:space:]]*=/ {
+  /^(model|model_reasoning_effort|personality|web_search|model_context_window|model_auto_compact_token_limit|approval_policy|approvals_reviewer|sandbox_mode|cli_auth_credentials_store|mcp_oauth_credentials_store)[[:space:]]*=/ {
     next
   }
 
