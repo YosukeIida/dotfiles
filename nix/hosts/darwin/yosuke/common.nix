@@ -877,6 +877,32 @@ in
       done
     fi
 
+    # ~/.claude.json の「好み設定」だけを宣言的に揃える。
+    #
+    # なぜ symlink しないのか: このファイルは設定・セッション状態・機密（oauthAccount）が
+    # 同居する単一ファイルで、Claude Code が随時全体を書き戻す（実測: 調査中に 53,516→53,618 B）。
+    # なぜ settings.json に書かないのか: 以下のキーは settings.json の zod スキーマに存在せず、
+    # /config が global config（= ~/.claude.json）へ直書きする。dotfiles から宣言できる口が他にない。
+    #
+    # 既定値と同じキーは書かない（同期ではなく「挙動変更」になるため）。
+    # 2026-08-22 の両機比較にもとづく初期セット。根拠は
+    # dotfiles-private/docs/claude-json-sync-audit-2026-08-22.md
+    _claudePrefs='{"copyOnSelect":false,"leftArrowOpensAgents":false,"defaultToAgentsView":false,"externalEditorContext":true,"autoConnectIde":true}'
+    _cj="$home/.claude.json"
+    if [ -f "$_cj" ]; then
+      # 差分があるときだけ書く。CC 起動中の無駄な書き戻しを避ける。
+      # jq が失敗（不正 JSON 等）したら空文字になり "differs" にならないので fail-soft。
+      if [ "$(su - ${username} -c "${pkgs.jq}/bin/jq -r --argjson d '$_claudePrefs' '. as \$c | if any(\$d|to_entries[]; \$c[.key] != .value) then \"differs\" else \"same\" end' '$_cj'" 2>/dev/null)" = "differs" ]; then
+        # inode とパーミッション（600）を保つため mv ではなく cat で上書きする。
+        # su - でユーザー権限に落とすのでオーナーも変わらない。
+        if su - ${username} -c "${pkgs.jq}/bin/jq --argjson d '$_claudePrefs' '. * \$d' '$_cj' > '$_cj.new' && cat '$_cj.new' > '$_cj' && rm -f '$_cj.new'"; then
+          echo "claude prefs: ~/.claude.json を dotfiles の宣言値に更新した"
+        else
+          echo >&2 "warning: ~/.claude.json の更新に失敗した（内容は変更されていない）"
+        fi
+      fi
+    fi
+
     # agenix デーモン（org.nixos.activate-agenix）は非同期で /run/agenix へ復号する。
     # 初回 switch / boot 時は _place より後に復号が終わる可能性があるため、完了を待つ（最大 ~30秒）。
     if [ ! -e /run/agenix/ssh-config ]; then
