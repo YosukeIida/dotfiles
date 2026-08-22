@@ -193,7 +193,7 @@
   "theme": "dark",
   "editorMode": "normal",
   "verbose": false,
-  "preferredNotifChannel": "auto",
+  "preferredNotifChannel": "ghostty",
   "autoCompactEnabled": true,
   "switchModelsOnFlag": true,
   "autoContinueAtUsageLimit": true,
