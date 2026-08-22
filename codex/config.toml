@@ -1,16 +1,11 @@
-model = "gpt-5.5"
-model_reasoning_effort = "high"
 personality = "pragmatic"
 web_search = "live"
 
-model_context_window = 1000000
-model_auto_compact_token_limit = 900000
-
-# This personal workstation intentionally runs Codex without an approval gate or
-# filesystem sandbox. External MCP servers, including Exa below, are therefore
-# part of the trusted boundary for prompt/tool-output handling.
-approval_policy = "never"
-sandbox_mode = "danger-full-access"
+# Keep routine workspace actions automatic. Approval requests that cross the
+# sandbox boundary are reviewed by Codex Auto-review.
+approval_policy = "on-request"
+approvals_reviewer = "auto_review"
+sandbox_mode = "workspace-write"
 mcp_oauth_credentials_store = "file"
 cli_auth_credentials_store = "file"
 
