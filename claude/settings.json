@@ -113,7 +113,8 @@
     "swift-lsp@claude-plugins-official": true,
     "impeccable@impeccable": true,
     "claude-security@claude-plugins-official": true,
-    "clangd-lsp@claude-plugins-official": true
+    "clangd-lsp@claude-plugins-official": true,
+    "eli5@claude-community": true
   },
   "extraKnownMarketplaces": {
     "YosukeIida": {
@@ -169,6 +170,12 @@
         "source": "github",
         "repo": "anthropics/skills"
       }
+    },
+    "claude-community": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-community"
+      }
     }
   },
   "outputStyle": "Concise",
@@ -188,6 +195,7 @@
   "verbose": false,
   "preferredNotifChannel": "auto",
   "autoCompactEnabled": true,
+  "switchModelsOnFlag": true,
   "autoContinueAtUsageLimit": true,
   "autoScrollEnabled": true,
   "fileCheckpointingEnabled": true,
