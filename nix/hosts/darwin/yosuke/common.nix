@@ -903,6 +903,29 @@ in
       fi
     fi
 
+    # Claude Code の settings.json 一式（2026-08-24 に common 層から移設）。
+    # 監査 2026-07-08 の指摘: 中身が個人の permissions・model・herdr hook の絶対パスで、
+    # fork 可能層で配ると他者環境で毎 SessionStart に exit 127 が出続ける。
+    # 下の herdr integration install より **前** に置くこと — herdr の ensure は
+    # この symlink 越しに settings.json を書くので、初回機ではリンクが先に必要。
+    # settings.json は「実ファイルなら dotfiles に取り込んで symlink 化」を初回だけ行う。
+    # 既に symlink なら張り替えない: cc api が settings.api.json へ差し替えた
+    # モード選択を darwin-switch が巻き戻さないようにするため。
+    if [ -f "$home/.claude/settings.json" ] && [ ! -L "$home/.claude/settings.json" ]; then
+      cp "$home/.claude/settings.json" "$pub/claude/settings.json"
+    fi
+    if [ ! -L "$home/.claude/settings.json" ]; then
+      _link "$pub/claude/settings.json"            "$home/.claude/settings.json"
+    fi
+    # settings.api.json は生成物（live settings.json + api-mode-overlay.json）。
+    # 編集は api-mode-overlay.json 側へ。サブスクは live をそのまま使う（複製しない）。
+    su - ${username} -c "bash $pub/claude/gen-api-settings.sh" || true
+    # settings.json / settings.api.json の "model" キーは /model コマンドで頻繁に
+    # ローカル書き換えされるため、git の管理対象から外す（clean filter で常に除去）。
+    # .gitattributes で filter=strip-model が指定されているファイルにのみ効く。
+    su - ${username} -c "cd $pub && git config filter.strip-model.clean '${pkgs.jq}/bin/jq --indent 2 -f \"\$(git rev-parse --show-toplevel)/claude/git-filters/strip-model-clean.jq\"' && git config filter.strip-model.smudge cat" || true
+    _link "$pub/claude/settings.api.json"          "$home/.claude/settings.api.json"
+
     # herdr の agent-state hook（~/.claude/hooks/herdr-agent-state.sh）を毎 switch で
     # 流し直す。intent-cli の skill install と同型で、**vendor しない**のが要点：
     # このスクリプトは herdr 本体が所有・生成し（`integration status` が `current (v8)` の
