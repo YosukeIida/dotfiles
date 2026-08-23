@@ -70,6 +70,15 @@ in
   ];
 
   home.sessionVariables = {
+    # macOS は LANG 未設定だと「システム標準エンコーディング」を MacRoman と解釈する
+    # （CFStringGetSystemEncoding の既定）。この状態で pbcopy 等を経由すると UTF-8 の
+    # バイト列が1バイトずつ MacRoman として読み直され、「なのです」→「„Å™„ÅÆ„Åß„Åô」の
+    # 形に化ける（2026-08-24 に Mac Studio で再発、iconv -f MACROMAN で再現確認）。
+    # ja_JP ではなく en_US にするのは、ツールのメッセージを英語のまま保ち、英語出力を
+    # 前提にしたスクリプトを壊さないため（必要なのは文字コードだけ）。
+    # これはシェル経路の分。GUI アプリ・launchd 経路は host 層の
+    # launchd.user.envVariables と herdr agent の plist で別途設定する。
+    LANG = "en_US.UTF-8";
     AGMSG_NODE = "${pkgs.nodejs_22}/bin/node";
     # gws-multi-account skill（agents/skills/gws-multi-account/、vendor元は
     # indentcorp/gws-multi-account）の PreToolUse hook（hooks/hook.js）と、

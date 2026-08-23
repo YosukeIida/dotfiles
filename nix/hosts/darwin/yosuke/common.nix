@@ -727,6 +727,13 @@ in
     };
   };
 
+  # GUI アプリ（cmux 等）と、これ以降 launchd が起動する全プロセスに UTF-8 を渡す。
+  # launchd のドメイン env は login shell を経ないアプリにも効くので、シェル経路の
+  # home.sessionVariables（nix/home/packages.nix）では届かない範囲を埋める。
+  # nix-darwin の当該オプションの example がそのまま `LANG = "nl_NL.UTF-8"` である
+  # ことからも、これが想定された用法。
+  launchd.user.envVariables.LANG = "en_US.UTF-8";
+
   # herdr server を Aqua セッション限定で常駐させる。
   #
   # `brew services start herdr` は使わない。brew services は sudo 経由・SSH 経由
@@ -759,6 +766,10 @@ in
       RunAtLoad = true;
       KeepAlive = true;
       EnvironmentVariables = {
+        # LANG が無いと herdr が spawn する経路のクリップボード書き込みが MacRoman
+        # 扱いになり、日本語のコピーが化ける（nix/home/packages.nix の LANG 参照）。
+        # launchd agent は login shell を経ないので hm-session-vars では届かない。
+        LANG = "en_US.UTF-8";
         PATH = "${homedir}/.local/share/agent-switch/shims:${homedir}/.nix-profile/bin:/etc/profiles/per-user/${username}/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin";
       };
       StandardOutPath = "${homedir}/Library/Logs/herdr.log";
