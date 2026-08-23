@@ -69,20 +69,6 @@
       ln -sf "$src" "$dst"
     }
 
-    # Claude Code
-    # settings.json は「実ファイルなら dotfiles に取り込んで symlink 化」を初回だけ行う。
-    # 既に symlink なら張り替えない: cc api が settings.api.json へ差し替えた
-    # モード選択を darwin-switch が巻き戻さないようにするため。
-    if [ -f "$home/.claude/settings.json" ] && [ ! -L "$home/.claude/settings.json" ]; then
-      cp "$home/.claude/settings.json" "$pub/claude/settings.json"
-    fi
-    if [ ! -L "$home/.claude/settings.json" ]; then
-      _link "$pub/claude/settings.json"            "$home/.claude/settings.json"
-    fi
-    # settings.api.json は生成物（live settings.json + api-mode-overlay.json）。
-    # 編集は api-mode-overlay.json 側へ。サブスクは live をそのまま使う（複製しない）。
-    su - ${username} -c "bash $pub/claude/gen-api-settings.sh" || true
-
     # clean filter は python を使わない。python ガード
     # （tools/agent-switch/runtime-guards/python-guard.sh）が Claude Code セッション中の
     # PATH に入ると、フィルタが絶対パスで /usr/bin/python3 を呼んでいても撃ち落とされる
@@ -91,18 +77,18 @@
     # 中断する」のどちらかになり、この仕組みの目的が崩れる。
     # インタプリタは nix store のパスを直指定する（PATH に依存しない・generation ごとに固定）。
 
-    # settings.json / settings.api.json の "model" キーは /model コマンドで頻繁に
-    # ローカル書き換えされるため、git の管理対象から外す（clean filter で常に除去）。
-    # .gitattributes で filter=strip-model が指定されているファイルにのみ効く。
-    su - ${username} -c "cd $pub && git config filter.strip-model.clean '${pkgs.jq}/bin/jq --indent 2 -f \"\$(git rev-parse --show-toplevel)/claude/git-filters/strip-model-clean.jq\"' && git config filter.strip-model.smudge cat" || true
-
     # karabiner.json の "selected" プロファイルは GUI 切替で頻繁に書き換わるため、
     # git の管理対象から外す（clean filter で常に "Default profile" に固定）。
     # .gitattributes で filter=strip-selected が指定されているファイルにのみ効く。
     # jq ではなく awk なのは、karabiner.json の独自コンパクト整形を再シリアライズで
     # 壊さないため（実測 783行 → 1161行）。詳細はスクリプト内のコメント参照。
     su - ${username} -c "cd $pub && git config filter.strip-selected.clean '${pkgs.gawk}/bin/awk -f \"\$(git rev-parse --show-toplevel)/karabiner/git-filters/strip-selected-clean.awk\"' && git config filter.strip-selected.smudge cat" || true
-    _link "$pub/claude/settings.api.json"          "$home/.claude/settings.api.json"
+    # Claude Code
+    # settings.json / settings.api.json とその git clean filter は **ここには無い** —
+    # nix/hosts/darwin/yosuke/common.nix に移した（2026-08-24、監査 2026-07-08 の指摘）。
+    # 中身が個人の permissions・model・herdr hook のパスなので、fork 層で配ると
+    # 他者環境で毎 SessionStart に「そのファイルは無い」と言われ続ける。
+    # 下の statusline 等は settings.json から参照されるだけの部品なので common に残す。
     _link "$pub/claude/get_key.sh"                 "$home/.claude/get_key.sh"
     _link "$pub/claude/statusline.sh"              "$home/.claude/statusline.sh"
     _link "$pub/claude/subagent-statusline.sh"     "$home/.claude/subagent-statusline.sh"
