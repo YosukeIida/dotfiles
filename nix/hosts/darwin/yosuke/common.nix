@@ -903,6 +903,22 @@ in
       fi
     fi
 
+    # herdr の agent-state hook（~/.claude/hooks/herdr-agent-state.sh）を毎 switch で
+    # 流し直す。intent-cli の skill install と同型で、**vendor しない**のが要点：
+    # このスクリプトは herdr 本体が所有・生成し（`integration status` が `current (v8)` の
+    # ように版を報告する）、herdr は Homebrew で自動更新される。repo に固定すると
+    # 0.7.4→0.7.5 の terminal_id→pane_id 破壊のときのように静かに古くなる。
+    #
+    # なぜ必要か: settings.json（commit 済み）の SessionStart hook がこのパスを呼ぶが、
+    # スクリプト実体は dotfiles 管理外で、消えても git では検知できない。実際 2026-08 に
+    # ~/.claude/hooks/ ごと消えており、sessionId が herdr に報告されない →
+    # cctag が transcript を特定できず Slack に「テキスト応答なし」を返していた。
+    # install は冪等で settings.json を書き換えない（2回連続実行で実測）。
+    su - ${username} -c '
+      command -v herdr >/dev/null 2>&1 || { echo "herdr: PATH に無いため integration install を skip" >&2; exit 0; }
+      herdr integration install claude >/dev/null
+    ' || true
+
     # agenix デーモン（org.nixos.activate-agenix）は非同期で /run/agenix へ復号する。
     # 初回 switch / boot 時は _place より後に復号が終わる可能性があるため、完了を待つ（最大 ~30秒）。
     if [ ! -e /run/agenix/ssh-config ]; then
