@@ -7,6 +7,19 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "ssh_connections": [
+    {
+      "host": "mac-studio",
+      "args": [],
+      "projects": [
+        {
+          "paths": [
+            "/Users/yosuke/workspace/github.com/TMLlaboratory/irireshi/./"
+          ]
+        }
+      ]
+    }
+  ],
   "markdown_preview": {
     "limit_content_width": false,
     "max_width": 800.0
