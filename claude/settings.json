@@ -111,7 +111,6 @@
     "daymade-docs@daymade-skills": true,
     "rust-analyzer-lsp@claude-plugins-official": true,
     "swift-lsp@claude-plugins-official": true,
-    "impeccable@impeccable": true,
     "claude-security@claude-plugins-official": true,
     "clangd-lsp@claude-plugins-official": true,
     "eli5@claude-community": true
@@ -127,43 +126,43 @@
       "source": {
         "source": "github",
         "repo": "Imbad0202/academic-research-skills"
-      }
+      },
+      "autoUpdate": true
     },
     "claude-paper": {
       "source": {
         "source": "github",
         "repo": "alaliqing/claude-paper"
-      }
+      },
+      "autoUpdate": true
     },
     "daymade-skills": {
       "source": {
         "source": "github",
         "repo": "daymade/claude-code-skills"
-      }
+      },
+      "autoUpdate": true
     },
     "ecc": {
       "source": {
         "source": "github",
         "repo": "affaan-m/everything-claude-code"
-      }
+      },
+      "autoUpdate": true
     },
     "fujibee-agmsg": {
       "source": {
         "source": "github",
         "repo": "fujibee/agmsg"
-      }
+      },
+      "autoUpdate": true
     },
     "openai-codex": {
       "source": {
         "source": "github",
         "repo": "openai/codex-plugin-cc"
-      }
-    },
-    "impeccable": {
-      "source": {
-        "source": "github",
-        "repo": "pbakaus/impeccable"
-      }
+      },
+      "autoUpdate": true
     },
     "anthropic-agent-skills": {
       "source": {
@@ -175,7 +174,8 @@
       "source": {
         "source": "github",
         "repo": "anthropics/claude-plugins-community"
-      }
+      },
+      "autoUpdate": true
     }
   },
   "outputStyle": "Concise",
