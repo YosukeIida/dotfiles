@@ -251,5 +251,6 @@
   "skipAutoPermissionPrompt": true,
   "useAutoModeDuringPlan": true,
   "disableDeepLinkRegistration": "disable",
-  "voiceEnabled": true
+  "voiceEnabled": true,
+  "autoMemoryEnabled": false
 }
