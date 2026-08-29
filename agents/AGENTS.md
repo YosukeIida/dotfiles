@@ -86,6 +86,12 @@ devshell が有効かの確認・direnv の手順は **devshell-setup スキル*
 
 ---
 
+## 経験知の索引
+
+経験知の索引: @~/.claude/experience-index.md を意思決定・レビューの前に読むこと。
+（Claude Code はこの行の @ でファイルが展開される。他の agent はパスを Read すること。
+索引は SessionStart hook が生成する機械キャッシュで、正本は experience/ にある）
+
 ## コード調査時のツール選択
 
 grep/find/cat 相当の調査は Bash ではなくネイティブの `Grep`/`Glob`/`Read` ツールを優先する。

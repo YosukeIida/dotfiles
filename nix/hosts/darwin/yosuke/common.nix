@@ -635,8 +635,18 @@ in
   # macbook-air.nix / mac-studio.nix で同じ属性を素の値で上書きすればよい。
   # 共通層（nix/home/packages.nix）ではなくここに置くのは、他人が fork する層に
   # 個人の機材事情を持ち込まないため。
-  home-manager.users.${username}.home.sessionVariables.HF_HOME =
-    lib.mkDefault "$HOME/.cache/huggingface";
+  home-manager.users.${username}.home.sessionVariables = {
+    HF_HOME = lib.mkDefault "$HOME/.cache/huggingface";
+
+    # experience/（判断レシピの正本）の場所。hook（experience-inject.sh）と
+    # /wrap-up skill・Codex 側 hook が参照する。未設定の環境では hook は
+    # 何もしない（他人が fork しても壊れない任意化）。yosuke 層に置くのは
+    # 個人リポジトリのパスを他人が fork する層に持ち込まないため。
+    EXPERIENCE_DIR =
+      "$HOME/workspace/github.com/YosukeIida/dotfiles-private/experience";
+    EXPERIENCE_MANIFEST =
+      "$HOME/workspace/github.com/YosukeIida/dotfiles-private/claude-memory/manifest.tsv";
+  };
 
   environment.systemPackages = with pkgs; [
     vim
@@ -869,6 +879,13 @@ in
       echo >&2 "  gh repo clone YosukeIida/personal-agent-skills $skillsPub && darwin-switch"
     fi
 
+    # experience/（判断レシピの正本・dotfiles-private）の索引ファイルを touch する。
+    # ~/.claude/CLAUDE.md（=AGENTS.md）の @import がこのファイルを参照するため、
+    # 存在しないと初回セッションで import が空振りする（欠損は黙って許容されるが、
+    # hook（claude/hooks/experience-inject.sh）が最初に走るまでの穴を埋めておく）。
+    # 中身は SessionStart hook が毎回生成する機械キャッシュなのでここでは作らない。
+    su - ${username} -c "touch '$home/.claude/experience-index.md'" || true
+
     # private skills を ~/.claude/skills, ~/.codex/skills に追加
     if [ -d "$priv/agents/skills" ]; then
       for d in "$priv/agents/skills"/*/; do
@@ -999,6 +1016,12 @@ in
     # ここ（host 固有）で配備する。
     # ~/.codex/config.toml は projects/trust/UI 等のローカル状態として Codex に所有させる。
     _link "$pub/codex/config.toml" "/etc/codex/config.toml"
+
+    # Codex 側の hooks（Claude 互換 hooks.json 形式・CODEX_HOME 直下が discovery パス）。
+    # experience の索引生成 hook を Claude Code と共用する（openai/codex の
+    # codex-rs/hooks/src/engine/discovery.rs で load_hooks_json が
+    # config_folder/hooks.json を読むことを一次確認済み・2026-08-28）。
+    _link "$pub/codex/hooks.json" "$home/.codex/hooks.json"
     # 旧 activation が ~/.codex/config.toml にコピーした安定設定を除去する
     # （user layer は system layer より優先されるため、残すと新しい system 設定が無視される）。
     su - ${username} -c "bash $pub/codex/migrate-user-config.sh" || true
