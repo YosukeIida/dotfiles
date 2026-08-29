@@ -9,7 +9,7 @@
 #   2. settings.json の SessionStart（matcher: startup|resume|clear|compact）にこのスクリプトを登録
 #   3. ~/.claude/CLAUDE.md に1行:「経験知の索引: @~/.claude/experience-index.md を意思決定の前に読むこと」
 #   4. （任意）Codex: hooks の session_start に同スクリプトを登録すると同じ索引が使える
-# dir 名の解決は $EXPERIENCE_MANIFEST（claude-memory の manifest.tsv 形式:
+# dir 名の解決は $EXPERIENCE_MANIFEST（manifest.tsv 形式:
 # "<repo相対パス>\t<短名>"）があればそれを、無ければ git root の basename を使う。
 #
 # 脱出口: EXPERIENCE_INJECT=off

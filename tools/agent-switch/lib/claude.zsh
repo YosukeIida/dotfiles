@@ -213,37 +213,13 @@ cc_status() {
 # 委譲するか、uv run pythonに委譲するか、拒否するかを判定する
 # （PATH位置だけでは devShell > guard > /usr/bin という優先順位を表現できないため）。
 #
-# あわせて claude-memory の registrar を起動前に走らせる。auto memory の行き先
-# （autoMemoryDirectory）は **セッション開始時に読まれる** ため、SessionStart hook
-# では間に合わない — hook が設定を書いても、そのセッションは旧位置に書いてしまい、
-# 使い捨ての worktree では二度と回収できない。実装は private overlay にあり、
-# 無いマシンでは単に skip する。
-#
-# 不変条件: registrar が何をしようと claude の起動は妨げない。失敗したときだけ
-# CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 を付けて、旧位置に書かれるのを防ぐ。
+# claude-memory の registrar は 2026-08-30 に撤去した（auto-memory を無効化し、
+# 経験知は dotfiles-private/experience/ に一本化したため）。
 claude() {
   local _rt_bin="$HOME/.local/share/claude-runtime/bin"
   local _rt_fallback="$HOME/.local/share/claude-runtime/fallback"
   local _path="$PATH"
   [[ -d "$_rt_bin" ]] && _path="$_rt_bin:$_path"
   [[ -d "$_rt_fallback" ]] && _path="$_rt_fallback:$_path"
-
-  # registrar は **deadline 付きで**走らせる。非0 で失敗するだけなら fail-open できるが、
-  # git rev-parse やファイルシステムが hang すると claude に到達しなくなり、
-  # decision-003 の最重要不変条件（registrar は claude の起動を妨げない）が破れる。
-  # timeout(1) は macOS に無いので、watchdog を背後に置いて wait する。
-  local _cm="${CLAUDE_MEMORY_HOME:-$HOME/workspace/github.com/YosukeIida/dotfiles-private}/claude-memory.sh"
-  local _cm_ok=1 _cm_pid
-  if [[ -x "$_cm" ]]; then
-    "$_cm" register "$PWD" >/dev/null 2>&1 &
-    _cm_pid=$!
-    { sleep "${CLAUDE_MEMORY_REGISTER_TIMEOUT:-5}"; kill -KILL "$_cm_pid" 2>/dev/null } &!
-    wait "$_cm_pid" 2>/dev/null || _cm_ok=0
-  fi
-
-  if (( ! _cm_ok )); then
-    PATH="$_path" CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 command claude "$@"
-    return
-  fi
   PATH="$_path" command claude "$@"
 }

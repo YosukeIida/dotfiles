@@ -30,7 +30,7 @@ esac
 # experience/ は判断ログ（速度・正確さ優先の書き物）なので文体検査しない。
 # drafts の書き味が accepted の質を下げるようなら戻して様子を見る。
 case "$file_path" in
-  */claude-memory/*|*/agents/skills/*|*/\.claude/*|*/node_modules/*|*/experience/*) exit 0 ;;
+  */agents/skills/*|*/\.claude/*|*/node_modules/*|*/experience/*) exit 0 ;;
 esac
 
 # 日本語がほぼ無いファイルは素通し（英語 README 等への誤検知を根元から絶つ）
