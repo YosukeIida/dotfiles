@@ -159,7 +159,9 @@
     "swift-lsp@claude-plugins-official": true,
     "claude-security@claude-plugins-official": true,
     "clangd-lsp@claude-plugins-official": true,
-    "eli5@claude-community": true
+    "eli5@claude-community": true,
+    "academic-research-skills@academic-research-skills": true,
+    "security-guidance@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "YosukeIida": {
@@ -235,6 +237,7 @@
   },
   "advisorModel": "fable",
   "tui": "fullscreen",
+  "autoMemoryEnabled": false,
   "skipWorkflowUsageWarning": true,
   "theme": "dark",
   "editorMode": "normal",
@@ -251,6 +254,5 @@
   "skipAutoPermissionPrompt": true,
   "useAutoModeDuringPlan": true,
   "disableDeepLinkRegistration": "disable",
-  "voiceEnabled": true,
-  "autoMemoryEnabled": false
+  "voiceEnabled": true
 }
