@@ -75,7 +75,7 @@ WRITING_QUOTATION_REV="c1814f2850c2e18624a15206bc8b18b24cf3d3e8"
 # （404 実測）、こちらだけを vendor する。
 BROWSER_HARNESS_REPO="browser-use/browser-harness"
 BROWSER_HARNESS_PATH="SKILL.md"
-BROWSER_HARNESS_REV="2c3a69ad09fd7b6f369f32d3eb5c5ad44d7832ed"
+BROWSER_HARNESS_REV="36769c87317f74f29871e0e9571c370abd1265a2"
 
 # grill-me系（mattpocock/skills）。3 skill は依存関係がある:
 #   grill-with-docs → /grilling + /domain-modeling に一行委譲
