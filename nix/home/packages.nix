@@ -21,6 +21,27 @@ let
     '';
   };
 
+  # 日本語文章の AI 臭（LLM常套句・翻訳調・リズムの均質化）を決定的に検出する linter。
+  # nixpkgs に未収録のため intent-cli と同じく release binary を fetchurl で取り込む。
+  # style-notes skill（dotfiles-private）と Claude Code の PostToolUse hook
+  # （claude/hooks/suiko-lint.sh）が使う。更新時は
+  # https://github.com/nwiizo/suiko/releases から version と
+  # aarch64-apple-darwin tarball の sha256 を手で更新する。
+  suiko = pkgs.stdenvNoCC.mkDerivation rec {
+    pname = "suiko";
+    version = "0.3.3";
+    src = pkgs.fetchurl {
+      url = "https://github.com/nwiizo/suiko/releases/download/v${version}/suiko-v${version}-aarch64-apple-darwin.tar.gz";
+      sha256 = "8aa913f79b4f812a9c0360f7f0a1a47d4aca80fd403c909df10daddef7f01677";
+    };
+    # tarball は suiko-v<version>-aarch64-apple-darwin/ ディレクトリ入りなので
+    # デフォルトの unpackPhase がそのまま使える（intent-cli とは違う）。
+    installPhase = ''
+      mkdir -p $out/bin
+      install -m755 suiko $out/bin/suiko
+    '';
+  };
+
   figma-console-mcp = pkgs.buildNpmPackage {
     pname = "figma-console-mcp";
     version = "1.32.0";
@@ -57,6 +78,7 @@ in
     python3Packages.twscrape
     rclone
     rustup
+    suiko
     tmux
     tree
     uv
