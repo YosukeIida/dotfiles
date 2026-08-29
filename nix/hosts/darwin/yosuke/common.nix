@@ -645,7 +645,7 @@ in
     EXPERIENCE_DIR =
       "$HOME/workspace/github.com/YosukeIida/dotfiles-private/experience";
     EXPERIENCE_MANIFEST =
-      "$HOME/workspace/github.com/YosukeIida/dotfiles-private/claude-memory/manifest.tsv";
+      "$HOME/workspace/github.com/YosukeIida/dotfiles-private/experience/manifest.tsv";
   };
 
   environment.systemPackages = with pkgs; [
@@ -852,19 +852,9 @@ in
       fi
     }
 
-    # claude-memory: pending を manifest に確定し、memory を git 同期する。
-    # postActivation は root で走るので **必ず su - でユーザー権限に落とす** —
-    # root が claude-memory/ 配下や state にファイルを作ると Claude が更新できなくなる。
-    # run-locked が host 単位の排他を取り、競合時は retry_wait にして exit 0 する。
-    # network 不通・認証失敗も retry_wait 止まりで、switch は失敗させない。
-    # promote と sync は **同じ lock の中で**連続実行する。別々に走らせると、
-    # promote が pending を消費している最中に registrar が追記した行を取りこぼす。
-    if [ -x "$priv/claude-memory.sh" ]; then
-      su - ${username} -c "'$priv/claude-memory.sh' run-locked -- sh -c \"'$priv/claude-memory.sh' promote && '$priv/claude-memory.sh' sync --push\"" || true
-      # 未移行の memory を **通知だけ**する（read-only）。移行は手動という決定
-      # （decision-001）なので、放置に気づけるようにするのがこの行の役目。
-      su - ${username} -c "'$priv/claude-memory.sh' check" || true
-    fi
+    # claude-memory の同期基盤は 2026-08-30 に撤去した。auto-memory を無効化し、
+    # 経験知は experience/（dotfiles-private）へ一本化したため（manifest.tsv だけ
+    # experience/ へ移設して dir 名解決に使い続ける）。全文は git 履歴にある。
 
     # skills リポジトリが未 clone なら **通知する**。clone 自体は activation ではやらない
     # （private repo には gh の Keychain 認証が要り、root の非対話 activation からは
