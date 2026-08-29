@@ -85,6 +85,18 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/yosuke/workspace/github.com/YosukeIida/dotfiles/claude/hooks/suiko-lint.sh",
+            "timeout": 15
+          }
+        ]
+      }
     ]
   },
   "worktree": {
