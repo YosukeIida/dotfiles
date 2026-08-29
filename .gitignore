@@ -19,3 +19,8 @@ karabiner/assets/**/*.bak.*
 # api-mode-overlay.json on every darwin-switch; tracking it just creates noise diffs.
 claude/settings.api.json
 evals/results/
+
+# Orca（stablyai/orca）は agent hook を注入するたびに書き換え前の内容を .bak として
+# 隣に残す。実体の変更は tracked 側の diff で見えるため、バックアップは追跡しない。
+claude/settings.json.bak
+codex/hooks.json.bak
