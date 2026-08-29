@@ -73,6 +73,16 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/yosuke/workspace/github.com/YosukeIida/dotfiles/claude/hooks/experience-inject.sh",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "Stop": [
@@ -94,6 +104,30 @@
             "type": "command",
             "command": "bash /Users/yosuke/workspace/github.com/YosukeIida/dotfiles/claude/hooks/suiko-lint.sh",
             "timeout": 15
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/yosuke/workspace/github.com/YosukeIida/dotfiles/claude/hooks/experience-queue.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/yosuke/workspace/github.com/YosukeIida/dotfiles/claude/hooks/experience-queue.sh",
+            "timeout": 5
           }
         ]
       }
