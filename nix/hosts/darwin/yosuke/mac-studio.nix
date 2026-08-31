@@ -68,6 +68,13 @@ let
 in
 
 {
+  # omlx（jundot/omlx）は formula の upgrade/ビルドが重く、持ち歩く Air には不要なため
+  # Studio 専用インストールにする（profiles/darwin/homebrew.nix は両機共通の一覧）。
+  homebrew.extraConfig = ''
+    tap "jundot/omlx", "https://github.com/jundot/omlx", trusted: true
+  '';
+  homebrew.brews = [ "jundot/omlx/omlx" ];
+
   # 常設機なので寝かせない。ディスプレイだけは離席時に消す。
   power = {
     sleep = {

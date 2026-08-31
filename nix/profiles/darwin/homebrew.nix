@@ -24,7 +24,6 @@
     # nix-darwin が trusted オプションに対応したら taps に戻すこと。
     extraConfig = ''
       tap "can1357/tap", trusted: true
-      tap "jundot/omlx", "https://github.com/jundot/omlx", trusted: true
       tap "solarphlare/tap", trusted: true
       tap "stablyai/orca", trusted: true
       tap "steipete/tap", trusted: true
@@ -66,7 +65,6 @@
       # hermesAgentPkgs.full）。brew formula は node を depends_on して
       # /opt/homebrew/bin にリンクしてしまう（nodeless 方針違反）ため使わない。
       "hunk"
-      "jundot/omlx/omlx"
       "mas"
       "rtk"
       "xcodegen"
