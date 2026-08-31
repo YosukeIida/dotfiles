@@ -7,7 +7,7 @@
 #   1. gist 由来（cognitive-rhythm-writing / japanese-tech-writing）
 #      → clone して SKILL.md をコピーする。REV_* で pin。
 #   2. repo 内の SKILL.md 由来（herdr, browser-harness, writing-quotation,
-#      grilling, domain-modeling, grill-with-docs, gws-multi-account）
+#      grilling, domain-modeling, grill-with-docs, gws-multi-account, latex-devkit）
 #      → gh api で1ファイルだけ取得し、ローカルのパッチと vendor-* metadata を注入する。
 #        gh skill install は使えない: 発見に `<name>/SKILL.md` のディレクトリ構造を要求し、
 #        リポジトリ直下の裸の SKILL.md を認識しない（`gh skill preview` が
@@ -119,6 +119,17 @@ GWS_MULTI_ACCOUNT_REPO="indentcorp/gws-multi-account"
 GWS_MULTI_ACCOUNT_PATH="skills/gws-multi-account/SKILL.md"
 GWS_MULTI_ACCOUNT_EXTRA="skills/gws-multi-account/references/auth-login.md:references/auth-login.md hooks/hook.js:hooks/hook.js"
 GWS_MULTI_ACCOUNT_REV="e73dcbb12e581c51a259e0d5bf827b684faf997a"
+
+# latex-devkit: 自作だが、他の自作 skill のように personal-agent-skills には置かず
+# ツール本体の repo（YosukeIida/latex-devkit）に同居させている（2026-08〜）。
+# skill がドキュメントする対象そのもの（Makefile・docker-compose 構成）と
+# 同じ repo に置くことで、ツール側の変更と skill の記述が drift しにくくなる。
+# upstream は他ユーザーも使える汎用形（$LATEX_DEVKIT_DIR 変数化・allowed-tools 無し）。
+# ここでの局所パッチで allowed-tools と、他 skill との住み分け注記を足した
+# description に差し替える。
+LATEX_DEVKIT_REPO="YosukeIida/latex-devkit"
+LATEX_DEVKIT_PATH="skills/latex-devkit/SKILL.md"
+LATEX_DEVKIT_REV="4c7a845f142974b54648d140d9c280c31f5c115b"
 
 DEST="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/agents/skills"
 WORK="$(mktemp -d)"
@@ -307,6 +318,9 @@ sync_repo_file "grill-with-docs" "$GRILL_WITH_DOCS_REPO" "$GRILL_WITH_DOCS_PATH"
   "" "" '^disable-model-invocation:'
 sync_repo_file "gws-multi-account" "$GWS_MULTI_ACCOUNT_REPO" "$GWS_MULTI_ACCOUNT_PATH" "$GWS_MULTI_ACCOUNT_REV" \
   "" "" "" "$GWS_MULTI_ACCOUNT_EXTRA"
+sync_repo_file "latex-devkit" "$LATEX_DEVKIT_REPO" "$LATEX_DEVKIT_PATH" "$LATEX_DEVKIT_REV" \
+  "Bash(make:*), Bash(docker:*)" \
+  'description: latex-devkit を使って LaTeX を Docker でビルドする操作スキル。「PDFをビルドして」「latexでコンパイルして」「ビルドして」などの表現がトリガー。外部リポジトリの papers/ 以下のプロジェクトのビルドにも対応。※既存 LaTeX プロジェクトのビルド専用。サーベイ論文の執筆工程一式（文献収集〜章ドラフト〜PDF 化）は tmllab-academic-survey-paper が担当。'
 
 # ローカルパッチ: upstream の SKILL.md は accounts.json のマージに裸の `node -e` を
 # 使い、「Claude Code や opencode を動かすマシンには必ず node がある」という前提で
