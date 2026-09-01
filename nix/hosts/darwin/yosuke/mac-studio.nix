@@ -12,59 +12,11 @@
 # HF_HOME（HuggingFace のモデルキャッシュ）を外付けへ移すなら、この機の設定として
 # `home-manager.users.yosuke.home.sessionVariables.HF_HOME = "...";` を素の値で書く。
 # 既定は yosuke/common.nix が mkDefault で与えているので、そのまま上書きされる。
-{ pkgs, ... }:
+{ ... }:
 
 let
   username = "yosuke";
   homedir = "/Users/${username}";
-
-  # Orca の runtime server を、この機の tailnet アドレスを広告しながら起動する。
-  #
-  # --serve-pairing-address は「相手に伝える住所」を決めるだけで bind 先は変えない
-  # （bind は 0.0.0.0:6768 固定で、Orca 側に選択肢が無い）。省略すると Orca は
-  # advertisedEndpoint を 127.0.0.1 に決め打ちする（app.asar の
-  # resolveAdvertisedPairingEndpoint に自動検出は無い）ため、Air で開いた瞬間に
-  # Air 自身を指す使えないリンクになる。だから住所は必ず渡す必要がある。
-  #
-  # その住所を nix に焼き込まず実行時に引くのは、tailnet アドレスがこの repo の事実では
-  # なく Tailscale が持つ状態だから。公開 repo に自分の tailnet アドレスを残さない意味も
-  # ある（CGNAT 空間なので到達はできないが、書かずに済むなら書かない）。
-  #
-  # tailscale を素の `tailscale` ではなく .app 内の実体で呼ぶのは、下の PATH に
-  # /usr/local/bin を入れていないため（herdr と揃えた PATH）。そこにあるのは
-  #     #!/bin/sh
-  #     /Applications/Tailscale.app/Contents/MacOS/Tailscale "$@"
-  # という2行のラッパでしかなく、経由しても得るものが無い。vpn-coexistence-apply
-  # （common.nix）が .app 内を直に指しているのと同じ判断。
-  #
-  # tailscaled が未起動なら住所は取れない。ここで 127.0.0.1 等にフォールバックすると
-  # 「繋がらない pairing リンク」を静かに配ることになるので、正直に落ちて KeepAlive の
-  # 再試行に任せる（launchd は既定で 10 秒間隔に絞る）。
-  orcaServe = pkgs.writeShellScriptBin "orca-serve" ''
-    set -euo pipefail
-
-    tailscale_bin="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
-    orca_bin="/Applications/Orca.app/Contents/MacOS/Orca"
-
-    if [ ! -x "$orca_bin" ]; then
-      echo "orca-serve: $orca_bin が無い（cask 未導入か更新中）" >&2
-      exit 1
-    fi
-
-    if [ ! -x "$tailscale_bin" ]; then
-      echo "orca-serve: $tailscale_bin が無い（Tailscale.app 未導入）" >&2
-      exit 1
-    fi
-
-    address=$("$tailscale_bin" ip -4 2>/dev/null | head -n 1 || true)
-    if [ -z "$address" ]; then
-      echo "orca-serve: tailnet アドレスを取得できない（tailscaled 起動待ち）。再試行する" >&2
-      exit 1
-    fi
-
-    echo "orca-serve: advertising $address"
-    exec "$orca_bin" --serve --serve-pairing-address "$address"
-  '';
 in
 
 {
@@ -122,55 +74,69 @@ in
 
   # Orca の runtime を launchd が所有する。GUI（Orca.app）は「別のクライアント」ではなく、
   # この同じプロセスがウィンドウを開いたものになる。単一インスタンスロックが GUI 起動を
-  # serve 側への second-instance イベントとして配送し、shouldActivateDesktopForSecondInstance
-  # → desktopActivationGate → focusExistingMainWindow(openWindow) がウィンドウを開く経路
-  # （app.asar の main を読んで確認、`open -a Orca` しても pid が変わらないことを実測）。
-  # つまりウィンドウを閉じても runtime は生き続け、Air からは pairing で入れる。
+  # 既存プロセスへの second-instance イベントとして配送し、
+  # shouldActivateDesktopForSecondInstance → desktopActivationGate →
+  # focusExistingMainWindow(openWindow) がウィンドウを開く経路（app.asar の main を読んで
+  # 確認、`open -a Orca` しても pid が変わらないことを実測）。つまりウィンドウを閉じても
+  # runtime は生き続ける。
   #
-  # なぜ `orca serve`（公式 CLI）ではなく Electron を直接叩くのか、理由は2つ:
+  # 以前は `--serve --serve-pairing-address <tailnet-ip>` で headless runtime server として
+  # 起動していたが、2点の理由でやめて素のデスクトップアプリ起動に変えた
+  # （2026-09-01、実機確認済み）:
   #
-  # 1. Orca 1.4.192 の macOS では `orca serve` が起動時に必ず落ちる。CLI が packaged app
-  #    に対して ORCA_SERVE_UPDATE_HANDOFF_PATH を常に渡すため、app 側の
-  #    getConfiguredHandoffPath() が early return せず getCanonicalUserDataPath() に進むが、
-  #    この呼び出しはモジュールのトップレベル（installServeSupervisorDisconnectQuit）に
-  #    あって setAppEnvironment() より前に走る:
-  #      Error: AppEnvironment not initialized — call setAppEnvironment() during startup
+  # 1. Orca 公式ドキュメント（https://www.onorca.dev/docs/remote-servers）は
+  #    `--serve` を「headless Linux server / VM 向け」と位置づけており、Mac のような
+  #    常設デスクトップ機には「デスクトップアプリを起動したままにして
+  #    Settings → Remote Orca Servers → Advertise this app as a server で
+  #    access link を発行する」方式を推奨している。
+  # 2. 実測で `--serve` 経路は Tailscale 到達性のある LAN/tailnet 内でしかペアリング
+  #    できず、公式の relay server 経由の接続（スマホがモバイル回線のみでもバック
+  #    グラウンド通知が届く）が機能しなかった。素のデスクトップアプリ経由の
+  #    access link ならこの relay 経由の接続も機能することを確認した。
   #
-  # 2. そもそもその supervisor は「CLI の親プロセスが runtime を所有する」ための仕組みで、
-  #    親が disconnect したら app.quit() する。launchd に所有させたい本構成では逆に邪魔。
-  #    Orca 自体は homebrew cask 管理なので、アプリ内自動更新の引き継ぎも不要。
+  # なお `orca serve`（公式 CLI）を使わず Electron を直接叩いているのは、
+  # Orca 1.4.192 の macOS で `orca serve` が起動時に必ず落ちるバグの回避のため
+  # （CLI が packaged app に ORCA_SERVE_UPDATE_HANDOFF_PATH を常に渡し、
+  # setAppEnvironment() より前に getCanonicalUserDataPath() が走って
+  # "AppEnvironment not initialized" で落ちる）。素のデスクトップアプリ起動には
+  # このバグ自体が関係ない（`orca serve` を経由しないため）が、Electron 直叩きの
+  # ままにして起動経路を単純に保っている。upstream が直ったら `open -a Orca` や
+  # `orca open` に切り替えてもよい。
   #
-  # upstream が 1 を直したら ProgramArguments を `orca serve` に戻してよい。
+  # 初回セットアップ: darwin-switch 後、Studio の画面で Orca を開き、
+  # Settings → Remote Orca Servers → Share this host → Advertise this app as a
+  # server → Connection address に Tailscale アドレスを選んで Generate Access Link。
+  # この access link は Orca 側のミュータブルな状態（orca-data.json）に保存されるので
+  # nix には焼き込めない。Air・スマホからはこの link で pair する。
   #
   # 注意（herdr の kickstart と同じ性質）: このウィンドウで Cmd+Q すると runtime ごと
   # 落ちるので、管理下の terminal / agent が全部死ぬ。KeepAlive で新しい runtime が
-  # 起動し直すだけで、状態は戻らない。閉じたいだけならウィンドウを閉じる（赤ボタン）。
+  # 起動し直すだけで、走っていた agent セッションは戻らない（pairing 状態は
+  # orca-data.json に永続化されているので再ペアリングは不要）。閉じたいだけなら
+  # ウィンドウを閉じる（赤ボタン）。
   #
-  # 注意（導入順）: 素の Orca.app が起動していると単一インスタンスロックを先に取られ、
-  # serve 側が exit 3 で落ちて KeepAlive のリトライループになる。darwin-switch の前に
-  # Orca.app を終了しておくこと。
-  launchd.user.agents.orcaServe = {
+  # 注意（導入順）: 素の Orca.app が既に起動していると単一インスタンスロックを先に
+  # 取られ、launchd 側が exit 1 で落ちて KeepAlive のリトライループになる。
+  # darwin-switch の前に Orca.app を終了しておくこと。
+  launchd.user.agents.orcaApp = {
     serviceConfig = {
-      Label = "com.yosuke.orca-serve";
-      # 実際の起動は上の orca-serve が行う（tailnet アドレスを実行時に引くため）。
-      ProgramArguments = [ "${orcaServe}/bin/orca-serve" ];
+      Label = "com.yosuke.orca-app";
+      ProgramArguments = [ "/Applications/Orca.app/Contents/MacOS/Orca" ];
       RunAtLoad = true;
       KeepAlive = true;
-      # CLI の serveOrcaApp が cwd を app root に固定しているのに倣う（Electron の
-      # リソース解決が process.cwd() を見る経路があるため）。
+      # 以前の `orca serve` 相当の起動が cwd を app root に固定していたのに倣う
+      # （Electron のリソース解決が process.cwd() を見る経路があるため）。
       WorkingDirectory = "/Applications/Orca.app/Contents/Resources/app.asar.unpacked";
       EnvironmentVariables = {
         # herdr と同じ理由。launchd agent は login shell を経ないので hm-session-vars が
-        # 届かず、LANG が無いと serve 配下で spawn した経路の日本語が MacRoman 化する。
+        # 届かず、LANG が無いと Orca 配下で spawn した経路の日本語が MacRoman 化する。
         LANG = "en_US.UTF-8";
-        # 同じく herdr と同じ理由。serve は agent（claude / codex）と git を自分で spawn
+        # 同じく herdr と同じ理由。Orca は agent（claude / codex）と git を自分で spawn
         # するので、launchd の最小 PATH のままだと nix 側の git や node を見失う。
         PATH = "${homedir}/.local/share/agent-switch/shims:${homedir}/.nix-profile/bin:/etc/profiles/per-user/${username}/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin";
       };
-      # pairing URL はここにしか出ない（Air を繋ぐときはこのログから拾う）。
-      # デバイストークンを含むので、共有するときは中身に注意すること。
-      StandardOutPath = "${homedir}/Library/Logs/orca-serve.log";
-      StandardErrorPath = "${homedir}/Library/Logs/orca-serve.log";
+      StandardOutPath = "${homedir}/Library/Logs/orca-app.log";
+      StandardErrorPath = "${homedir}/Library/Logs/orca-app.log";
     };
   };
 }
