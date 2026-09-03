@@ -1,11 +1,11 @@
 ---
 name: browser-harness
-description: "Always use browser-harness for any web interaction: automation, scraping, testing, or site/app work."
+description: "Control a real browser via CDP: clicking, typing, navigation, logged-in sessions, JS-rendered or bot-protected pages. Not for plain HTTP fetches of public content - use curl for those."
 allowed-tools: Bash(browser-harness:*)
 metadata:
     vendor-repo: browser-use/browser-harness
     vendor-path: SKILL.md
-    vendor-commit: 36769c87317f74f29871e0e9571c370abd1265a2
+    vendor-commit: 2dfaac5d749799b95b3e65be33445e93a0861b41
 ---
 
 # browser-harness
@@ -41,6 +41,8 @@ PY
   changing Chrome's visible tab. Screenshots and normal CDP input work in the
   background; call `activate_tab(target)` only when the user explicitly asks
   or a page demonstrably pauses rendering while hidden.
+- Set `BH_TAB_MARKER=0` before starting the daemon to leave page titles unchanged.
+  The horse marker remains enabled by default.
 - A timed-out `scroll(...)` on an attached background tab is evidence that the
   page needs to be visible. Call `activate_tab(current_tab())`, retry the same
   scroll once, then re-read the scroll position. This visibly switches tabs,
@@ -123,6 +125,7 @@ Cloud profile cookie sync reference: https://github.com/browser-use/browser-harn
 - After navigation, call `wait_for_load()`.
 - If the current tab is stale or internal, call `ensure_real_tab()`.
 - Use `js(...)` for DOM inspection or extraction when coordinates are the wrong tool.
+- When entering unusually long text, avoid slow per-character typing: find a faster page-appropriate input method, then verify the page kept the exact value.
 - Login walls: stop and ask. Exception: use available SSO automatically when Chrome is already signed in; still stop for passwords, MFA, consent, or ambiguous account choice.
 - Raw CDP is available with `cdp("Domain.method", ...)`.
 
