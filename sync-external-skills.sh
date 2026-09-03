@@ -7,7 +7,8 @@
 #   1. gist 由来（cognitive-rhythm-writing / japanese-tech-writing）
 #      → clone して SKILL.md をコピーする。REV_* で pin。
 #   2. repo 内の SKILL.md 由来（herdr, browser-harness, writing-quotation,
-#      grilling, domain-modeling, grill-with-docs, gws-multi-account, latex-devkit）
+#      grilling, domain-modeling, grill-with-docs, gws-multi-account, latex-devkit,
+#      akubun-writing）
 #      → gh api で1ファイルだけ取得し、ローカルのパッチと vendor-* metadata を注入する。
 #        gh skill install は使えない: 発見に `<name>/SKILL.md` のディレクトリ構造を要求し、
 #        リポジトリ直下の裸の SKILL.md を認識しない（`gh skill preview` が
@@ -130,6 +131,17 @@ GWS_MULTI_ACCOUNT_REV="e73dcbb12e581c51a259e0d5bf827b684faf997a"
 LATEX_DEVKIT_REPO="YosukeIida/latex-devkit"
 LATEX_DEVKIT_PATH="skills/latex-devkit/SKILL.md"
 LATEX_DEVKIT_REV="4c7a845f142974b54648d140d9c280c31f5c115b"
+
+# akubun-writing: 岩淵悦太郎『悪文』の原則にもとづく日本語推敲スキル。もともと
+# personal-agent-skills に自作扱いで置いていたが、大元は youwei16/akubun-writing-skill
+# （自作ではない）と判明したため2026-09にvendor管理へ移行した。上流との差分は
+# allowed-tools の追加と、tmllab-ja-prose-polish との住み分けを足した description のみ
+# （references/*.md・agents/openai.yaml は upstream と完全一致）。
+# REV は upstream で akubun-writing/ を最後に変更した commit（HEAD ではない）。
+AKUBUN_WRITING_REPO="youwei16/akubun-writing-skill"
+AKUBUN_WRITING_PATH="akubun-writing/SKILL.md"
+AKUBUN_WRITING_EXTRA="akubun-writing/references/book-analysis.md:references/book-analysis.md akubun-writing/references/diagnostic-checklist.md:references/diagnostic-checklist.md akubun-writing/references/fifty-rules.md:references/fifty-rules.md akubun-writing/references/revision-patterns.md:references/revision-patterns.md akubun-writing/agents/openai.yaml:agents/openai.yaml"
+AKUBUN_WRITING_REV="4769f92d24c3745282b891676b443121b1f36469"
 
 DEST="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/agents/skills"
 WORK="$(mktemp -d)"
@@ -321,6 +333,10 @@ sync_repo_file "gws-multi-account" "$GWS_MULTI_ACCOUNT_REPO" "$GWS_MULTI_ACCOUNT
 sync_repo_file "latex-devkit" "$LATEX_DEVKIT_REPO" "$LATEX_DEVKIT_PATH" "$LATEX_DEVKIT_REV" \
   "Bash(make:*), Bash(docker:*)" \
   'description: latex-devkit を使って LaTeX を Docker でビルドする操作スキル。「PDFをビルドして」「latexでコンパイルして」「ビルドして」などの表現がトリガー。外部リポジトリの papers/ 以下のプロジェクトのビルドにも対応。※既存 LaTeX プロジェクトのビルド専用。サーベイ論文の執筆工程一式（文献収集〜章ドラフト〜PDF 化）は tmllab-academic-survey-paper が担当。'
+sync_repo_file "akubun-writing" "$AKUBUN_WRITING_REPO" "$AKUBUN_WRITING_PATH" "$AKUBUN_WRITING_REV" \
+  "Read, Edit, Write" \
+  'description: 岩淵悦太郎編『悪文』の原則にもとづいて、日本語の文章を読者本位で診断・推敲・改稿するときに使う。メール、案内文、報告書、論説、マニュアル、スピーチ、広報文、Webコピー、日本語への翻訳文などで、わかりやすさ、段落構成、文の長さ、修飾関係、語の選び方、敬語、文体の統一が主な論点になる場合に特に有効。詩や、意図的に晦渋さを残した文学表現には、ユーザーが明晰化を求めた場合に限って慎重に適用する。※学術原稿（.tex/.md）の生成AIらしさ除去・論点集約・圧縮は tmllab-ja-prose-polish が担当。本 skill は悪文原則に基づく一般文章（メール・案内文・報告書・Web コピー等）の読者本位の診断・改稿を担う。' \
+  "" "$AKUBUN_WRITING_EXTRA"
 
 # ローカルパッチ: upstream の SKILL.md は accounts.json のマージに裸の `node -e` を
 # 使い、「Claude Code や opencode を動かすマシンには必ず node がある」という前提で
