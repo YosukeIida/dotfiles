@@ -130,7 +130,7 @@ GWS_MULTI_ACCOUNT_REV="e73dcbb12e581c51a259e0d5bf827b684faf997a"
 # description に差し替える。
 LATEX_DEVKIT_REPO="YosukeIida/latex-devkit"
 LATEX_DEVKIT_PATH="skills/latex-devkit/SKILL.md"
-LATEX_DEVKIT_REV="4c7a845f142974b54648d140d9c280c31f5c115b"
+LATEX_DEVKIT_REV="a65e238f463fe5356fb2f785d185bdc30bd827a0"
 
 # akubun-writing: 岩淵悦太郎『悪文』の原則にもとづく日本語推敲スキル。もともと
 # personal-agent-skills に自作扱いで置いていたが、大元は youwei16/akubun-writing-skill
