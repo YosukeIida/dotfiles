@@ -643,10 +643,8 @@ in
     # /wrap-up skill・Codex 側 hook が参照する。未設定の環境では hook は
     # 何もしない（他人が fork しても壊れない任意化）。yosuke 層に置くのは
     # 個人リポジトリのパスを他人が fork する層に持ち込まないため。
-    EXPERIENCE_DIR =
-      "$HOME/workspace/github.com/YosukeIida/dotfiles-private/experience";
-    EXPERIENCE_MANIFEST =
-      "$HOME/workspace/github.com/YosukeIida/dotfiles-private/experience/manifest.tsv";
+    EXPERIENCE_DIR = "$HOME/workspace/github.com/YosukeIida/dotfiles-private/experience";
+    EXPERIENCE_MANIFEST = "$HOME/workspace/github.com/YosukeIida/dotfiles-private/experience/manifest.tsv";
   };
 
   environment.systemPackages = with pkgs; [
