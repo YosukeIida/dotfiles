@@ -26,6 +26,10 @@
   age.secrets."figma-pat".file = ../../../../secrets/figma-pat.age; # expires 2026-09-21
   age.secrets."cctag-slack_tmllab_workspace".file =
     ../../../../secrets/cctag-slack_tmllab_workspace.age;
+  age.secrets."cctag-slack_nutmeg_workspace".file =
+    ../../../../secrets/cctag-slack_nutmeg_workspace.age;
+  age.secrets."slack-mcp-nutmeg-token".file =
+    ../../../../secrets/slack-mcp-nutmeg-token.age;
 
   # sync-lab-skills.sh --check を darwin-switch から非対話的に実行するための PAT。
   # gh CLI 通常の keyring 認証は su - 経由の非対話 activation スクリプトからは

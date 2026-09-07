@@ -42,6 +42,36 @@ let
     '';
   };
 
+  # nixpkgs に未収録。NUTFes の nutmeg Slack workspace 用 MCP サーバー
+  # （user scope で登録し全リポジトリから使えるようにする、bot token 限定運用
+  # — invited channels のみ・search.messages 不可）。更新時は
+  # https://github.com/korotovsky/slack-mcp-server/releases から
+  # version と darwin-arm64 の sha256 を手で更新する。
+  slack-mcp-server-nutmeg-bin = pkgs.stdenvNoCC.mkDerivation rec {
+    pname = "slack-mcp-server-nutmeg-bin";
+    version = "1.3.0";
+    src = pkgs.fetchurl {
+      url = "https://github.com/korotovsky/slack-mcp-server/releases/download/v${version}/slack-mcp-server-darwin-arm64";
+      sha256 = "04jkhmki2fvs8k7810383mqpbysam9idhkbhxlw389985rfalfg8";
+    };
+    # 単一バイナリの直配布（tarball ではない）ので unpack をスキップする。
+    dontUnpack = true;
+    installPhase = ''
+      mkdir -p $out/bin
+      install -m755 $src $out/bin/slack-mcp-server-nutmeg-bin
+    '';
+  };
+
+  # token を .mcp.json に直書きしないためのラッパー。agenix 管理の
+  # $HOME/.config/slack-mcp/nutmeg-token.env（common.nix の _place で配置）を
+  # 起動時に読み込んでから本体を exec する。
+  slack-mcp-server-nutmeg = pkgs.writeShellScriptBin "slack-mcp-server-nutmeg" ''
+    set -a
+    [ -f "$HOME/.config/slack-mcp/nutmeg-token.env" ] && . "$HOME/.config/slack-mcp/nutmeg-token.env"
+    set +a
+    exec ${slack-mcp-server-nutmeg-bin}/bin/slack-mcp-server-nutmeg-bin "$@"
+  '';
+
   figma-console-mcp = pkgs.buildNpmPackage {
     pname = "figma-console-mcp";
     version = "1.32.0";
@@ -86,6 +116,7 @@ in
     zsh-autosuggestions
     zsh-syntax-highlighting
     figma-console-mcp
+    slack-mcp-server-nutmeg
     # nixpkgs-25.11-darwin（stable）には未収録（新規パッケージは stable に
     # バックポートされない）ため、nixpkgs-unstable から個別に引く。
     pkgsUnstable.agent-browser

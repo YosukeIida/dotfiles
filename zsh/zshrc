@@ -171,6 +171,11 @@ cctag-spoke() {
   CCTAG_ENV_FILE="$HOME/.config/cctag/slack_tmllab_workspace.env" command cctag-spoke "$@"
 }
 
+# nutmeg Slack workspace 用（自前 Hub: cctag-hub.iodine2.net）。
+cctag-spoke-nutmeg() {
+  CCTAG_ENV_FILE="$HOME/.config/cctag/slack_nutmeg_workspace.env" command cctag-spoke "$@"
+}
+
 # =====================================================================
 # ==== sleepctl: 蓋閉じ耐性の切り替え ===================================
 # =====================================================================
