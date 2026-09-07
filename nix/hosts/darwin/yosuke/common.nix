@@ -616,6 +616,7 @@ in
 {
   imports = [
     ./printers.nix
+    ./codexbar.nix
   ];
 
   environment.interactiveShellInit = ''
