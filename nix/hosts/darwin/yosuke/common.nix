@@ -979,6 +979,12 @@ in
     _place "${
       config.age.secrets."cctag-slack_tmllab_workspace".path
     }" "$home/.config/cctag/slack_tmllab_workspace.env"
+    _place "${
+      config.age.secrets."cctag-slack_nutmeg_workspace".path
+    }" "$home/.config/cctag/slack_nutmeg_workspace.env"
+    _place "${
+      config.age.secrets."slack-mcp-nutmeg-token".path
+    }" "$home/.config/slack-mcp/nutmeg-token.env"
     _place "${config.age.secrets."gh-lab-skills-pat".path}" "$home/.config/gh/lab-skills-pat"
 
     # skill（研究室 tmllab-* と外部 vendor）の更新有無を通知のみ表示する
