@@ -15,4 +15,16 @@
 # フィルタが失敗すると「除去されるべき model がそのままコミットされる」か
 # 「git add が中断する」のどちらかになり、この仕組みの目的が崩れる。
 # jq 実装は python 版とバイト単位で同一の出力を出すことを実測で確認済み。
-del(.model, .effortLevel)
+#
+# "effortLevel" はトップレベルだけでなく "modelSettings.<model>.effortLevel"
+# のようにネストしても現れる（2026-09 の modelSettings 追加で判明）ため、
+# walk で再帰的に除去する。除去した結果 modelSettings.<model> が空 {} に
+# なったエントリ、および modelSettings 自体が空になった場合はキーごと消す
+# （空オブジェクトが差分ノイズとして残らないように）。
+# "model" はトップレベルのみ。
+walk(if type == "object" then del(.effortLevel) else . end)
+| if has("modelSettings") then
+    .modelSettings |= with_entries(select(.value != {}))
+  else . end
+| if (.modelSettings? // null) == {} then del(.modelSettings) else . end
+| del(.model)
