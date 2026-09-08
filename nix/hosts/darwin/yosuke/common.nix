@@ -943,6 +943,31 @@ in
     su - ${username} -c "cd $pub && git config filter.strip-model.clean '${pkgs.jq}/bin/jq --indent 2 -f \"\$(git rev-parse --show-toplevel)/claude/git-filters/strip-model-clean.jq\"' && git config filter.strip-model.smudge cat" || true
     _link "$pub/claude/settings.api.json"          "$home/.claude/settings.api.json"
 
+    # omp（oh my pi）の config.yml。personal / labteam どちらのプロファイルでも
+    # 同じ設定を使う（プロファイル間で分けたいのは auth のみで、それは
+    # ~/.omp/profiles/<name>/agent/agent.db 側にあり config.yml には含まれない）。
+    # 「実ファイルなら dotfiles に取り込んで symlink 化」は settings.json と同じ扱い。
+    # labteam はこの機体にまだ無くても _link が親ディレクトリを作るので先に張れる。
+    for _ompProfile in personal labteam; do
+      _ompCfg="$home/.omp/profiles/$_ompProfile/agent/config.yml"
+      if [ -f "$_ompCfg" ] && [ ! -L "$_ompCfg" ]; then
+        cp "$_ompCfg" "$pub/omp/config.yml"
+      fi
+      if [ ! -L "$_ompCfg" ]; then
+        _link "$pub/omp/config.yml" "$_ompCfg"
+      fi
+      # 上の _link が _userdir 経由で新規に複数階層（profiles/<name>/agent）を
+      # 一度に作ると、macOS の `install -d` は末端以外の所有権を伝播しないことがある
+      # （.claude/.codex 初回作成時にも同じ症状の既往あり、819行目コメント参照）。
+      # プロファイル root だけを対象にした自己修復。
+      _ompDir="$home/.omp/profiles/$_ompProfile"
+      if [ -d "$_ompDir" ] && [ "$(/usr/bin/stat -f %Su "$_ompDir")" != "${username}" ]; then
+        echo >&2 "repairing ownership: $_ompDir"
+        chown -R ${username}:staff "$_ompDir" || true
+      fi
+    done
+    unset _ompProfile _ompCfg _ompDir
+
     # herdr の agent-state hook（~/.claude/hooks/herdr-agent-state.sh）を毎 switch で
     # 流し直す。intent-cli の skill install と同型で、**vendor しない**のが要点：
     # このスクリプトは herdr 本体が所有・生成し（`integration status` が `current (v8)` の
