@@ -34,6 +34,14 @@ in
     historicalTrackingEnabled = true;
     showOptionalCreditsAndExtraUsage = true;
     refreshFrequency = "fifteenMinutes";
+    multiAccountMenuLayout = "stacked";
+    # 2値のみ: "always"（バックグラウンド自動再認証も許可） /
+    # "onlyOnUserAction"（手動 Refresh 時のみプロンプト。バックグラウンドでの
+    # Claude OAuth 自動修復は抑制される）。
+    claudeOAuthKeychainPromptMode = "onlyOnUserAction";
+    tokenCostUsageEnabled = true;
+    # off = 低電力モードでもバックグラウンド更新の間隔を絞らない（常時動作継続）。
+    backgroundWorkLowPowerModePreference = "off";
   };
 
   system.activationScripts.postActivation.text = ''
