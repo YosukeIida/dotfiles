@@ -1,0 +1,43 @@
+providers:
+  webSearchOrder:
+    - exa
+    - perplexity
+    - gemini
+    - anthropic
+    - codex
+    - xai
+    - zai
+    - tinyfish
+    - jina
+    - kagi
+    - tavily
+    - firecrawl
+    - brave
+    - kimi
+    - parallel
+    - synthetic
+    - searxng
+    - startpage
+    - duckduckgo
+    - ecosia
+    - google
+    - mojeek
+    - public
+symbolPreset: unicode
+composer:
+  shape: box
+theme:
+  dark: titanium
+setupVersion: 2
+modelRoles:
+  vision: openai-codex/gpt-5.6-luna:max
+  default: openai-codex/gpt-6-astra:low
+dev:
+  autoqaConsent: denied
+skills:
+  enableClaudeUser: true
+  enableClaudeProject: true
+  enableAgentsUser: true
+  enableAgentsProject: true
+codexResets:
+  autoRedeem: "yes"
