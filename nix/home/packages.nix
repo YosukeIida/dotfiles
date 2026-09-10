@@ -107,7 +107,6 @@ in
     poppler
     python3Packages.twscrape
     rclone
-    rustup
     suiko
     tmux
     tree
