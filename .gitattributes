@@ -1,2 +1,2 @@
-claude/settings.json filter=strip-model
+claude/settings.json filter=normalize-settings
 karabiner/karabiner.json filter=strip-selected
