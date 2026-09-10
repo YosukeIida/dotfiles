@@ -969,6 +969,15 @@ in
     done
     unset _ompProfile _ompCfg _ompDir
 
+    # omp はこの機体ではプロファイル分離運用（--profile personal/labteam）しかせず、
+    # 素の（プロファイル無指定の）omp を起動する機会が無いため、プロファイル非依存の
+    # ~/.omp/agent/extensions/ が自然にはできない。herdr の `integration install omp`
+    # はこのディレクトリが無いと mkdir せず即エラーになる（2026-09 実測）ため、ここで
+    # 先回りして作っておく。実際の統合インストールは claude と違い手動（`herdr
+    # integration install omp`）のまま — herdr 本体が所有・生成するファイルなので
+    # vendor しない方針は変えない。
+    su - ${username} -c "mkdir -p '$home/.omp/agent/extensions'" || true
+
     # herdr の agent-state hook（~/.claude/hooks/herdr-agent-state.sh）を毎 switch で
     # 流し直す。intent-cli の skill install と同型で、**vendor しない**のが要点：
     # このスクリプトは herdr 本体が所有・生成し（`integration status` が `current (v8)` の
