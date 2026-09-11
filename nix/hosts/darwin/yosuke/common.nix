@@ -937,11 +937,10 @@ in
     # settings.api.json は生成物（live settings.json + api-mode-overlay.json）。
     # 編集は api-mode-overlay.json 側へ。サブスクは live をそのまま使う（複製しない）。
     su - ${username} -c "bash $pub/claude/gen-api-settings.sh" || true
-    # settings.json の "model" キー（/model コマンドで頻繁にローカル書き換えされる）、
-    # および Orca 所有の hook command 文字列（Orca のバージョンアップのたびに文言が変わる）は
-    # git の管理対象から外す（clean filter で常に正規化）。
-    # .gitattributes で filter=normalize-settings が指定されているファイルにのみ効く。
-    su - ${username} -c "cd $pub && git config filter.normalize-settings.clean '${pkgs.jq}/bin/jq --indent 2 -f \"\$(git rev-parse --show-toplevel)/claude/git-filters/normalize-settings-clean.jq\"' && git config filter.normalize-settings.smudge cat" || true
+    # settings.json / settings.api.json の "model" キーは /model コマンドで頻繁に
+    # ローカル書き換えされるため、git の管理対象から外す（clean filter で常に除去）。
+    # .gitattributes で filter=strip-model が指定されているファイルにのみ効く。
+    su - ${username} -c "cd $pub && git config filter.strip-model.clean '${pkgs.jq}/bin/jq --indent 2 -f \"\$(git rev-parse --show-toplevel)/claude/git-filters/strip-model-clean.jq\"' && git config filter.strip-model.smudge cat" || true
     _link "$pub/claude/settings.api.json"          "$home/.claude/settings.api.json"
 
     # omp（oh my pi）の config.yml。personal / labteam どちらのプロファイルでも
