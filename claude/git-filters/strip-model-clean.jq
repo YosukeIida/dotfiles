@@ -1,21 +1,12 @@
-# git clean filter: settings.json を git のオブジェクトに保存する直前に正規化する。
-# 対象は2種類。
+# git clean filter: settings.json / settings.api.json の "model" / "effortLevel" キーを
+# git のオブジェクトに保存する直前に取り除く。
 #
-# (1) "model" / "effortLevel" キー（/model・/fast 等で頻繁にローカル書き換えされる）。
-#     worktree 上の実ファイルは自由に書き換えられるが、git diff / git status / commit には
-#     常にこれらのキー抜きの内容が見える（diff は worktree 側にもこの filter を適用してから
-#     比較するため）。
-#
-# (2) Orca アプリが自動生成する hook の "command" 文字列。
-#     Claude 側の hook エントリ（herdr と同様、文字列自体は Orca アプリが所有・生成する）は
-#     Orca のバージョンアップや統合チェックのたびに文言が変わる（Windows 分岐の追加等）ため、
-#     無関係な diff を生む。実際の呼び出し先（~/.orca/agent-hooks/*.sh 等）を指している限り
-#     中身の揺れは無視してよいので、".orca/agent-hooks/" を含む command 文字列は固定の
-#     プレースホルダに畳んで git 上のノイズを消す（worktree の実ファイルは Orca が書いた
-#     実際の値のまま動く。2026-09）。
+# 効果: worktree 上の実ファイルは /model・/fast 等のコマンドで自由に書き換えられるが、
+# git diff / git status / commit には常にこれらのキー抜きの内容が見える
+# （diff は worktree 側にもこの filter を適用してから比較するため）。
 #
 # 呼び出しは `jq --indent 2 -f このファイル`。設定は .gitattributes +
-# `git config filter.normalize-settings.*`（nix postActivation で自動設定）。
+# `git config filter.strip-model.*`（nix postActivation で自動設定）。
 #
 # python 実装（strip-model-clean.py）から移行した。python ガード
 # （tools/agent-switch/runtime-guards/python-guard.sh）が Claude Code セッション中の
@@ -37,9 +28,3 @@ walk(if type == "object" then del(.effortLevel) else . end)
   else . end
 | if (.modelSettings? // null) == {} then del(.modelSettings) else . end
 | del(.model)
-| walk(
-    if type == "object" and has("command") and (.command | type == "string")
-       and (.command | contains(".orca/agent-hooks/"))
-    then .command = "<orca-managed-hook>"
-    else . end
-  )

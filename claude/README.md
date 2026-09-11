@@ -63,7 +63,7 @@ cc personal && claude
 | `gen-api-settings.sh` | settings.api.json の生成スクリプト（overlay のトップレベルキーで live を置換） |
 | `get_key.sh` | API key 取得ヘルパー（`$CLAUDE_CONFIG_DIR/anthropic.env` を読む） |
 | `statusline.sh` | ステータスライン表示スクリプト |
-| `git-filters/normalize-settings-clean.jq` | git clean filter 本体（`model` キー・Orca 所有の hook command を正規化） |
+| `git-filters/strip-model-clean.py` | git clean filter 本体（`model` キーを除去） |
 
 > モード切替の仕組み: `cc api` は `settings.json` symlink を `settings.api.json`（生成物）へ、
 > `cc sub` は live の `settings.json` へ差し替える。サブスク専用ファイルは存在しない。
@@ -72,14 +72,11 @@ cc personal && claude
 > ドリフトは生成方式により恒久解消（2026-07-06）。
 
 > `model` キーは git 管理から除外している: `/model` コマンドで頻繁にローカル書き換えされ、
-> commit するたびに無関係な diff が出るため。同様に、Orca アプリが所有・生成する hook の
-> `command` 文字列（Orca のバージョンアップのたびに文言が変わる）も正規化対象にしている。
-> `.gitattributes`（`filter=normalize-settings`）+ `git-filters/normalize-settings-clean.jq`
-> の clean filter で、worktree の実ファイルには実際の値を残したまま、git 上
-> （diff/status/commit）では常に正規化済みの内容に揃える。
-> filter の登録自体（`git config filter.normalize-settings.*`）は clone ごとに必要な
-> ローカル設定なので darwin-switch の postActivation で自動セットアップする
-> （2026-07-07 導入、2026-09 に Orca hook command の正規化を追加）。
+> commit するたびに無関係な diff が出るため。`.gitattributes`（`filter=strip-model`）+
+> `git-filters/strip-model-clean.py` の clean filter で、worktree の実ファイルには実際の値を
+> 残したまま、git 上（diff/status/commit）では常に `model` キーが無い状態に正規化する。
+> filter の登録自体（`git config filter.strip-model.*`）は clone ごとに必要なローカル設定
+> なので darwin-switch の postActivation で自動セットアップする（2026-07-07）。
 
 ---
 
