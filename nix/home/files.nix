@@ -53,18 +53,13 @@ in
     "Library/Application Support/ZedDevRaTeX/config/settings.json".source = lnk "zed/settings.json";
     "Library/Application Support/ZedDevRaTeX/config/keymap.json".source = lnk "zed/keymap.json";
     "Library/Application Support/ZedDevRaTeX/config/tasks.json".source = lnk "zed/tasks.json";
-    ".config/cmux/settings.json".source = lnk "cmux/settings.json";
-    # cmux.json が優先設定（settings.json はキーが無いときのフォールバック）。
-    # JSONC だが cmux 自体はここへ書き戻さない（Settings GUI の変更は別ストアに保存される）
-    # ため、karabiner.json のような atomic rewrite 由来の symlink 置換は起きない想定。
-    ".config/cmux/cmux.json".source = lnk "cmux/cmux.json";
     ".docker/daemon.json".source = lnk "docker/daemon.json";
     ".config/gh/config.yml".source = lnk "gh/config.yml";
     ".zshenv".source = lnk "zsh/zshenv";
     ".zshrc".source = lnk "zsh/zshrc";
     # zprofile を管理下に入れているのは dot_path_priority を brew shellenv の後に
     # 呼び直すため。非対話ログインシェル（zsh -lc）は zshrc を読まないので、
-    # ここで呼ばないと ~/.agents/bin と agent-switch のシムが Homebrew に負ける。
+    # ここで呼ばないと agent-switch のシムが Homebrew に負ける。
     ".zprofile".source = lnk "zsh/zprofile";
 
     # codex プラグイン（sites 等）の MCP サーバが `command: "node"` で起動されるための node。

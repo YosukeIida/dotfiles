@@ -264,7 +264,6 @@
     "command": "bash ~/.claude/subagent-statusline.sh"
   },
   "enabledPlugins": {
-    "agmsg@fujibee-agmsg": true,
     "claude-paper@claude-paper": true,
     "codex@openai-codex": true,
     "document-skills@anthropic-agent-skills": true,
@@ -312,12 +311,6 @@
         "repo": "affaan-m/everything-claude-code"
       }
     },
-    "fujibee-agmsg": {
-      "source": {
-        "source": "github",
-        "repo": "fujibee/agmsg"
-      }
-    },
     "openai-codex": {
       "source": {
         "source": "github",
@@ -339,13 +332,6 @@
   },
   "outputStyle": "Concise",
   "language": "Japanese",
-  "sandbox": {
-    "filesystem": {
-      "allowWrite": [
-        "~/.agents/skills/agmsg/"
-      ]
-    }
-  },
   "advisorModel": "fable",
   "tui": "fullscreen",
   "autoMemoryEnabled": false,
