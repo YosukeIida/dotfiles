@@ -5,7 +5,7 @@ allowed-tools: Bash(browser-harness:*)
 metadata:
     vendor-repo: browser-use/browser-harness
     vendor-path: SKILL.md
-    vendor-commit: 5c5fedf93854a47bd1b2960e5da330d98984cb4a
+    vendor-commit: 7103d22b6961dfdd484e80eff41469fe3bafbef6
 ---
 
 # browser-harness
@@ -196,6 +196,9 @@ Cloud profile cookie sync reference: https://github.com/browser-use/browser-harn
 - When entering unusually long text, avoid slow per-character typing: find a faster page-appropriate input method, then verify the page kept the exact value.
 - Login walls: stop and ask. Exception: use available SSO automatically when Chrome is already signed in; still stop for passwords, MFA, consent, or ambiguous account choice.
 - Raw CDP is available with `cdp("Domain.method", ...)`.
+  Pass CDP parameters as keywords: `cdp("Input.insertText", text="hello")`.
+  The second positional argument is a session ID, not a parameters dictionary.
+  When targeting an explicit session, use `session_id="..."` alongside the keywords.
 
 ## Recordings and Videos
 

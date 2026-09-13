@@ -50,7 +50,7 @@
 set -euo pipefail
 
 REV_COGNITIVE_RHYTHM="a3b1e26beced71d582e13314fb6f5b179b023c76"
-REV_JAPANESE_TECH_WRITING="c7189cdc9c2520be50418209834145bdf3a46e97"
+REV_JAPANESE_TECH_WRITING="8f2d57610a73efc97d743c9b0b0ecb1002e09fa4"
 
 GIST_COGNITIVE_RHYTHM="https://gist.github.com/k16shikano/eb2929f13ed19c97188393d297be8432"
 GIST_JAPANESE_TECH_WRITING="https://gist.github.com/k16shikano/fd287c3133457c4fd8f5601d34aa817d"
@@ -63,7 +63,7 @@ HERDR_REPO="ogulcancelik/herdr"
 # 2026-08 に upstream が SKILL.md を repo 直下から skills/herdr/SKILL.md へ移動
 # （gh skill install が要求する <name>/SKILL.md 構造に合わせた再編、と見られる）。
 HERDR_PATH="skills/herdr/SKILL.md"
-HERDR_REV="9eb521456ac0d19d3ab3d9d7cea3cca10baa8a4c"
+HERDR_REV="b99002ac99b09e00b4ca692436cb15a6b0d676f1"
 
 # writing-quotation: 引用ブロックの書式規約（Bash等のツール呼び出しを一切含まない
 # 純粋な書式ガイドなので allowed-tools は付けない）。
@@ -76,7 +76,7 @@ WRITING_QUOTATION_REV="c1814f2850c2e18624a15206bc8b18b24cf3d3e8"
 # （404 実測）、こちらだけを vendor する。
 BROWSER_HARNESS_REPO="browser-use/browser-harness"
 BROWSER_HARNESS_PATH="SKILL.md"
-BROWSER_HARNESS_REV="5c5fedf93854a47bd1b2960e5da330d98984cb4a"
+BROWSER_HARNESS_REV="7103d22b6961dfdd484e80eff41469fe3bafbef6"
 
 # grill-me系（mattpocock/skills）。3 skill は依存関係がある:
 #   grill-with-docs → /grilling + /domain-modeling に一行委譲
