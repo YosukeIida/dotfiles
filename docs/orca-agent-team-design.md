@@ -30,26 +30,52 @@ orca orchestration send --run <run-id> --to run:<run-id> --from <role> --subject
 （モード名は transport を指しており、実質「agmsg ブリッジを走らせない」の意味。
 記録が無いときの既定は `agmsg` なので明示設定が必須）。
 
-### 前提が崩れる条件（最優先の検証項目）
+### 検証結果（2026-09-14、`~/.intent-teams/s-code/host` で実施）
 
-guide `design-thread` 126行目の deployment rule。文末に「This is a deployment rule, not a
-recommendation」と念を押してある強制規定：
+**懸念していた制約は intent-cli 側に存在しなかった。前提は成立する。**
 
-> A design seat whose agent kind has no inbound app monitor must be a recorded resident herdr
-> seat with cwd `<routing-root>`. A kind with an inbound app monitor may use that external reader.
+`topology record` の external 形式は `--kind` を**受け取らない**（`--frontend` のみ）。
+intent-cli は external 席の agent kind を記録も検証もしないため、Codex 席を external に
+することを CLI が拒む経路が無い。guide 126行目の deployment rule は運用者への注意であり、
+CLI が強制する検証ではない。
 
-**「inbound app monitor」の定義が guide から確定できていない。** 手がかり：
-orchestrator-thread 530-532行目が agmsg 文脈で「Claude Code は Monitor ツール、Codex は
-bridge (beta) で caveat 付き」と書いている。これが G775 の external reader にも同じく
-適用されるかは不明。
+end-to-end の動作も確認済み：
 
-Codex がこの条件を満たさない場合の影響：
+```
+notify delegate --write  →  delivered: true / event_appended: true
+  →  .intent-cli/events/<domain>/<team>.jsonl に着弾
+    →  notify collect --role implementation  →  count: 1 で受信
+```
 
-- 全席 external が成立しない → **herdr が戻ってくる**
-- 回避案 A: 全席を Claude にする → G789（review 席は design と別 kind が望ましい）を犠牲にする
-- 回避案 B: review 席だけ herdr resident にする → herdr 依存が残る
+wake_command のプレースホルダ展開も確認：
 
-**したがって kind の選択は実機検証の結果で決まる。実装前に検証すること（§6 タスク①）。**
+```
+courtesy wake command: orca orchestration send --run RUNID --to run:RUNID \
+  --from orchestrator --subject probe-2 --body second probe
+```
+
+herdr も agmsg も介在しない。
+
+### ただし全席 external には手順がある（重要）
+
+4席をいきなり external で記録すると **validate が失敗する**。
+
+```
+"cause": "topology-invalid",
+"message": "Team '<t>' has no unambiguous field 'workspace_id'."
+```
+
+`workspace_id` は herdr 由来の概念で、herdr 席がゼロだと導出されない。`topology move
+--workspace-id` で後から入れようとしても「topology が invalid だから拒否」で循環する。
+
+**確定手順：1席を herdr で記録して `workspace_id` を確立し、その席を external に変換する。**
+変換後も `workspace_id` はトップレベルに残り、4席すべて external で `valid: true` になる。
+この工程は `up` が自動で行う（§3-3）。
+
+dummy の `workspace_id` が悪さをしないことも確認済み：
+
+- `session-layer inspect` → `live_query_attempted: false`（herdr 席がゼロなので socket を触らない）
+- `topology validate --live` → herdr の pane list が失敗しても「skipped」扱いで `valid: true`
 
 ---
 
@@ -167,6 +193,31 @@ intent-cli session-layer topology update-field --domain <d> --team <t> --role <r
 
 run-id が変わるたびに全席の wake_command を書き換える必要がある（§5-3 と直結）。
 
+### 3-3. topology の anchor→convert 工程
+
+全席 external を成立させるために `up` が実行する確定手順（§0 の検証結果より）。
+
+```bash
+# 1. アンカー：design を herdr で記録して workspace_id を確立する
+intent-cli session-layer topology record --domain <d> --team <t> --role design \
+  --resident herdr --workspace-id orca --pane-id orca:p1 --cwd <host-repo> --kind claude \
+  --write --format json
+
+# 2. 残り3席を external で記録
+intent-cli session-layer topology record --domain <d> --team <t> --role <r> \
+  --resident external --reader ".intent-cli/events/<t>.jsonl" --frontend orca --write --format json
+
+# 3. design を external に変換（workspace_id はトップレベルに残る）
+intent-cli session-layer topology update-residence --domain <d> --team <t> --role design \
+  --current-resident herdr --new-resident external --reader ".intent-cli/events/<t>.jsonl" \
+  --frontend orca --confirm-update-residence --write --format json
+```
+
+`workspace_id` に入れる `orca` は placeholder。herdr 席がゼロなので参照されない（§0 で確認済み）。
+herdr らしい形式（`w1H` 等）を避けて `orca` としているのは、後から見て placeholder と分かるようにするため。
+
+これらは `.intent-cli` を持つ host repo の cwd から実行する必要がある（G299 fail-closed）。
+
 ---
 
 ## 4. 移植するが検証が要る機能
@@ -266,18 +317,22 @@ guide の釘刺しを守る。全許可で黙らせるのは禁じ手：
 
 ### 5-5. agent kind の割り当て（implementation のみ確定）
 
-| role | kind | model | effort | 状態 |
-|---|---|---|---|---|
-| design | claude | opus | high | §0 の検証待ち |
-| orchestrator | claude | opus | high | §0 の検証待ち |
-| implementation | codex | gpt-5.6-luna | **max** | 確定 |
-| review | codex | gpt-5.6-sol | high | §0 の検証待ち |
+§0 の検証で「Codex は external になれない」という制約が存在しないことが分かったため、
+herdr 版の既定をそのまま使える。
+
+| role | kind | model | effort |
+|---|---|---|---|
+| design | claude | opus | high |
+| orchestrator | claude | opus | high |
+| implementation | codex | gpt-5.6-luna | **max** |
+| review | codex | gpt-5.6-sol | high |
 
 `max` が codex の有効値であることは確認済み
 （`~/.codex/config.toml` の `enabled-reasoning-efforts = ["low", "medium", "high", "xhigh", "ultra", "max"]`）。
 
-design / orchestrator / review は §0 の検証結果に依存する。Codex が external になれない場合、
-review 席の kind または residence を変更する（§0 の回避案 A/B）。
+review が codex なのは G789（review 席は design と別 kind が望ましい）を満たすため。
+kind は external 席の topology には記録されない（`--frontend` のみ）ので、これは
+skill の team config が持つ情報であって intent-cli には渡らない。
 
 ---
 
@@ -285,22 +340,31 @@ review 席の kind または residence を変更する（§0 の回避案 A/B）
 
 dotfiles には `.intent-cli` が無く G299 で fail-closed するため、**host repo で実施する必要がある**。
 
-| # | 検証内容 | 失敗時の影響 | 状態 |
-|---|---|---|---|
-| ① | Codex 席が external resident になれるか（「inbound app monitor」条件） | 設計の前提が崩れる。kind か residence を変更（§0） | 未 |
-| ② | `topology record --resident external` が要求する値の形 | herdr 版のコピーが通らない | **済**（§5-2。`--reader` は routing-root 相対パスのまま） |
-| ③ | pane resident ゼロ（全席 external）の topology が herdr-only モードで受理されるか | 1席だけ herdr にする混成か、agmsg モードに退避 | 未 |
-| ④ | `notify collect --wait` ↔ `orca orchestration send` の往復が実際に通るか | 起床経路の作り直し | 未 |
-| ⑤ | `terminal read --screen` が codex の alternate screen を正しく返すか | doctor の承認待ち検出が効かない（§4） | 未 |
-| ⑥ | `record-profile` / `record-host-state` の `--envelope` `--sandbox-mode` 等が取りうる値 | §5-1 / §5-4 の第1段が書けない | 未 |
+2026-09-14 に `~/.intent-teams/s-code/host` で実施。⑤以外はすべて解決した。
 
-検証環境として使える host repo が手元に3つある：
+| # | 検証内容 | 結果 |
+|---|---|---|
+| ① | Codex 席が external resident になれるか | **制約は存在しない。** external 形式は `--kind` を取らず、intent-cli は kind を検証しない |
+| ② | `topology record --resident external` が要求する値の形 | `--reader <routing-root-relative-path>` + 任意の `--frontend` / `--wake-command` |
+| ③ | 全席 external の topology が受理されるか | **anchor→convert 手順（§3-3）を経れば `valid: true`。** 直接記録すると `workspace_id` 不足で失敗 |
+| ④ | `notify collect` ↔ `orca orchestration send` の往復 | **成立。** delegate → reader JSONL → collect を実測。wake のプレースホルダ展開も確認 |
+| ⑤ | `terminal read --screen` が codex の alternate screen を返すか | **未**（doctor 実装時に確認する） |
+| ⑥ | `record-profile` / `record-host-state` の引数の有効値 | **自由文字列。** enum 検証は無い。「宣言を記録するだけで provision はしない」と明記 |
+
+検証環境として使える host repo：
 
 ```
-~/workspace/github.com/TMLlaboratory/timesheet-workbench/.intent-cli
-~/.intent-teams/s-code/host/.intent-cli
-~/.intent-teams/cmux/host/.intent-cli
+~/.intent-teams/s-code/host/.intent-cli      ← 検証に使用
+~/workspace/github.com/TMLlaboratory/timesheet-workbench/.intent-cli   （config.toml が無く host ではない）
 ```
+
+### 検証中に判明した別件
+
+`s-code-dev` と `cmux-dev` の topology が 0.31.0 で読めない。legacy `role-pane-mapping.json`
+の互換読み取りが削除されたため。使うなら `topology record` での再宣言か
+`topology retire-legacy` が必要。
+
+herdr サーバが protocol_mismatch（client 22 / server 20）で古い。herdr を使わないなら無関係。
 
 ---
 
