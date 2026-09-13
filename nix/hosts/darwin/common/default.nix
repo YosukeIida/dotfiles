@@ -172,6 +172,37 @@
       intent-cli skill install --target codex  --scope user --force
     ' || true
 
+    # Orca 同梱の skill を claude / codex 両方へ冪等に配備する。intent-cli と同じ判断：
+    # SKILL.md は orca バイナリに埋め込まれており `orca skills get` が書き出すため repo に
+    # 実体を置けない。orca は homebrew cask で自動更新されるので vendor すると必ず drift する。
+    # `orca skills install` は使わない — 内部で `npx skills add` を実行するため nodeless-policy と
+    # 「命令型 install を避ける」方針の両方に反する。`skills get` はローカル読み取りのみで、
+    # Orca.app の起動も不要（switch 中でも確実に動く）。
+    # compact guide を SKILL.md に、bundled reference は references/ に分けて置く（--full で
+    # 全部を SKILL.md に inline すると常時ロードされる本文が数十KBに膨らむ）。
+    # linear-tickets は orca-linear の legacy alias で description がほぼ同一のため入れない
+    # （説明の重なる skill を2つ置くと発動判定が濁る）。
+    su - ${username} -c '
+      command -v orca >/dev/null 2>&1 || { echo "orca: PATH に無いため skill 配備を skip" >&2; exit 0; }
+      for target in "$HOME/.claude/skills" "$HOME/.codex/skills"; do
+        for s in orca-cli orchestration computer-use orca-linear orca-emulator orca-emulator-android orca-per-workspace-env; do
+          d="$target/$s"
+          mkdir -p "$d"
+          orca skills get "$s" > "$d/SKILL.md" || { echo "orca: $s の取得に失敗" >&2; continue; }
+          rm -rf "$d/references"
+          refs=$(orca skills get "$s" --references 2>/dev/null) || continue
+          case "$refs" in *"no bundled references"*) continue ;; esac
+          mkdir -p "$d/references"
+          # su のログインシェルは zsh。zsh は unquoted 変数を単語分割しないため
+          # `for r in $refs` は全行を1語として渡してしまう。read ループなら両シェルで動く。
+          printf "%s\n" "$refs" | while IFS= read -r r; do
+            [ -n "$r" ] || continue
+            orca skills get "$s" --reference "$r" > "$d/references/$r.md" || true
+          done
+        done
+      done
+    ' || true
+
     # 外部由来 skill（gist・GitHub repo 等）の更新有無を通知のみ表示する（brew outdated 相当）。
     # 内容は一切書き換えない（読み取り専用）。ネットワーク不通でも switch を失敗させない。
     if [ -x "$pub/sync-external-skills.sh" ]; then
