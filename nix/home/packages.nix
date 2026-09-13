@@ -101,12 +101,11 @@ in
     # これはシェル経路の分。GUI アプリ・launchd 経路は host 層の
     # launchd.user.envVariables と herdr agent の plist で別途設定する。
     LANG = "en_US.UTF-8";
-    AGMSG_NODE = "${pkgs.nodejs_22}/bin/node";
     # gws-multi-account skill（agents/skills/gws-multi-account/、vendor元は
     # indentcorp/gws-multi-account）の PreToolUse hook（hooks/hook.js）と、
-    # SKILL.md 内の accounts.json 更新スニペットが使う。AGMSG_NODE と同じ理由
-    # （nodeless-policy: 裸の node を PATH に常駐させない）で、nix pin 済みの
-    # node をこの専用変数経由でだけ触れるようにしている。
+    # SKILL.md 内の accounts.json 更新スニペットが使う。nodeless-policy
+    # （裸の node を PATH に常駐させない）のため、nix pin 済みの node を
+    # この専用変数経由でだけ触れるようにしている。
     GWS_MULTI_ACCOUNT_NODE = "${pkgs.nodejs_22}/bin/node";
     # agent-browser は headed（通常ウィンドウ・ハードウェア GPU）で起動する。
     # headless だと swiftshader（CPU での GPU エミュレーション）で描画され、
@@ -114,19 +113,9 @@ in
     AGENT_BROWSER_HEADED = "1";
     # 閉じ忘れ保険: 30分アイドルでデーモンごと Chrome を自動終了する（実測で動作確認済み）。
     AGENT_BROWSER_IDLE_TIMEOUT_MS = "1800000";
-    # agmsg の codex shim（~/.agents/bin/codex）に実体を直指しさせ、PATH 走査を止める。
-    # 走査させると cmux が panel ごとに $TMPDIR/cmux-cli-shims/<panel-id>/ へ生成する
-    # codex shim を「実体」と誤認する。cmux 側の wrapper も逆に agmsg shim を「実体」と
-    # 判定するため、両者が互いを exec し合って無限再帰し、codex が起動しなくなる
-    # （2026-08-13 に cmux 0.64.22 × agmsg 1.1.6 で実測。herdr では cmux の per-panel
-    # shim が無いので発生しない）。本質は agmsg の resolve_real_codex が他社製 wrapper を
-    # 除外できていない点で、upstream 修正が入ればこの pin は不要になる。
-    AGMSG_REAL_CODEX = "/opt/homebrew/bin/codex";
     # HF_HOME は機ごとに置き場所が変わりうるので、ここ（他人も fork して使う共通層）
     # ではなく nix/hosts/darwin/yosuke/common.nix に置いてある。
   };
-
-  home.sessionPath = [ "$HOME/.agents/bin" ];
 
   # figma-console-mcp の Desktop Bridge プラグインを安定パスへ実体コピーする。
   # Figma はここ（~/.figma-plugins/figma-desktop-bridge/manifest.json）から一度 import すれば、

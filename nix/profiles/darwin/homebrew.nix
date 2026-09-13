@@ -94,7 +94,6 @@
       "claude-code@latest"
       "yosukeiida/casks-personal/claude-science"
       "cloudflare-warp@beta"
-      "cmux"
       "codex"
       "codexbar"
       "discord"
