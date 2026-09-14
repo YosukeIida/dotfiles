@@ -246,16 +246,8 @@ codex() {
     fi
   fi
 
-  # Gatekeeper の quarantine 属性を落とす（shims/claude の同名ステップと同じ理由）。
-  # cask `codex` は Caskroom の素のバイナリを /opt/homebrew/bin に symlink する形なので、
-  # 更新のたびに com.apple.quarantine が付き直し、更新直後の初回起動で
-  # 「"codex" is an app downloaded from the Internet.」の GUI ダイアログが出る。
-  # whence -p で関数ではなく PATH 上の実行ファイルを引く。xattr(1) は symlink を追うので
-  # Caskroom 側の実体に効き、属性が無ければエラー終了するだけ（冪等）。
-  # claude と違い codex にはシムが無いため、これが効くのは対話 zsh 経由の起動だけ。
-  local _codex_bin
-  _codex_bin="$(whence -p codex 2>/dev/null)"
-  [[ -n "$_codex_bin" ]] && /usr/bin/xattr -d com.apple.quarantine "$_codex_bin" 2>/dev/null
+  # Gatekeeper の quarantine 剥がしは shims/codex が担当する（`command codex` は
+  # PATH 先頭の shims を必ず通る）。関数側に二重に持たせると片方だけ直す事故になる。
 
   # codex プラグイン（sites 等）の MCP サーバ用 node を codex 起動時だけ PATH に注入する。
   # node は devshell のみの方針のため、通常の PATH には置かず nix が
