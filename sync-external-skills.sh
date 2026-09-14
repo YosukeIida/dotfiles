@@ -122,13 +122,14 @@ GWS_MULTI_ACCOUNT_EXTRA="skills/gws-multi-account/references/auth-login.md:refer
 GWS_MULTI_ACCOUNT_REV="e73dcbb12e581c51a259e0d5bf827b684faf997a"
 
 # latex-devkit: 自作だが、他の自作 skill のように personal-agent-skills には置かず
-# ツール本体の repo（YosukeIida/latex-devkit）に同居させている（2026-08〜）。
+# ツール本体の repo（TMLlaboratory/latex-devkit）に同居させている（2026-08〜。
+# 2026-09 に YosukeIida から TMLlaboratory org へ transfer）。
 # skill がドキュメントする対象そのもの（Makefile・docker-compose 構成）と
 # 同じ repo に置くことで、ツール側の変更と skill の記述が drift しにくくなる。
 # upstream は他ユーザーも使える汎用形（$LATEX_DEVKIT_DIR 変数化・allowed-tools 無し）。
 # ここでの局所パッチで allowed-tools と、他 skill との住み分け注記を足した
 # description に差し替える。
-LATEX_DEVKIT_REPO="YosukeIida/latex-devkit"
+LATEX_DEVKIT_REPO="TMLlaboratory/latex-devkit"
 LATEX_DEVKIT_PATH="skills/latex-devkit/SKILL.md"
 LATEX_DEVKIT_REV="a65e238f463fe5356fb2f785d185bdc30bd827a0"
 
