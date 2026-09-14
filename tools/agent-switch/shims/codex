@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# Codex CLI 起動シム（PATH 経由で本体より先に見つかる実行可能ファイル）。
+#
+# shims/claude と同じ構造・同じ理由で存在する。lib/codex.zsh の codex() 関数は
+# **対話 zsh でしか定義されない**ため、
+#   - 非対話シェル（zsh -c / bash / sh）からの起動
+#   - herdr が自プロセスの env のまま spawn した codex
+#     （launchd agent の PATH 先頭にこの shims dir を置いてあるのはこのため。
+#      nix/hosts/darwin/yosuke/common.nix の launchd.user.agents.herdr 参照）
+#   - 関数が定義される前に起動していた古いシェル
+# では関数側の処理（MCP サーバ用 node の PATH 注入・quarantine 剥がし）が効かない。
+# シムは実行可能ファイルなのでシェルの種類に依存せず、PATH を継承した子プロセスにも効く。
+#
+# 関数側に残る login/logout ガードは「認証ファイルを壊させない」ための運用ポリシーで、
+# 対話シェルでの確認プロンプトが前提のため、こちらには持ち込まない。
+# -f: PATH 要素に含まれるワイルドカードを glob 展開させない
+set -ufo pipefail
+
+_self="$0"
+_self_dir="$(dirname -- "$_self")"
+# PATH に載っているのは symlink 側（~/.local/share/agent-switch/shims）なので、
+# 論理パスと物理パスの両方を除外対象にする。
+_self_dir_phys="$(cd -- "$_self_dir" 2>/dev/null && pwd -P || printf '%s' "$_self_dir")"
+
+_rt_bin="$HOME/.local/share/codex-runtime/bin"
+
+# 1. 自分のディレクトリを PATH から外す（シムが自分自身を再実行しないように）
+#
+# PATH は手動で分解する。`IFS=:` の単語分割では末尾の空要素が落ちるため。
+# 空要素は「カレントディレクトリ」を意味するので、勝手に落とすと PATH の意味が変わる。
+_newpath=""
+_first=1
+_rest="${PATH-}"
+while :; do
+  case "$_rest" in
+    *:*) _dir="${_rest%%:*}"; _rest="${_rest#*:}"; _more=1 ;;
+    *)   _dir="$_rest"; _rest=""; _more="" ;;
+  esac
+
+  case "$_dir" in
+    "$_self_dir" | "$_self_dir_phys") ;;  # 自分のディレクトリは落とす
+    *)
+      if [[ -n "$_first" ]]; then
+        _newpath="$_dir"; _first=""
+      else
+        _newpath="$_newpath:$_dir"
+      fi
+      ;;
+  esac
+
+  [[ -n "$_more" ]] || break
+done
+
+# 2. codex プラグイン（sites 等）の MCP サーバ用 node を PATH 先頭へ冪等に注入する
+#    （node をグローバル PATH に置かない方針は変えない。nix/home/files.nix 参照）。
+if [[ -d "$_rt_bin" ]]; then
+  case ":$_newpath:" in
+    *":$_rt_bin:"*) ;;
+    *) _newpath="$_rt_bin:$_newpath" ;;
+  esac
+fi
+
+export PATH="$_newpath"
+
+# 3. 本体を解決する。万一シムに戻るようなら無限ループさせずに失敗させる。
+_real="$(command -v codex || true)"
+if [[ -z "$_real" ]]; then
+  echo "agent-switch codex shim: codex 本体が PATH 上に見つかりません。" >&2
+  echo "  Homebrew cask の codex が入っているか確認してください。" >&2
+  exit 127
+fi
+if [[ "$_real" -ef "$_self" ]]; then
+  echo "agent-switch codex shim: 自分自身に再帰しています（$_real）。" >&2
+  exit 127
+fi
+
+# 4. Gatekeeper の quarantine 属性を落とす（shims/claude の同名ステップと同じ理由）。
+# cask 更新のたび com.apple.quarantine が付き直し、更新直後の初回起動で
+# 「"codex" is an app downloaded from the Internet.」の GUI ダイアログが出て、
+# ボタンを押すまでターミナルから起動できない。xattr(1) は symlink を追うので
+# Caskroom 側の実体に効く（属性が無ければエラー終了するだけなので握り潰す = 冪等）。
+/usr/bin/xattr -d com.apple.quarantine "$_real" 2>/dev/null || true
+
+# argv[0] は "codex" のまま渡す（herdr の agent 検出や ps を見るスクリプトのため）。
+exec -a codex "$_real" "$@"
