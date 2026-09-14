@@ -82,6 +82,23 @@ if [[ "$_real" -ef "$_self" ]]; then
   exit 127
 fi
 
+# 4. Gatekeeper の quarantine 属性を落とす
+#
+# Homebrew Cask は cask を更新するたび com.apple.quarantine を付け直すため、
+# 更新直後の初回起動で「"claude" is an app downloaded from the Internet.」の
+# GUI ダイアログが出て、ボタンを押すまでターミナルから起動できない
+# （2026-09-14 実測）。install 時に quarantine を付けさせない手段は Homebrew 6 に
+# 存在せず（nix/profiles/darwin/homebrew.nix の zed-dev-ratex のコメント参照）、
+# upstream の cask には postflight を足せないので、起動側で落とす。
+#
+# darwin-switch の postActivation ではなくここに置く理由: homebrew の
+# onActivation.upgrade = false なので cask 更新は `brew upgrade` 側で起き、
+# switch を挟まずに再 quarantine される。シムなら全起動経路で必ず通る。
+# xattr(1) は symlink を追うので Caskroom 側の実体に効く（属性が無ければ
+# エラー終了するだけなので握り潰す = 冪等）。com.apple.provenance は
+# ダイアログの原因ではないので触らない。
+/usr/bin/xattr -d com.apple.quarantine "$_real" 2>/dev/null || true
+
 # argv[0] は "claude" のまま渡す（zsh 関数版の `command claude` と同じ見え方を保つ。
 # herdr の agent 検出や ps を見るスクリプトの挙動を変えないため）。
 exec -a claude "$_real" "$@"
