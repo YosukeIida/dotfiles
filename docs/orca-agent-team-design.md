@@ -463,3 +463,35 @@ kind の選択が変わる。
 
 `cmux-dev` チームの topology が 0.31.0 で読めない状態にある（§5-2）。
 このチームを使う前に `topology record` での再宣言か `topology retire-legacy` が必要。
+
+---
+
+## 10. 顛末と、追跡している upstream（2026-09-16 追記）
+
+この設計は **herdr へ戻すことで決着した**。orca 側の四ロール skill（`orca-agent-team`）は
+削除済み。このノートは実測記録として残す。
+
+戻した理由は3つ。いずれも 2026-09-15 の調査で裏が取れている。
+
+1. **orca 1.4.203 でも CLI からレイアウトを組めない。** コマンド総数は 234 のまま増えず、
+   `terminal split` に比率指定が無く、タブ領域を分割する経路も無い。
+2. **intent-cli の orca 対応が未着手。** G813 の queue state は `queued` で、
+   G822 が host loop を `dispatch-identity-source-unavailable` で明示的に拒否する。
+3. **長文注入が黙って切れる問題を他の利用者も踏んでいる。** 解は file 経由の配送で、
+   intent-cli 0.31.0 の `--delivery-method file-backed` と同じ設計。
+
+### 追跡中の upstream
+
+これらが入れば orca 経路を再検討する材料になる。
+
+| # | 内容 | 入ると何が変わるか |
+|---|---|---|
+| [orca #18162](https://github.com/stablyai/orca/pull/18162) | Workspace Multiplexer（worktree をまたいで1画面に並べ、分割し、再起動をまたいで保持する） | **本命。** 配置の手作業がほぼ消える。ただし UI 実装で CLI は付いてこない |
+| [orca #15771](https://github.com/stablyai/orca/issues/15771) | `orca terminal split --ratio <0..1>` | 3席以上を1タブに入れられるようになる |
+| [orca #18077](https://github.com/stablyai/orca/issues/18077) | 分割後の自動均等化 | 同上（比率指定の代替） |
+| [orca #12844](https://github.com/stablyai/orca/issues/12844) | agent 状態の CLI 公開 | `status` が画面読みに頼らず済む |
+| [orca PR #10076](https://github.com/stablyai/orca/pull/10076) | tab-level split のショートカット | `computer hotkey` でタブ領域を作れるようになる |
+| [intent-system #1771](https://github.com/J-Tech-Japan/intent-system/issues/1771) | external resident 用の Orca Run メールボックス | orca 席が正規の dispatch 経路に乗る |
+| [intent-system #1774](https://github.com/J-Tech-Japan/intent-system/issues/1774) | 上記の実装単位 G813 | 同上 |
+
+調査の詳細は当時の scratchpad（`orca-upstream-findings.md`）に残した要点をここへ転記した。
