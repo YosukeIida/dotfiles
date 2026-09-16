@@ -415,14 +415,12 @@ let
     tailscale_bin="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
     warp_cli="/Applications/Cloudflare WARP.app/Contents/Resources/warp-cli"
     disable_routes=0
-    fetch_derp=0
 
     for arg in "$@"; do
       case "$arg" in
         --disable-tailscale-routes) disable_routes=1 ;;
-        --fetch-derp) fetch_derp=1 ;;
         *)
-          echo "usage: vpn-coexistence-apply [--disable-tailscale-routes] [--fetch-derp]" >&2
+          echo "usage: vpn-coexistence-apply [--disable-tailscale-routes]" >&2
           exit 64
           ;;
       esac
@@ -440,6 +438,14 @@ let
       fi
     }
 
+    # DERP サーバの個別 IP はここに入れない（2026-09-16 に撤去）。
+    # derp-map 全件（176件、うち IPv6 /128 が約88件）を除外に入れていたところ、WARP は
+    # ::/0 から /128 をくり抜くために補集合を分割するため、接続のたびに約5,058本の経路を
+    # OS に投入していた。実測 5.2〜8.7 秒かかり、WARP の watchdog は connection actor が
+    # 9 秒応答しないと daemon を panic させるので、再接続がほぼ毎回失敗していた
+    # （`Setting split tunnel routes` 到達122回に対し次段階到達7回）。DERP への TCP/443 は
+    # WARP のトンネル内を通しても成立するため、この除外は機能要件ではなかった。
+    # 経緯と実測: dotfiles-private/docs/warp-tailscale-disconnect-diagnosis-2026-09-16.md
     # WARP をバイパスさせる IP レンジ（Tailscale/Headscale を機能させるため）。
     # Source: https://tailscale.com/kb/1082/firewall-ports
     #
@@ -449,6 +455,14 @@ let
     #   2606:B740:49::/48      control plane (IPv6)
     #   199.165.136.0/24       logging (log.tailscale.com)
     #   2606:B740:1::/48       logging (IPv6)
+    #
+    # 133.44.0.0/16 は NUT の public IP 帯。WARP 接続中、tailscaled は経路ループを避けるため
+    # 送信ソケットを物理 interface に bind する。WARP の firewall は catch-all Deny なので、
+    # 除外が無いと peer への直接 UDP も DERP への TCP/443 もすべて落ちる（2026-09-16 実測:
+    # WARP 接続中は全 peer が `no reply`、WARP 切断で即 direct 復活）。研究室の peer は全て
+    # この帯にいるため、1本の /16 を除外するだけで direct 接続が成立する（実測 4〜6ms）。
+    # 引き換えに NUT 宛の通信は WARP を経由せず FortiGate から見える。
+    #   133.44.0.0/16          NUT public range (tailscale peer の direct endpoint)
     warp_exclude_ranges="
       100.64.0.0/10
       fd7a:115c:a1e0::/48
@@ -456,6 +470,7 @@ let
       2606:B740:49::/48
       199.165.136.0/24
       2606:B740:1::/48
+      133.44.0.0/16
     "
 
     # Headscale サーバ IP は agenix 暗号化 → darwin-switch 時に下記へ復号配置。
@@ -492,81 +507,53 @@ let
       return "$failed"
     }
 
-    configure_warp_derp() {
-      if [ "$fetch_derp" -eq 0 ]; then
-        return 0
-      fi
-      if [ ! -x "$warp_cli" ]; then
-        return 0
-      fi
-      if [ ! -x "$tailscale_bin" ]; then
-        return 0
-      fi
+    # 学外 peer との relay 経路。home region（tok）の DERP だけを除外する。
+    # 以前は derp-map 全件（176件・IPv6 /128 込み）を入れていて、WARP が ::/0 から /128 を
+    # くり抜くための補集合 約5,058本を接続のたびに投入し、9秒の watchdog を超えて daemon が
+    # 落ちていた。region 1つ・IPv4 のみ・上限 derp_max 件に絞ることで、経路爆発を構造的に
+    # 起こせなくする。IP は Tailscale 側でローテートしうるので derp-map から毎回引き直す
+    # （region code は人が選ぶ定数なので netcheck に依存せず、WARP 接続中でも決定できる）。
+    derp_region="tok"
+    derp_max=8
 
-      local state_dir="''${HOME}/Library/Application Support/nix-darwin"
-      local state_file="$state_dir/vpn-derp-exclusions.txt"
-      mkdir -p "$state_dir"
-
-      # DERP マップは tailscale CLI からローカルに取る。以前は controlplane.tailscale.com へ
-      # curl していたが、研究室ネットワークの FortiGate が tailscale.com を TLS 復号した
-      # うえで 403 で遮断するため一度も成功しなかった（証明書の issuer が Fortinet になり、
-      # 検証を無効化して通しても 403）。CLI 経由なら境界のフィルタに影響されない。
-      local derp_json
-      derp_json="$("$tailscale_bin" debug derp-map 2>/dev/null || true)"
-      if [ -z "$derp_json" ]; then
-        echo "warning: could not read DERP map from tailscale; keeping previous state" >&2
+    configure_warp_derp_home() {
+      if [ ! -x "$warp_cli" ] || [ ! -x "$tailscale_bin" ]; then
         return 0
       fi
 
-      local new_ips
-      new_ips="$(echo "$derp_json" \
-        | grep -oE '"IPv[46]"\s*:\s*"[^"]+"' \
-        | grep -oE '"[^"]+"\s*$' \
-        | tr -d '"' \
-        | sort -u || true)"
+      local ips
+      ips="$("$tailscale_bin" debug derp-map 2>/dev/null \
+        | awk -v r="\"$derp_region\"" '
+            $0 ~ /"RegionCode":/ { inregion = ($2 == r ",") || ($2 == r) }
+            inregion && /"IPv4":/ { gsub(/[",]/, "", $2); print $2 }
+          ' | sort -u)"
 
-      local prev_ips=""
-      if [ -f "$state_file" ]; then
-        prev_ips="$(cat "$state_file")"
+      if [ -z "$ips" ]; then
+        echo "warning: no DERP IPv4 found for region $derp_region; skipping" >&2
+        return 0
       fi
 
-      cidr_for() {
-        case "$1" in
-          *:*) echo "$1/128" ;;
-          *)   echo "$1/32" ;;
-        esac
-      }
+      local count
+      count="$(echo "$ips" | grep -c .)"
+      if [ "$count" -gt "$derp_max" ]; then
+        echo "warning: DERP region $derp_region returned $count IPs (> $derp_max); skipping to avoid route explosion" >&2
+        return 1
+      fi
 
-      local ip
-      local sync_failed=0
-      for ip in $prev_ips; do
-        if ! echo "$new_ips" | grep -qxF "$ip"; then
-          if ! "$warp_cli" tunnel ip remove-range "$(cidr_for "$ip")" >/dev/null 2>&1; then
-            sync_failed=1
-          fi
-        fi
-      done
-
-      local current_ranges
+      local current_ranges ip failed=0
       current_ranges="$("$warp_cli" tunnel ip list --no-paginate 2>/dev/null || true)"
-      for ip in $new_ips; do
+      for ip in $ips; do
         case "$current_ranges" in
-          *"$ip"*) ;;
+          *"$ip/32"*) ;;
           *)
-            if ! "$warp_cli" tunnel ip add-range "$(cidr_for "$ip")" >/dev/null 2>&1; then
-              sync_failed=1
+            if ! "$warp_cli" tunnel ip add-range "$ip/32" >/dev/null 2>&1; then
+              failed=1
             fi
             ;;
         esac
       done
 
-      if [ "$sync_failed" -eq 0 ]; then
-        echo "$new_ips" > "$state_file"
-        return 0
-      else
-        echo "warning: some DERP exclusions failed; state file not updated" >&2
-        return 1
-      fi
+      return "$failed"
     }
 
     tailscale_pending=0
@@ -592,7 +579,7 @@ let
     done
 
     derp_ok=0
-    if ! configure_warp_derp; then
+    if ! configure_warp_derp_home; then
       derp_ok=1
     fi
 
@@ -606,7 +593,7 @@ let
       rc=1
     fi
     if [ "$derp_ok" -eq 1 ]; then
-      echo "warning: DERP exclusions were not fully synchronized" >&2
+      echo "warning: home DERP exclusions were not fully applied" >&2
       rc=1
     fi
     exit "$rc"
@@ -683,7 +670,6 @@ in
       Label = "com.yosuke.vpn-coexistence-apply";
       ProgramArguments = [
         "${vpnCoexistenceApply}/bin/vpn-coexistence-apply"
-        "--fetch-derp"
       ];
       RunAtLoad = true;
       StartInterval = 1800;
