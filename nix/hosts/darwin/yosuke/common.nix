@@ -508,11 +508,18 @@ let
     }
 
     # 学外 peer との relay 経路。home region（tok）の DERP だけを除外する。
-    # 以前は derp-map 全件（176件・IPv6 /128 込み）を入れていて、WARP が ::/0 から /128 を
-    # くり抜くための補集合 約5,058本を接続のたびに投入し、9秒の watchdog を超えて daemon が
-    # 落ちていた。region 1つ・IPv4 のみ・上限 derp_max 件に絞ることで、経路爆発を構造的に
-    # 起こせなくする。IP は Tailscale 側でローテートしうるので derp-map から毎回引き直す
+    # 以前は derp-map 全件（176件）を入れていて、WARP が ::/0 から /128 をくり抜くための
+    # 補集合 約5,058本を接続のたびに投入し、9秒の watchdog を超えて daemon が落ちていた。
+    # region 1つ・上限 derp_max 件に絞ることで、経路爆発を構造的に起こせなくする。
+    # IP は Tailscale 側でローテートしうるので derp-map から毎回引き直す
     # （region code は人が選ぶ定数なので netcheck に依存せず、WARP 接続中でも決定できる）。
+    #
+    # IPv4 と IPv6 の両方を入れる。当初 IPv4 のみにしていたが、IPv6 が使える回線
+    # （Android テザリング等）では tailscaled が v6 側の DERP を選び、除外に無いため
+    # WARP の firewall に全部落とされた（2026-09-17 実測: `derp.Send ... write tcp6
+    # [2001:268:...]->[2600:3c18::2000:b1ff:fea9:4560]:443: write: broken pipe` が連続し、
+    # health warning `no-derp-connection`）。研究室は IPv6 が無いので露見していなかった。
+    # 4件の /128 を足しても同一 prefix を共有するため経路は +250本・所要 126ms→182ms で済む。
     derp_region="tok"
     derp_max=8
 
@@ -521,38 +528,41 @@ let
         return 0
       fi
 
-      local ips
-      ips="$("$tailscale_bin" debug derp-map 2>/dev/null \
+      # "<ip>/<prefixlen>" の形にして出力する
+      local cidrs
+      cidrs="$("$tailscale_bin" debug derp-map 2>/dev/null \
         | awk -v r="\"$derp_region\"" '
             $0 ~ /"RegionCode":/ { inregion = ($2 == r ",") || ($2 == r) }
-            inregion && /"IPv4":/ { gsub(/[",]/, "", $2); print $2 }
+            inregion && /"IPv4":/ { gsub(/[",]/, "", $2); print $2 "/32" }
+            inregion && /"IPv6":/ { gsub(/[",]/, "", $2); print $2 "/128" }
           ' | sort -u)"
 
-      if [ -z "$ips" ]; then
-        echo "warning: no DERP IPv4 found for region $derp_region; skipping" >&2
+      if [ -z "$cidrs" ]; then
+        echo "warning: no DERP address found for region $derp_region; skipping" >&2
         return 0
       fi
 
-      local count
-      count="$(echo "$ips" | grep -c .)"
-      if [ "$count" -gt "$derp_max" ]; then
-        echo "warning: DERP region $derp_region returned $count IPs (> $derp_max); skipping to avoid route explosion" >&2
+      # 上限は「1 region あたりのノード数」で見たいので v4/v6 を別々に数える
+      local n4 n6
+      n4="$(echo "$cidrs" | grep -c '/32$' || true)"
+      n6="$(echo "$cidrs" | grep -c '/128$' || true)"
+      if [ "$n4" -gt "$derp_max" ] || [ "$n6" -gt "$derp_max" ]; then
+        echo "warning: DERP region $derp_region returned $n4 v4 / $n6 v6 (> $derp_max); skipping to avoid route explosion" >&2
         return 1
       fi
 
-      local current_ranges ip failed=0
+      local current_ranges cidr failed=0
       current_ranges="$("$warp_cli" tunnel ip list --no-paginate 2>/dev/null || true)"
-      for ip in $ips; do
+      for cidr in $cidrs; do
         case "$current_ranges" in
-          *"$ip/32"*) ;;
+          *"$cidr"*) ;;
           *)
-            if ! "$warp_cli" tunnel ip add-range "$ip/32" >/dev/null 2>&1; then
+            if ! "$warp_cli" tunnel ip add-range "$cidr" >/dev/null 2>&1; then
               failed=1
             fi
             ;;
         esac
       done
-
       return "$failed"
     }
 
