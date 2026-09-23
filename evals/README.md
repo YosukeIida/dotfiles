@@ -70,7 +70,7 @@ grader は2種類:
    「eval-audit-and-sweep skill でこの eval suite（evals/suites/<name>）を audit して」
 2. **grader は必ず既知の正解と既知の誤答でテストする**（oracle ≈ pass / 誤答 = fail）。
    これを通らない grader でスイープしても数字は信用できない
-3. スイープ結果は `CLAUDE.md` の委譲ルールと `agents/subagents/*.md` の
+3. スイープ結果は `agents/AGENTS.md` の委譲ルールと `agents/subagents/*.md` の
    `model:` frontmatter に反映する
 4. **living suite として運用する**: 実務で委譲先モデルの失敗を見つけたら、
    それを新しいタスクとして追加する

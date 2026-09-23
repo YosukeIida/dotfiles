@@ -20,7 +20,7 @@ check_node_deps() {
 
   # nix-darwin homebrew.brews は文字列のリストではなく、
   # {"name": "...", "brewfileLine": "...", ...} のリスト。
-  # python3 は使わない: system python 使用禁止方針（CLAUDE.md）を Claude Code の
+  # python3 は使わない: system python 使用禁止方針（agents/AGENTS.md）を Claude Code の
   # Bash hook が強制しており、python3 呼び出しがブロックされて formula_names が
   # 常に空になり、この if で早期 return して検査がまるごと空振りする、という事故が
   # 実際に起きた（2026-08-12）。jq は home.packages で常に入っている前提。

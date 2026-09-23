@@ -15,7 +15,7 @@
 #        "no standard skills found" を返す。2026-07 実測）。
 #        writing-quotation（mathbullet/skills）は marketplace 構造の repo だが、
 #        `/plugin install` は使わない（~/.claude の mutable state に入り、
-#        nix/dotfiles の宣言的管理から外れるため。判断は dotfiles/CLAUDE.md 参照）。
+#        nix/dotfiles の宣言的管理から外れるため。判断は dotfiles/AGENTS.md 参照）。
 #        domain-modeling は SKILL.md から ADR-FORMAT.md / CONTEXT-FORMAT.md を相対参照
 #        するため、この2ファイルも extra_files で同じ rev から一緒に vendor する。
 #        gws-multi-account（indentcorp/gws-multi-account）も同じ理由:
