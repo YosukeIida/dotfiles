@@ -1,7 +1,7 @@
 # dotfiles
 
 Yosuke の Mac 環境の本体 flake。nix-darwin / home-manager・Homebrew・agenix シークレットを
-一元管理する。設計や運用の詳細は [`CLAUDE.md`](./CLAUDE.md) と [`docs/`](./docs/) を参照。
+一元管理する。設計や運用の詳細は [`AGENTS.md`](./AGENTS.md) と [`docs/`](./docs/) を参照。
 
 ---
 
