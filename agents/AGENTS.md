@@ -33,7 +33,8 @@
 ## 実装の方針
 
 - Do not preserve backward compatibility. Remove obsolete paths instead of adding compatibility layers, fallbacks, or migrations.
-- Choose the simplest implementation that fully meets the current requirements. Grow the system in layers: start from the smallest version that works end to end, and never trade a working product for unfinished complexity.
+- Choose the simplest implementation that fully meets the current requirements. Avoid speculative abstractions, configuration, and indirection.
+- Grow the system in layers: start from the smallest version that works end to end, and never trade a working product for unfinished complexity.
 - Lean on the dependencies already in the project before writing your own or adding packages. Do not assume a library lacks a capability without checking its documentation and types.
 - Make architectural decisions for the long term. Do not accept a stopgap that only works for now and is meant to be replaced later.
 
