@@ -1,100 +1,53 @@
 # Yosuke の環境メモ
 
-## モデル別の作業スタイル（トークン節約）
+## 続ける／止まって聞く
 
-> このセッションのモデルは、システムプロンプトの
-> `You are powered by the model named ...` で判別できる。
+作業に入る前に、結果が大きく変わる判断だけをまとめて一度に聞く。それ以外は自分で決め、前提として明記して進める。
+途中で新しい分岐が出たら、それに依存しない作業を先に済ませてから聞く。
+自分の入力が要らない手順は、確認を挟まずに続ける。途中経過は次の操作と同じメッセージに書く。
+止まって聞くのは次のときだけ（開始時に許可を得た操作は除く）:
+- 続行に user の判断が必要なとき（要件の解釈が分かれ、結果が大きく変わる）
+- 取り消しにくい操作の前: データ削除・force push・commit/push・外部への送信や公開・
+  repo 外の変更・稼働中のプロセスやセッションを落とす操作
+診断・監査・計画を頼まれたときは、結果を渡して止まる（実行は指示を待つ）。
 
-**メインセッションが Fable 5 のときのみ** 以下に従う（コストが高いため）：
+## 判断・解釈への応答
 
-- **メイン（Fable 5）の役割は設計・タスク分解・レビュー・監査に専念する。**
-- **設計が固まった実装は Agent tool で委譲する：**
-  - 定型・機械的な作業（テスト追加、リネーム、定型 CRUD 等）→ `model: "sonnet"`
-  - 中〜高難度の実装 → `model: "opus"`
-- 委譲プロンプトには「対象ファイル・設計方針・完了条件・守る規約」を明記し、丸投げしない。
-- サブエージェントの成果物（diff）はメインで必ずレビューしてから採用する。
-- 設計と実装が不可分な特に高難度の箇所は、委譲せずメインで直接実装してよい。
+相手が評価を求めている主張を含む依頼では、答える前に入力を中立な問いに置き換える。
+指定された操作をそのまま実行する依頼には適用しない（依頼を勝手に評価課題へ変えない）。
+評価と実行が混ざった依頼では、評価部分にだけ適用する。
 
-**メインが Sonnet / Opus / Haiku のときはこの分担は適用しない**（無駄な再委譲を避ける）。
+- 「A は B だと思う」→「A は B か」を独立に評価する。相手が示した立場を初期値にしない。
+- 置き換えるのは立場だけ。観測された事実・制約・目的・選好は与件として保持する。
+- 正誤を割合（「半々です」）だけで返さない。どこが正しく、どこが誤りで、
+  どこは情報が足りず未確定かを分けて書く。
+- 相違点を隠さない。同意できる部分を探して結論を和らげない。
 
----
+反対のための反対や、根拠を水増しした指摘は、迎合と同じく判断を誤らせる。
+根拠を示せない主張は「未確定」と書く（対象は真偽・因果・効果。相手の選好は評価対象にしない）。
 
-## 実装の一般方針
+## モデル別の分担
+
+メインが Fable 5 系のときだけ、メインは設計・分解・レビューに専念し、設計が固まった実装は Agent tool で委譲する（定型は `model: "sonnet"`、中〜高難度は `model: "opus"`）。委譲プロンプトには対象ファイル・設計方針・完了条件・守る規約を書き、成果物の diff はレビューしてから採用する。設計と実装が不可分な箇所は直接実装してよい。他のモデルのときはこの分担をしない。
+
+## 実装の方針
 
 - Do not preserve backward compatibility. Remove obsolete paths instead of adding compatibility layers, fallbacks, or migrations.
-- Choose the simplest implementation that fully meets the current requirements. Avoid speculative abstractions, configuration, and indirection.
-- Grow the system in layers. Start from the smallest version that works end to end, and add each new capability on top of a product that already works. Never trade a working product for unfinished complexity.
-- Keep components modular and concerns clearly separated.
-- Prefer established, well-maintained libraries when they reduce overall complexity or improve reliability. Do not reimplement common functionality without a clear reason.
-- Lean on the dependencies already in the project before writing your own implementation or adding packages. Do not assume a library lacks a capability without checking its documentation and types.
+- Choose the simplest implementation that fully meets the current requirements. Grow the system in layers: start from the smallest version that works end to end, and never trade a working product for unfinished complexity.
+- Lean on the dependencies already in the project before writing your own or adding packages. Do not assume a library lacks a capability without checking its documentation and types.
 - Make architectural decisions for the long term. Do not accept a stopgap that only works for now and is meant to be replaced later.
 
----
+## ツールの入れ方
 
-## Nix Darwin セットアップ
-
-```bash
-darwin-switch
-# 実体: sudo darwin-rebuild switch --flake <dotfiles>#<そのマシンの flake attr>
-# attr は各機の `hostname -s` と一致させる規約（darwin-switch 自体に埋め込み済み）
-```
-
-設定エントリ: `~/workspace/github.com/YosukeIida/dotfiles/flake.nix` の
-`darwinConfigurations`（`Yosukes-MacBook-Air` / `Yosukes-Mac-Studio`）。
-個人設定は `nix/hosts/darwin/yosuke/` にあり、`common.nix` が機種共通、
-`macbook-air.nix` / `mac-studio.nix` が機種固有。秘密値は agenix で `secrets/*.age`。
-対比として `nix/hosts/darwin/common/` は他人も fork して使える層（`example` 構成）。
-
-> 2026-06 に単一 public repo 化。個人 skills だけ private overlay（dotfiles-private）
-> にローカルパス symlink で取り込む。
-
----
-
-## パッケージ管理の方針
-
-- グローバル CLI ツール → `nix/home/packages.nix` の `home.packages`
-- Homebrew formula/cask → `nix/profiles/darwin/homebrew.nix` の `brews` / `casks`
-- プロジェクト固有のツール → `nix/flake.nix` の `packages`（nix devshell）
-- `npm install -g` は使わない → `npx` か `nix/flake.nix` に追加する
-
-新しい repo への devshell 追加・nixpkgs の存在確認・Nix GC の手順は
-**devshell-setup スキル**を参照（Skill ツールで自動ロードされる）。
-
----
-
-## Python 環境の方針
-
-### 禁止事項
-
-```bash
-python3 -m pip install --user <package>  # ❌ macOS のシステム Python を汚す
-pip install <package>                    # ❌ 同上
-```
-
-macOS の system Python（Xcode 由来）やユーザー領域（`~/Library/Python/`）には何も入れない。
-
-### 正しい使い方
-
-| 用途 | コマンド |
-|---|---|
-| 一時的なスクリプト実行 | `uvx --with <pkg> python script.py` |
-| 複数パッケージが必要 | `uv run --with <pkg1> --with <pkg2> python script.py` |
-| プロジェクト内（継続利用） | `uv add <pkg>` して `uv run python script.py` |
-| HTTP サーバ（標準ライブラリ） | `python -m http.server 8080`（インストール不要） |
-
-devshell が有効かの確認・direnv の手順は **devshell-setup スキル**を参照。
-
----
+- グローバルな CLI は dotfiles の `nix/home/packages.nix`、Homebrew が要るものは `nix/profiles/darwin/homebrew.nix`、プロジェクト固有のものは各 repo の nix devshell に入れる。反映は `darwin-switch`
+- Node.js / npm をグローバルに入れない（`npm install -g` も素の `npx` も使わない）。node が要るプロジェクトは devshell に閉じ、node 依存の CLI はネイティブバイナリで置き換える
+- Python は uv 経由で使う（`uv run` / `uvx --with <pkg>`）。system python や `pip install --user` は使わない
 
 ## 経験知の索引
 
-経験知の索引: @~/.claude/experience-index.md を意思決定・レビューの前に読むこと。
-（Claude Code はこの行の @ でファイルが展開される。他の agent はパスを Read すること。
-索引は SessionStart hook が生成する機械キャッシュで、正本は experience/ にある）
+過去の判断の前例: @~/.claude/experience-index.md
+`@` を展開しない agent（Codex など）は、判断に前例が要るときにこのパスを Read する。索引は SessionStart hook が生成するキャッシュで、正本は `dotfiles-private/experience/`。
 
-## コード調査時のツール選択
+## 調査ツール
 
-grep/find/cat 相当の調査は Bash ではなくネイティブの `Grep`/`Glob`/`Read` ツールを優先する。
-`rtk` の PreToolUse hook は `Bash` にしか掛からないため、Bash 経由の `grep` 等は
-`rtk grep ...` に書き換えられ plan mode で確認プロンプトが出る。ネイティブツールは
-Read-only 扱いで確認不要かつ rtk の影響を受けない。
+grep / find / cat 相当の調査は Bash ではなくネイティブの Grep / Glob / Read を使う（Bash 経由は rtk の hook で書き換えられ、plan mode で確認が出る）。
