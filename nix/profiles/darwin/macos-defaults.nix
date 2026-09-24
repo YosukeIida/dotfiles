@@ -131,6 +131,9 @@
       # Disable smart dashes.
       NSAutomaticDashSubstitutionEnabled = false;
 
+      # スペース2回でピリオドを入れない。
+      NSAutomaticPeriodSubstitutionEnabled = false;
+
       # Enable natural scrolling.
       "com.apple.swipescrolldirection" = true;
 
