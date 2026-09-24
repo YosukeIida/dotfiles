@@ -367,8 +367,11 @@
     }
 
     # メニューバーのアイコン間隔を詰める。
-    _byhost -globalDomain NSStatusItemSpacing -int 1
-    _byhost -globalDomain NSStatusItemSelectionPadding -int 1
+    # macOS 27 ではサードパーティ製アイコンにしか効かない。Apple 純正（Wi-Fi・バッテリー・
+    # 時計・コントロールセンター・入力メニュー）は新しい MenuBarAgent が描画し、この値を
+    # 無視する（2026-09 時点）。各アプリは起動時に一度だけ読むので、反映には再起動かログアウトが要る。
+    _byhost -globalDomain NSStatusItemSpacing -int 0
+    _byhost -globalDomain NSStatusItemSelectionPadding -int 0
 
     # Spotlight の虫眼鏡アイコンをメニューバーから消す（検索機能自体は Raycast に寄せている）。
     _byhost com.apple.Spotlight MenuItemHidden -int 1
