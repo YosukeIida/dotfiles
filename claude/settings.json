@@ -275,19 +275,21 @@
   "enabledPlugins": {
     "claude-paper@claude-paper": true,
     "codex@openai-codex": true,
-    "document-skills@anthropic-agent-skills": true,
+    "document-skills@anthropic-agent-skills": false,
     "exa@claude-plugins-official": true,
-    "figma@claude-plugins-official": true,
-    "frontend-design@claude-plugins-official": true,
-    "lualatex-pdf@YosukeIida": true,
-    "daymade-docs@daymade-skills": true,
+    "figma@claude-plugins-official": false,
+    "frontend-design@claude-plugins-official": false,
+    "lualatex-pdf@YosukeIida": false,
+    "daymade-docs@daymade-skills": false,
     "rust-analyzer-lsp@claude-plugins-official": true,
-    "swift-lsp@claude-plugins-official": true,
+    "swift-lsp@claude-plugins-official": false,
     "claude-security@claude-plugins-official": true,
-    "clangd-lsp@claude-plugins-official": true,
+    "clangd-lsp@claude-plugins-official": false,
     "eli5@claude-community": true,
-    "academic-research-skills@academic-research-skills": true,
-    "security-guidance@claude-plugins-official": true
+    "academic-research-skills@academic-research-skills": false,
+    "security-guidance@claude-plugins-official": true,
+    "cowork-plugin-management@synced": false,
+    "data@synced": false
   },
   "extraKnownMarketplaces": {
     "YosukeIida": {
