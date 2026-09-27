@@ -6,9 +6,7 @@
 #
 # `"plugin": false` は uninstall せず残す。これはこのスクリプトが定める規約で、
 # 「一時的に切りたいだけなら false / 消したいならキーごと削除」を区別するため
-# （実績としては enabledPlugins に false が書かれたことは一度も無い。Claude Code の
-# enable/disable 状態は settings.json ではなく Claude Code 側の state に持たれており、
-# UI で disable してもここに false は書かれない）。
+# （`/plugin` の UI で disable すると、ここに false が書き込まれる）。
 #
 # 既知の制限: `claude plugins list --json` は「依存として自動インストールされた」
 # ことを示すフィールドを持たない（enabled/id/installPath/installedAt/lastUpdated/
