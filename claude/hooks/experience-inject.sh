@@ -27,8 +27,9 @@ root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 short=$(basename "$root")
 manifest="${EXPERIENCE_MANIFEST:-}"
 if [ -n "$manifest" ] && [ -f "$manifest" ]; then
-  # manifest は "workspace/github.com/owner/repo<TAB>短名"。root のサフィックス一致で引く
-  m=$(awk -F'\t' -v r="$root" 'index(r, $1) { print $2; exit }' "$manifest")
+  # manifest は "workspace/github.com/owner/repo<TAB>短名"。パス境界つきの最長一致で引く
+  # （dotfiles が dotfiles-private の前方一致で先に当たるのを防ぐ）
+  m=$(awk -F'\t' -v r="$root/" 'index(r, $1 "/") && length($1) > best { best = length($1); m = $2 } END { print m }' "$manifest")
   [ -n "$m" ] && short="$m"
 fi
 
