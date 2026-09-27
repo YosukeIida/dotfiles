@@ -272,6 +272,19 @@
     "type": "command",
     "command": "bash ~/.claude/subagent-statusline.sh"
   },
+  "skillOverrides": {
+    "anthropic-skills:ja-refine-paper": "off",
+    "anthropic-skills:ja-refine-grant": "off",
+    "anthropic-skills:ja-rigor-probe": "off",
+    "anthropic-skills:academic-survey-paper": "off",
+    "anthropic-skills:marp-academic-slides": "off",
+    "anthropic-skills:thinking-like-gendo": "off",
+    "anthropic-skills:cognitive-pattern-extractor": "off",
+    "anthropic-skills:interactive-textbook-generator-v2": "off",
+    "anthropic-skills:japanese-scientific-writing": "off",
+    "anthropic-skills:morning": "off",
+    "anthropic-skills:zemi-report-critique": "off"
+  },
   "enabledPlugins": {
     "claude-paper@claude-paper": true,
     "codex@openai-codex": true,
