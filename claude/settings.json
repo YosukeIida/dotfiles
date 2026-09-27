@@ -272,6 +272,7 @@
     "type": "command",
     "command": "bash ~/.claude/subagent-statusline.sh"
   },
+  "skillListingBudgetFraction": 0.02,
   "skillOverrides": {
     "anthropic-skills:ja-refine-paper": "off",
     "anthropic-skills:ja-refine-grant": "off",
