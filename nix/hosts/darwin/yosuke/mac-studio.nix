@@ -196,4 +196,24 @@ in
       StandardErrorPath = "${homedir}/Library/Logs/orca-app.log";
     };
   };
+
+  # darwin-switch のたびに Orca を launchd の管理下に置く。RunAtLoad は plist が
+  # 変わって読み直されたときしか走らないので、Cmd+Q 後などジョブが止まったままの状態を
+  # ここで kickstart して戻す。Orca が既に動いているときは kickstart しない
+  # （second-instance で既存ウィンドウを前面化するだけで管理下には入らない）。
+  # 管理外で動いている Orca は、落とすと中の terminal / agent が全部死ぬので
+  # 自動では落とさず、手順を表示するだけにする。
+  system.activationScripts.postActivation.text = ''
+    orca_uid="$(id -u -- ${username})"
+    orca_job="gui/$orca_uid/com.yosuke.orca-app"
+    orca_job_pid="$(launchctl print "$orca_job" 2>/dev/null | awk '$1 == "pid" { print $3; exit }')"
+    if [ -n "$orca_job_pid" ]; then
+      :
+    elif pgrep -x -u "$orca_uid" Orca >/dev/null; then
+      echo "Orca は launchd の管理外で動いています（クラッシュしても自動で起動し直しません）。" >&2
+      echo "  管理下に戻すには Orca を Cmd+Q で終了してから: launchctl kickstart $orca_job" >&2
+    else
+      launchctl kickstart "$orca_job" || true
+    fi
+  '';
 }
