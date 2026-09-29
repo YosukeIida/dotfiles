@@ -161,13 +161,13 @@ in
   #
   # 注意（herdr の kickstart と同じ性質）: このウィンドウで Cmd+Q すると runtime ごと
   # 落ちるので、管理下の terminal / agent が全部死ぬ。しかも KeepAlive を
-  # SuccessfulExit = false にしてあるため、Cmd+Q（正常終了）からは復活しない
+  # Crashed = true にしてあるため、Cmd+Q（正常終了）からは復活しない
   # ── 意図した終了として尊重する。閉じたいだけならウィンドウを閉じる（赤ボタン）。
   # 常駐に戻すときは `launchctl kickstart gui/$UID/com.yosuke.orca-app`
   # （pairing 状態は orca-data.json に永続化されているので再ペアリングは不要）。
   #
   # 注意（導入順）: 素の Orca.app が既に起動していると単一インスタンスロックを先に
-  # 取られ、launchd 側の Orca は「既存ウィンドウを前面に出して自分は exit 0 で抜ける」
+  # 取られ、launchd 側の Orca は「既存ウィンドウを前面に出して自分は exit 3 で抜ける」
   # という second-instance の作法で終了する。darwin-switch の前に Orca.app を
   # 終了しておくこと。
   launchd.user.agents.orcaApp = {
@@ -175,11 +175,12 @@ in
       Label = "com.yosuke.orca-app";
       ProgramArguments = [ "/Applications/Orca.app/Contents/MacOS/Orca" ];
       RunAtLoad = true;
-      # exit 0 は再起動対象から外し、クラッシュ（exit != 0）だけを復帰させる。
-      # KeepAlive = true だと上の single-instance 退出（exit 0）まで再起動してしまい、
-      # 「前面化 → exit 0 → 再起動」が数秒周期で回るループになった
-      # （2026-09-01 に Studio で発生、runs=56 / ログは ~/Library/Logs/orca-app.log）。
-      KeepAlive = { SuccessfulExit = false; };
+      # シグナルで落ちたクラッシュだけを復帰させ、終了コードでは判定しない。
+      # single-instance 退出は「既存ウィンドウを前面化して exit」なので、これを再起動すると
+      # 「前面化 → exit → 再起動」が ThrottleInterval（10 秒）周期で回るループになる。
+      # KeepAlive = true では exit 0 で（2026-09-01、runs=56）、SuccessfulExit = false では
+      # Orca がこの退出を exit 3 に変えた後に（2026-09-30、runs=185）発生した。
+      KeepAlive = { Crashed = true; };
       # 以前の `orca serve` 相当の起動が cwd を app root に固定していたのに倣う
       # （Electron のリソース解決が process.cwd() を見る経路があるため）。
       WorkingDirectory = "/Applications/Orca.app/Contents/Resources/app.asar.unpacked";
