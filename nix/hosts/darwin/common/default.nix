@@ -159,6 +159,10 @@
     # Codex プラグインを希望リストから冪等にインストール
     su - ${username} -c "bash $pub/codex/install-plugins.sh" || true
 
+    # dotfiles が宣言した Codex の hook（hooks.json と plugins.txt の plugin）を
+    # 各 CODEX_HOME で承認済みにする。plugin の hook も対象なので install の後に置く。
+    su - ${username} -c "bash $pub/codex/trust-hooks.sh" || true
+
     # intent-cli 同梱の dispatcher skill を claude / codex 両方へ冪等に配備する。
     # この skill だけは repo に実体を置けない — release tarball は単一バイナリで、
     # SKILL.md は CLI に埋め込まれており `intent-cli skill install` が書き出す
