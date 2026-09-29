@@ -1,3 +1,4 @@
+{ config, ... }:
 {
   homebrew = {
     enable = true;
@@ -41,6 +42,17 @@
       # omp（oh my pi）。formula は release の単体バイナリを置くだけで depends_on ゼロ
       # （node/bun 非依存）。nixpkgs には無く、derivation を書いても formula と同内容に
       # なるうえ version/sha256 の手動追随が増えるため homebrew 側で管理する。
+      #
+      # 2026-09-29 から 18.3.4 に固定している（下の postActivation の brew pin）。
+      # Orca 1.4.215 が omp 18.4.x の入力待ちを認識せず、orca-agent-team の席に
+      # worker-start できない（agent_readiness で timeout）。Brewfile には版を書けないので、
+      # 18.3.4 は tap の履歴（can1357/homebrew-tap 03b2d4e）の formula を一時的に置いて
+      # 入れ、pin で `brew upgrade` から外した（onActivation.upgrade = false なので
+      # darwin-switch も上げない）。新しい機械では最新版が入るので、同じ手順で入れ直す:
+      #   git -C "$(brew --repository can1357/tap)" show 03b2d4e:Formula/omp.rb > <tap>/Formula/omp.rb
+      #   brew uninstall can1357/tap/omp && brew install can1357/tap/omp
+      #   git -C <tap> checkout -- Formula/omp.rb
+      # Orca が 18.4 に対応したら、postActivation の pin を消して `brew unpin` → `brew upgrade omp`。
       "can1357/tap/omp"
       # Apple Container 本体（CLI + XPC バックエンド）。Orchard（cask）はこの GUI フロント
       # エンドで、本体がないと "XPC connection error" になる。常駐サービス化はせず、
@@ -151,4 +163,14 @@
       "yosukeiida/casks-personal/zed-dev-ratex"
     ];
   };
+
+  # omp を今入っている版に留める（理由は brews の omp の注記）。pin は冪等。
+  system.activationScripts.postActivation.text = ''
+    if [ -x /opt/homebrew/bin/brew ] && [ -d /opt/homebrew/Cellar/omp ]; then
+      launchctl asuser "$(id -u -- ${config.system.primaryUser})" \
+        sudo --user=${config.system.primaryUser} --set-home -- \
+        /opt/homebrew/bin/brew pin can1357/tap/omp \
+        || echo >&2 "warning: brew pin omp に失敗した"
+    fi
+  '';
 }
