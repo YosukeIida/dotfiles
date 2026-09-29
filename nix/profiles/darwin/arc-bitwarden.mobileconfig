@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>PayloadDisplayName</key>
+  <string>Arc: Bitwarden 拡張の強制インストール</string>
+  <key>PayloadDescription</key>
+  <string>Arc の全プロファイルに Bitwarden 拡張を入れる（dotfiles 管理）。</string>
+  <key>PayloadIdentifier</key>
+  <string>io.github.yosukeiida.dotfiles.arc-bitwarden</string>
+  <key>PayloadUUID</key>
+  <string>6BD1478F-2914-44D8-BDDD-FE3A1CD7B9E9</string>
+  <key>PayloadType</key>
+  <string>Configuration</string>
+  <key>PayloadScope</key>
+  <string>System</string>
+  <key>PayloadVersion</key>
+  <integer>1</integer>
+  <key>PayloadContent</key>
+  <array>
+    <dict>
+      <key>PayloadDisplayName</key>
+      <string>Arc ポリシー</string>
+      <key>PayloadIdentifier</key>
+      <string>io.github.yosukeiida.dotfiles.arc-bitwarden.policy</string>
+      <key>PayloadUUID</key>
+      <string>83BBFE9D-951F-4319-88EA-655739610FD6</string>
+      <key>PayloadType</key>
+      <string>com.apple.ManagedClient.preferences</string>
+      <key>PayloadVersion</key>
+      <integer>1</integer>
+      <key>PayloadContent</key>
+      <dict>
+        <key>company.thebrowser.Browser</key>
+        <dict>
+          <key>Forced</key>
+          <array>
+            <dict>
+              <key>mcx_preference_settings</key>
+              <dict>
+                <key>ExtensionInstallForcelist</key>
+                <array>
+                  <string>nngceckbapebfimnlniiiahkandclblb;https://clients2.google.com/service/update2/crx</string>
+                </array>
+              </dict>
+            </dict>
+          </array>
+        </dict>
+      </dict>
+    </dict>
+  </array>
+</dict>
+</plist>
