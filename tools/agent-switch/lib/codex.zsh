@@ -246,8 +246,8 @@ codex() {
     fi
   fi
 
-  # Gatekeeper の quarantine 剥がしは shims/codex が担当する（`command codex` は
-  # PATH 先頭の shims を必ず通る）。関数側に二重に持たせると片方だけ直す事故になる。
+  # Gatekeeper の quarantine は casks-personal の codex cask が preflight で外す
+  # （nix/profiles/darwin/homebrew.nix 参照）。起動側では扱わない。
 
   # codex プラグイン（sites 等）の MCP サーバ用 node を codex 起動時だけ PATH に注入する。
   # node は devshell のみの方針のため、通常の PATH には置かず nix が

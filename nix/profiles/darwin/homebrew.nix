@@ -94,7 +94,10 @@
       "claude-code@latest"
       "yosukeiida/casks-personal/claude-science"
       "cloudflare-warp@beta"
-      "codex"
+      # 公式 cask は更新時に quarantine 付きの bin/codex で補完を生成するため、
+      # Gatekeeper のダイアログで brew upgrade が止まる。preflight で quarantine を
+      # 外す以外は公式と同じ cask を使う（詳細は casks-personal の Casks/codex.rb）。
+      "yosukeiida/casks-personal/codex"
       "codexbar"
       "discord"
       "figma@beta"
