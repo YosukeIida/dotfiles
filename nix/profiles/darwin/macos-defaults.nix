@@ -419,27 +419,21 @@
     # 入っておらず、手動では抜けが出ていた。
     #
     # 副作用: 強制インストールなのでユーザーが削除・無効化できなくなる。
-    # 将来 MDM を入れるならこのファイルは MDM が管理するので、ここでの書き込みは外すこと。
-    # plist は heredoc で直接書く。`defaults write` は cfprefsd 経由で
-    # /Library/Managed Preferences には書き込めず、ファイルが作られなかった
-    # （2026-08-19、Mac Studio で chmod が No such file or directory で失敗）。
-    if [ -d /Applications/Arc.app ]; then
-      mkdir -p "/Library/Managed Preferences"
-      cat > "/Library/Managed Preferences/company.thebrowser.Browser.plist" <<'ARCPOLICY'
-    <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-    <plist version="1.0">
-    <dict>
-      <key>ExtensionInstallForcelist</key>
-      <array>
-        <string>nngceckbapebfimnlniiiahkandclblb;https://clients2.google.com/service/update2/crx</string>
-      </array>
-    </dict>
-    </plist>
-    ARCPOLICY
-      chmod 644 "/Library/Managed Preferences/company.thebrowser.Browser.plist"
-      plutil -lint "/Library/Managed Preferences/company.thebrowser.Browser.plist" >/dev/null \
-        || echo >&2 "warning: Arc policy plist is malformed"
+    #
+    # ポリシーは構成プロファイル（arc-bitwarden.mobileconfig）で配る。以前は
+    # /Library/Managed Preferences に plist を直接書いていたが、そこは ManagedClient の
+    # 管理領域で、プロファイルの裏付けがないファイルは再起動などで消される。ポリシーが
+    # 消えると Arc は強制インストールした拡張をデータごと削除するので、switch のたびに
+    # 入っては消えていた（2026-09-30、Air で確認）。
+    #
+    # 構成プロファイルは macOS 11 以降 CLI から入れられず、システム設定での承認が要る。
+    # 未導入のときだけ open でシステム設定に登録し、承認を促す。
+    # 将来 MDM を入れるなら、このプロファイルは MDM から配ること。
+    if [ -d /Applications/Arc.app ] \
+      && ! profiles list -all 2>/dev/null | grep -qF 'io.github.yosukeiida.dotfiles.arc-bitwarden'; then
+      echo >&2 "Arc policy profile is not installed: approve it in System Settings > General > Device Management"
+      launchctl asuser "$(id -u -- ${username})" \
+        sudo --user=${username} -- open ${./arc-bitwarden.mobileconfig} || true
     fi
   '';
 }
