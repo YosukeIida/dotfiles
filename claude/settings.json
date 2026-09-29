@@ -303,7 +303,8 @@
     "academic-research-skills@academic-research-skills": false,
     "security-guidance@claude-plugins-official": true,
     "cowork-plugin-management@synced": false,
-    "data@synced": false
+    "data@synced": false,
+    "ponytail@ponytail": true
   },
   "extraKnownMarketplaces": {
     "YosukeIida": {
@@ -352,6 +353,12 @@
       "source": {
         "source": "github",
         "repo": "anthropics/claude-plugins-community"
+      }
+    },
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail"
       }
     }
   },
