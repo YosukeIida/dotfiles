@@ -103,7 +103,10 @@
       "chatgpt"
       "chrome-remote-desktop-host"
       "claude"
-      "claude-code@latest"
+      # 公式 cask は quarantine 付きのまま置くので、更新後の初回起動で Gatekeeper の
+      # ダイアログが出て止まる。preflight で quarantine を外す以外は公式と同じ cask
+      # を使う（詳細は casks-personal の Casks/claude-code@latest.rb）。
+      "yosukeiida/casks-personal/claude-code@latest"
       "yosukeiida/casks-personal/claude-science"
       "cloudflare-warp@beta"
       # 公式 cask は更新時に quarantine 付きの bin/codex で補完を生成するため、
