@@ -434,7 +434,7 @@ let
     # 9 秒応答しないと daemon を panic させるので、再接続がほぼ毎回失敗していた
     # （`Setting split tunnel routes` 到達122回に対し次段階到達7回）。DERP への TCP/443 は
     # WARP のトンネル内を通しても成立するため、この除外は機能要件ではなかった。
-    # 経緯と実測: dotfiles-private/docs/warp-tailscale-disconnect-diagnosis-2026-09-16.md
+    # 経緯と実測: dotfiles-private/docs/2026-09-16_warp-tailscale-disconnect-diagnosis.md
     # WARP をバイパスさせる IP レンジ（Tailscale/Headscale を機能させるため）。
     # Source: https://tailscale.com/kb/1082/firewall-ports
     #
@@ -852,7 +852,7 @@ in
     #
     # 既定値と同じキーは書かない（同期ではなく「挙動変更」になるため）。
     # 2026-08-22 の両機比較にもとづく初期セット。根拠は
-    # dotfiles-private/docs/claude-json-sync-audit-2026-08-22.md
+    # dotfiles-private/docs/2026-08-22_claude-json-sync-audit.md
     _claudePrefs='{"copyOnSelect":false,"leftArrowOpensAgents":false,"defaultToAgentsView":false,"externalEditorContext":true,"autoConnectIde":true}'
     _cj="$home/.claude.json"
     if [ -f "$_cj" ]; then
