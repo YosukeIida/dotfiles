@@ -6,8 +6,8 @@
 # 扱う2系統:
 #   1. gist 由来（cognitive-rhythm-writing / japanese-tech-writing）
 #      → clone して SKILL.md をコピーする。REV_* で pin。
-#   2. repo 内の SKILL.md 由来（herdr, browser-harness, writing-quotation,
-#      grilling, domain-modeling, grill-with-docs, gws-multi-account, latex-devkit,
+#   2. repo 内の SKILL.md 由来（herdr, writing-quotation, grilling,
+#      domain-modeling, grill-with-docs, gws-multi-account, latex-devkit,
 #      akubun-writing）
 #      → gh api で1ファイルだけ取得し、ローカルのパッチと vendor-* metadata を注入する。
 #        gh skill install は使えない: 発見に `<name>/SKILL.md` のディレクトリ構造を要求し、
@@ -70,13 +70,6 @@ HERDR_REV="b99002ac99b09e00b4ca692436cb15a6b0d676f1"
 WRITING_QUOTATION_REPO="mathbullet/skills"
 WRITING_QUOTATION_PATH="plugins/writing-quotation/skills/writing-quotation/SKILL.md"
 WRITING_QUOTATION_REV="c1814f2850c2e18624a15206bc8b18b24cf3d3e8"
-
-# browser-use は 2026-07 に browser-harness（コマンド名も変更、AXツリー優先の
-# 新設計）へ実質移行した。browser-use/browser-use 本体には SKILL.md が無いため
-# （404 実測）、こちらだけを vendor する。
-BROWSER_HARNESS_REPO="browser-use/browser-harness"
-BROWSER_HARNESS_PATH="SKILL.md"
-BROWSER_HARNESS_REV="7103d22b6961dfdd484e80eff41469fe3bafbef6"
 
 # grill-me系（mattpocock/skills）。3 skill は依存関係がある:
 #   grill-with-docs → /grilling + /domain-modeling に一行委譲
@@ -321,8 +314,6 @@ sync_one "japanese-tech-writing" "$GIST_JAPANESE_TECH_WRITING" "$REV_JAPANESE_TE
 sync_repo_file "herdr" "$HERDR_REPO" "$HERDR_PATH" "$HERDR_REV" \
   "Bash(herdr:*), Bash(python3:*)" \
   'description: "Control herdr from inside it. Manage workspaces and tabs, split panes, spawn agents, read output, and wait for state changes — all via CLI commands that talk to the running herdr instance over a local unix socket. Use when running inside herdr (HERDR_ENV=1)."'
-sync_repo_file "browser-harness" "$BROWSER_HARNESS_REPO" "$BROWSER_HARNESS_PATH" "$BROWSER_HARNESS_REV" \
-  "Bash(browser-harness:*)"
 sync_repo_file "writing-quotation" "$WRITING_QUOTATION_REPO" "$WRITING_QUOTATION_PATH" "$WRITING_QUOTATION_REV"
 sync_repo_file "grilling" "$GRILLING_REPO" "$GRILLING_PATH" "$GRILLING_REV"
 sync_repo_file "domain-modeling" "$DOMAIN_MODELING_REPO" "$DOMAIN_MODELING_PATH" "$DOMAIN_MODELING_REV" \
