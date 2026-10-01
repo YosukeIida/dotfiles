@@ -3,7 +3,7 @@ name: latex-devkit
 description: latex-devkit を使って LaTeX を Docker でビルドする操作スキル。「PDFをビルドして」「latexでコンパイルして」「ビルドして」などの表現がトリガー。外部リポジトリの papers/ 以下のプロジェクトのビルドにも対応。※既存 LaTeX プロジェクトのビルド専用。サーベイ論文の執筆工程一式（文献収集〜章ドラフト〜PDF 化）は tmllab-academic-survey-paper が担当。
 allowed-tools: Bash(make:*), Bash(docker:*)
 metadata:
-    vendor-repo: YosukeIida/latex-devkit
+    vendor-repo: TMLlaboratory/latex-devkit
     vendor-path: skills/latex-devkit/SKILL.md
     vendor-commit: a65e238f463fe5356fb2f785d185bdc30bd827a0
 ---

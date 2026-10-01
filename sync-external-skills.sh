@@ -8,7 +8,7 @@
 #      → clone して SKILL.md をコピーする。REV_* で pin。
 #   2. repo 内の SKILL.md 由来（herdr, writing-quotation, grilling,
 #      domain-modeling, grill-with-docs, gws-multi-account, latex-devkit,
-#      akubun-writing）
+#      yomiyasu）
 #      → gh api で1ファイルだけ取得し、ローカルのパッチと vendor-* metadata を注入する。
 #        gh skill install は使えない: 発見に `<name>/SKILL.md` のディレクトリ構造を要求し、
 #        リポジトリ直下の裸の SKILL.md を認識しない（`gh skill preview` が
@@ -126,17 +126,20 @@ LATEX_DEVKIT_REPO="TMLlaboratory/latex-devkit"
 LATEX_DEVKIT_PATH="skills/latex-devkit/SKILL.md"
 LATEX_DEVKIT_REV="a65e238f463fe5356fb2f785d185bdc30bd827a0"
 
-# akubun-writing: 岩淵悦太郎『悪文』の原則にもとづく日本語推敲スキル。もともと
-# personal-agent-skills に自作扱いで置いていたが、大元は youwei16/akubun-writing-skill
-# （自作ではない）と判明したため2026-09にvendor管理へ移行した。上流との差分は
-# allowed-tools の追加と、tmllab-ja-prose-polish との住み分けを足した description のみ
-# （references/*.md・agents/openai.yaml は upstream と完全一致）。
-# REV は upstream で akubun-writing/ を最後に変更した commit（HEAD ではない）。
-AKUBUN_WRITING_REPO="youwei16/akubun-writing-skill"
-AKUBUN_WRITING_PATH="akubun-writing/SKILL.md"
-AKUBUN_WRITING_EXTRA="akubun-writing/references/book-analysis.md:references/book-analysis.md akubun-writing/references/diagnostic-checklist.md:references/diagnostic-checklist.md akubun-writing/references/fifty-rules.md:references/fifty-rules.md akubun-writing/references/revision-patterns.md:references/revision-patterns.md akubun-writing/agents/openai.yaml:agents/openai.yaml"
-AKUBUN_WRITING_REV="4769f92d24c3745282b891676b443121b1f36469"
-
+# yomiyasu: AI 生成の日本語を自然な日本語へ推敲するスキル（MIT）。2026-10 に
+# akubun-writing（youwei16/akubun-writing-skill）を外して、実務文の推敲担当をこちらに替えた。
+# SKILL.md が references/（domains/ 含む）と scripts/ の2本を相対参照するため、
+# gws-multi-account と同じく src:dest 形式で skills/yomiyasu/ 以下をまとめて vendor する
+# （assets/ と .claude-plugin/ は SKILL.md から参照されないので取らない）。
+# REV は upstream で skills/yomiyasu/ を最後に変更した commit（HEAD ではない）。
+# ローカルパッチ: description に他の文体系 skill との分担を足す。スクリプトの
+# 呼び出し `python3 ...` は、python3 ガード（system python を使わない方針）に
+# 拒否されるため、末尾の patch_yomiyasu_python で `uv run --no-project python ...` に
+# 差し替える（2本とも標準ライブラリだけで動く）。
+YOMIYASU_REPO="nanaism/yomiyasu"
+YOMIYASU_PATH="skills/yomiyasu/SKILL.md"
+YOMIYASU_EXTRA="skills/yomiyasu/references/gemini-syntax.md:references/gemini-syntax.md skills/yomiyasu/references/slop-catalog.md:references/slop-catalog.md skills/yomiyasu/references/domains/tech.md:references/domains/tech.md skills/yomiyasu/references/domains/business.md:references/domains/business.md skills/yomiyasu/references/domains/essay.md:references/domains/essay.md skills/yomiyasu/scripts/yomiyasu_lint.py:scripts/yomiyasu_lint.py skills/yomiyasu/scripts/yomiyasu_diff.py:scripts/yomiyasu_diff.py"
+YOMIYASU_REV="c9aca1a06e1c9de4afbe232cc1ca9fe4293a7678"
 DEST="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/agents/skills"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -325,11 +328,10 @@ sync_repo_file "gws-multi-account" "$GWS_MULTI_ACCOUNT_REPO" "$GWS_MULTI_ACCOUNT
 sync_repo_file "latex-devkit" "$LATEX_DEVKIT_REPO" "$LATEX_DEVKIT_PATH" "$LATEX_DEVKIT_REV" \
   "Bash(make:*), Bash(docker:*)" \
   'description: latex-devkit を使って LaTeX を Docker でビルドする操作スキル。「PDFをビルドして」「latexでコンパイルして」「ビルドして」などの表現がトリガー。外部リポジトリの papers/ 以下のプロジェクトのビルドにも対応。※既存 LaTeX プロジェクトのビルド専用。サーベイ論文の執筆工程一式（文献収集〜章ドラフト〜PDF 化）は tmllab-academic-survey-paper が担当。'
-sync_repo_file "akubun-writing" "$AKUBUN_WRITING_REPO" "$AKUBUN_WRITING_PATH" "$AKUBUN_WRITING_REV" \
-  "Read, Edit, Write" \
-  'description: 岩淵悦太郎編『悪文』の原則にもとづいて、日本語の文章を読者本位で診断・推敲・改稿するときに使う。メール、案内文、報告書、論説、マニュアル、スピーチ、広報文、Webコピー、日本語への翻訳文などで、わかりやすさ、段落構成、文の長さ、修飾関係、語の選び方、敬語、文体の統一が主な論点になる場合に特に有効。詩や、意図的に晦渋さを残した文学表現には、ユーザーが明晰化を求めた場合に限って慎重に適用する。※学術原稿（.tex/.md）の生成AIらしさ除去・論点集約・圧縮は tmllab-ja-prose-polish が担当。本 skill は悪文原則に基づく一般文章（メール・案内文・報告書・Web コピー等）の読者本位の診断・改稿を担う。' \
-  "" "$AKUBUN_WRITING_EXTRA"
-
+sync_repo_file "yomiyasu" "$YOMIYASU_REPO" "$YOMIYASU_PATH" "$YOMIYASU_REV" \
+  "Read, Edit, Write, Bash(uv run:*)" \
+  'description: AIが生成した不自然な日本語を、人間が読みやすく情報密度の高い自然な文章へ書き直すAgent Skill。「この文章を読みやすくして」「aiっぽさをなくして」「AI臭さを消して」「自然な日本語にして」「文章を脱臭して」という依頼や、技術記事、業務仕様書・PR説明文、エッセイ・noteの推敲時に使用する。非生物主語の解体、比喩的動詞の具体化、絵文字や文末コロンの完全排除、不要な補足カッコの削除、英単語前後の不自然な半角空白の排除、過剰な太字・箇条書き・否定対比の平文化を行い、文単体で誰が何をどうしたかが伝わる文章へ再構築する。※学術原稿（.tex/.md）の推敲は tmllab-ja-prose-polish が担当。本 skill は技術記事・PR・仕様書・社内レポート・メールなど実務文を担う。Yosuke がまとまった文章を書くときは style-notes が入口になり、本 skill の lint・diff スクリプトを仕上げ検査に使う（規則が衝突したら style-notes が優先）。' \
+  "" "$YOMIYASU_EXTRA"
 # ローカルパッチ: upstream の SKILL.md は accounts.json のマージに裸の `node -e` を
 # 使い、「Claude Code や opencode を動かすマシンには必ず node がある」という前提で
 # 書かれている。この環境には nodeless-policy により裸の node が PATH に無いため、
@@ -346,6 +348,15 @@ patch_gws_multi_account_node_path() {
     s/Use Node for cross-platform JSON merging — no `jq` dependency\. Node is guaranteed present on any machine running Claude Code or opencode\./Use "\$GWS_MULTI_ACCOUNT_NODE" (a nix-pinned Node.js binary) for cross-platform JSON merging — no `jq` dependency. There is no bare `node` on PATH in this environment by design; see the dotfiles nodeless policy./g;
   ' "$f"
 }
+# ローカルパッチ: yomiyasu の Step 3/4 は同梱スクリプトを素の `python3` で呼ぶが、
+# この環境の python3 ガードは devShell・python プロジェクトの外では拒否する。
+# 行頭の `python3 <スキル配置ディレクトリ>/scripts/...` の2箇所を uv 経由に替える。
+patch_yomiyasu_python() {
+  local f="$DEST/yomiyasu/SKILL.md"
+  [ -f "$f" ] || return 0
+  perl -CSD -Mutf8 -pi -e 's{^python3 (<スキル配置ディレクトリ>/scripts/)}{uv run --no-project python $1}' "$f"
+}
 if [ "$check_mode" -eq 0 ]; then
   patch_gws_multi_account_node_path
+  patch_yomiyasu_python
 fi
