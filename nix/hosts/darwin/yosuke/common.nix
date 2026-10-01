@@ -678,6 +678,33 @@ in
     };
   };
 
+  # ログイン時に Tailscale（headscale.kumoi.net）へ接続する。アプリは終了前の接続状態を
+  # 復元するだけなので、切断したまま再起動すると繋がらない。RunAtLoad の1回だけ実行し、
+  # その後の手動切断は尊重する（常時強制なら AlwaysOn.Enabled ポリシーだが、切断できなくなる）。
+  # 引数なしの `up` は既存 prefs（login server・accept-dns=false 等）を変えずに接続だけする。
+  # tailscaled の起動待ちのため最大60秒リトライする。
+  launchd.user.agents.tailscaleUpAtLogin = {
+    serviceConfig = {
+      Label = "com.yosuke.tailscale-up-at-login";
+      # sh -c を挟むと「ログイン項目」での表示名が "sh" になるので名前付きスクリプトにする
+      ProgramArguments = [
+        "${pkgs.writeShellScript "tailscale-up-at-login" ''
+          ts="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+          for _ in $(seq 1 30); do
+            # 接続中の引数なし up は設定変更扱いになり "can't change --login-server" で失敗する
+            "$ts" status --json 2>/dev/null | grep -q '"BackendState": "Running"' && exit 0
+            "$ts" up && exit 0
+            sleep 2
+          done
+          exit 1
+        ''}"
+      ];
+      RunAtLoad = true;
+      StandardOutPath = "${homedir}/Library/Logs/tailscale-up-at-login.log";
+      StandardErrorPath = "${homedir}/Library/Logs/tailscale-up-at-login.log";
+    };
+  };
+
   # Codex App 用 auth.json（~/.codex/auth.json）の実ファイル化を監視して通知する。
   # CODEX_HOME 未指定の生 `codex login` が共有 symlink を上書きする事故（2026-07-11 発生）
   # を早期に気づけるようにする。修復はしない（cx 実行時に codex-auth-doctor が担当）。
