@@ -58,9 +58,31 @@
     pub="${darwinPublicConfigDir}"
     home="${homedir}"
 
+    # postActivation は root で走る。素の mkdir でディレクトリを作ると root 所有になり、
+    # 以後ユーザー権限で動く CLI が書き込めなくなる。実際 ~/.codex が root 所有で作られ、
+    # codex が marketplace ディレクトリを作れず失敗した（2026-08-19 に Mac Studio の初回、
+    # 2026-10-02 に個人の層を持たない secretary VM の初回）。
+    # 既存機ではディレクトリが先にユーザー所有で存在するため顕在化しない。
+    # 個人の層（yosuke/common.nix）の postActivation もこの定義を使う（同じスクリプトに連結される）。
+    _userdir() {
+      install -d -o ${username} -g staff "$1"
+    }
+
+    # 既に root 所有で作られてしまった場合の自己修復。
+    for _d in "$home/.claude" "$home/.codex" "$home/.config" "$home/.local"; do
+      # stat は絶対パスで呼ぶ。activation の PATH では GNU coreutils の stat に
+      # 解決されることがあり、-f がファイルシステム指定として解釈されて
+      # 「cannot read file system information for '%Su'」で失敗する（実測）。
+      # 失敗すると比較が常に真になり、毎回 chown -R が走る。
+      if [ -d "$_d" ] && [ "$(/usr/bin/stat -f %Su "$_d")" != "${username}" ]; then
+        echo >&2 "repairing ownership: $_d"
+        chown -R ${username}:staff "$_d" || true
+      fi
+    done
+
     _link() {
       local src="$1" dst="$2"
-      mkdir -p "$(dirname "$dst")"
+      _userdir "$(dirname "$dst")"
       if [ -L "$dst" ]; then
         rm "$dst"
       elif [ -e "$dst" ]; then
@@ -100,11 +122,9 @@
     if [ -L "$home/.claude/skills" ]; then
       rm "$home/.claude/skills"
     fi
-    mkdir -p "$home/.claude/skills"
-    # postActivation は root で走るため mkdir がディレクトリを root 所有にしてしまう。
     # home-manager の linkGeneration はユーザー権限で同じディレクトリに書くので、
-    # 所有者をユーザーに戻さないと activation が Permission denied で失敗する。
-    chown ${username}:staff "$home/.claude/skills"
+    # ユーザー所有で作らないと activation が Permission denied で失敗する。
+    _userdir "$home/.claude/skills"
     for d in "$pub/agents/skills"/*/; do
       [ -d "$d" ] || continue
       _link "$d" "$home/.claude/skills/$(basename "$d")"
@@ -115,8 +135,7 @@
     _link "${pkgsUnstable.agent-browser}/skills/agent-browser" "$home/.claude/skills/agent-browser"
 
     # public skills を ~/.codex/skills/ にも展開
-    mkdir -p "$home/.codex/skills"
-    chown ${username}:staff "$home/.codex/skills"
+    _userdir "$home/.codex/skills"
     for d in "$pub/agents/skills"/*/; do
       [ -d "$d" ] || continue
       _link "$d" "$home/.codex/skills/$(basename "$d")"
@@ -135,7 +154,7 @@
     done
 
     # subagents を ~/.claude/agents/ に展開
-    mkdir -p "$home/.claude/agents"
+    _userdir "$home/.claude/agents"
     for f in "$pub/agents/subagents"/*.md; do
       [ -f "$f" ] || continue
       _link "$f" "$home/.claude/agents/$(basename "$f")"
