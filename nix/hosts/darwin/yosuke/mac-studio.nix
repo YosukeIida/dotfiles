@@ -122,6 +122,30 @@ in
     };
   };
 
+  # OpenClaw 秘書を閉じ込めた Lume の macOS VM（darwinConfigurations.secretary を適用したもの。
+  # 設計は dotfiles-private の docs/2026-10-02_secretary-agent-base-selection.md）を常駐させる。
+  # `lume run` は --detach を付けなければ VM が動いている間フォアグラウンドに留まり、VM が止まると
+  # 終了するので、KeepAlive で止まったら起動し直す。画面は VNC（画面共有）で見る。ネイティブの画面
+  # （`lume attach`）を付けたあとに VM が止まることが2回あった（2026-10-02、原因は未確定）。
+  # 意図して止めるときは `launchctl bootout gui/$UID/com.yosuke.secretary-vm`（`lume stop` だけだと
+  # KeepAlive がすぐ起動し直す）。
+  launchd.user.agents.secretaryVm = {
+    serviceConfig = {
+      Label = "com.yosuke.secretary-vm";
+      ProgramArguments = [
+        "/opt/homebrew/bin/lume"
+        "run"
+        "secretary"
+        "--no-display"
+      ];
+      RunAtLoad = true;
+      KeepAlive = true;
+      EnvironmentVariables.LUME_TELEMETRY_ENABLED = "false";
+      StandardOutPath = "${homedir}/Library/Logs/secretary-vm.log";
+      StandardErrorPath = "${homedir}/Library/Logs/secretary-vm.log";
+    };
+  };
+
   # Orca の runtime を launchd が所有する。GUI（Orca.app）は「別のクライアント」ではなく、
   # この同じプロセスがウィンドウを開いたものになる。単一インスタンスロックが GUI 起動を
   # 既存プロセスへの second-instance イベントとして配送し、
