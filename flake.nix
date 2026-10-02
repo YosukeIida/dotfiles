@@ -109,7 +109,11 @@
               homedir = "/Users/lume";
               inherit pkgsUnstable;
             })
-            { homebrew.masApps = nixpkgs.lib.mkForce { }; }
+            {
+              homebrew.masApps = nixpkgs.lib.mkForce { };
+              # 秘書が大学・研究室の Google Workspace と個人の Gmail を読み取り専用で読むための CLI（Go の単体バイナリ）。
+              homebrew.brews = [ "gogcli" ];
+            }
           ];
         };
       }
