@@ -143,6 +143,10 @@ in
     AGENT_BROWSER_HEADED = "1";
     # 閉じ忘れ保険: 30分アイドルでデーモンごと Chrome を自動終了する（実測で動作確認済み）。
     AGENT_BROWSER_IDLE_TIMEOUT_MS = "1800000";
+    # Lume（homebrew.nix の自前 cask）は新規インストールでテレメトリが既定で有効になり、
+    # 最初の実行で登録する。環境変数は保存済みの設定より優先される（upstream の
+    # libs/lume/src/Telemetry/TelemetryClient.swift）。
+    LUME_TELEMETRY_ENABLED = "false";
     # HF_HOME は機ごとに置き場所が変わりうるので、ここ（他人も fork して使う共通層）
     # ではなく nix/hosts/darwin/yosuke/common.nix に置いてある。
   };
