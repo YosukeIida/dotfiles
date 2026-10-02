@@ -94,6 +94,24 @@
             })
           ];
         };
+
+        # OpenClaw 秘書を閉じ込める Lume の macOS VM（設計は dotfiles-private の
+        # docs/2026-10-02_secretary-agent-base-selection.md）。example と同じく共通層だけを使い、
+        # 個人の層（yosuke/common.nix: agenix の secret、Tailscale の自動接続、WARP）は入れない。
+        # VM では App Store にサインインできず mas の導入で brew bundle ごと失敗するので、masApps だけ外す。
+        # VM の HostName は `sudo scutil --set HostName secretary` で固定する。
+        secretary = nix-darwin.lib.darwinSystem {
+          inherit system;
+          modules = [
+            home-manager.darwinModules.home-manager
+            (import ./nix/hosts/darwin/common {
+              username = "lume";
+              homedir = "/Users/lume";
+              inherit pkgsUnstable;
+            })
+            { homebrew.masApps = nixpkgs.lib.mkForce { }; }
+          ];
+        };
       }
       # Yosuke の各 Mac。attr 名は必ずその機の `hostname -s` と一致させること
       # （apply.sh が hostname -s で attr を引く）。macOS の hostname -s は HostName が
