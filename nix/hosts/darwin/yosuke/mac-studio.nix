@@ -129,6 +129,8 @@ in
   # （`lume attach`）を付けたあとに VM が止まることが2回あった（2026-10-02、原因は未確定）。
   # 意図して止めるときは `launchctl bootout gui/$UID/com.yosuke.secretary-vm`（`lume stop` だけだと
   # KeepAlive がすぐ起動し直す）。
+  # 経験知（dotfiles-private/experience）を読み取り専用で共有し、秘書の記憶の検索に載せる
+  # （VM 内では /Volumes/My Shared Files/ の下に見える。秘書側の設定は dotfiles-private の secretary/）。
   launchd.user.agents.secretaryVm = {
     serviceConfig = {
       Label = "com.yosuke.secretary-vm";
@@ -137,6 +139,8 @@ in
         "run"
         "secretary"
         "--no-display"
+        "--shared-dir"
+        "${homedir}/workspace/github.com/YosukeIida/dotfiles-private/experience:ro"
       ];
       RunAtLoad = true;
       KeepAlive = true;
