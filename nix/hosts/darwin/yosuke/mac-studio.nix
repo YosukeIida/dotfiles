@@ -150,6 +150,38 @@ in
     };
   };
 
+  # 秘書の OpenClaw のダッシュボード（VM の中の 127.0.0.1:18789 でだけ待ち受ける）を、Mac Studio の
+  # http://127.0.0.1:18789 で開けるように SSH のトンネルを常駐させる。外には開かない（両端とも loopback）。
+  # 鍵で入る（~/.ssh/id_ed25519.pub を VM の ~/.ssh/authorized_keys に登録しておく）。VM の IP は Lume の NAT の
+  # 既定（lume ls の 192.168.64.2）。VM が止まっている間は接続に失敗して、ThrottleInterval ごとに入り直す。
+  launchd.user.agents.secretaryDashboardTunnel = {
+    serviceConfig = {
+      Label = "com.yosuke.secretary-dashboard-tunnel";
+      ProgramArguments = [
+        "/usr/bin/ssh"
+        "-N"
+        "-o"
+        "BatchMode=yes"
+        "-o"
+        "StrictHostKeyChecking=accept-new"
+        "-o"
+        "ExitOnForwardFailure=yes"
+        "-o"
+        "ServerAliveInterval=30"
+        "-o"
+        "ServerAliveCountMax=3"
+        "-L"
+        "127.0.0.1:18789:127.0.0.1:18789"
+        "lume@192.168.64.2"
+      ];
+      RunAtLoad = true;
+      KeepAlive = true;
+      ThrottleInterval = 30;
+      StandardOutPath = "${homedir}/Library/Logs/secretary-dashboard-tunnel.log";
+      StandardErrorPath = "${homedir}/Library/Logs/secretary-dashboard-tunnel.log";
+    };
+  };
+
   # Orca の runtime を launchd が所有する。GUI（Orca.app）は「別のクライアント」ではなく、
   # この同じプロセスがウィンドウを開いたものになる。単一インスタンスロックが GUI 起動を
   # 既存プロセスへの second-instance イベントとして配送し、

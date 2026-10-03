@@ -110,6 +110,9 @@
               inherit pkgsUnstable;
             })
             { homebrew.masApps = nixpkgs.lib.mkForce { }; }
+            # OpenClaw の GitHub 接続（tools.github）は Gateway の PATH から gh を探す。Gateway の LaunchAgent の
+            # PATH は /opt/homebrew/bin までで、nix の gh（/etc/profiles/per-user/lume/bin）は見えないので brew でも入れる。
+            { homebrew.brews = [ "gh" ]; }
           ];
         };
       }
