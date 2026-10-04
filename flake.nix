@@ -113,6 +113,35 @@
             # OpenClaw の GitHub 接続（tools.github）は Gateway の PATH から gh を探す。Gateway の LaunchAgent の
             # PATH は /opt/homebrew/bin までで、nix の gh（/etc/profiles/per-user/lume/bin）は見えないので brew でも入れる。
             { homebrew.brews = [ "gh" ]; }
+            # VM の GUI セッションで Orca を launchd 管理下に置く。共有設定は初回にアプリで行う。
+            {
+              launchd.user.agents.orcaApp = {
+                serviceConfig = {
+                  Label = "com.yosuke.orca-app";
+                  ProgramArguments = [ "/Applications/Orca.app/Contents/MacOS/Orca" ];
+                  RunAtLoad = true;
+                  # シグナルで落ちたクラッシュだけを復帰させ、終了コードでは判定しない。
+                  # single-instance 退出は「既存ウィンドウを前面化して exit」なので、これを再起動すると
+                  # 「前面化 → exit → 再起動」が ThrottleInterval（10 秒）周期で回るループになる。
+                  # KeepAlive = true では exit 0 で（2026-09-01、runs=56）、SuccessfulExit = false では
+                  # Orca がこの退出を exit 3 に変えた後に（2026-09-30、runs=185）発生した。
+                  KeepAlive = { Crashed = true; };
+                  # 以前の `orca serve` 相当の起動が cwd を app root に固定していたのに倣う
+                  # （Electron のリソース解決が process.cwd() を見る経路があるため）。
+                  WorkingDirectory = "/Applications/Orca.app/Contents/Resources/app.asar.unpacked";
+                  EnvironmentVariables = {
+                    # herdr と同じ理由。launchd agent は login shell を経ないので hm-session-vars が
+                    # 届かず、LANG が無いと Orca 配下で spawn した経路の日本語が MacRoman 化する。
+                    LANG = "en_US.UTF-8";
+                    # 同じく herdr と同じ理由。Orca は agent（claude / codex）と git を自分で spawn
+                    # するので、launchd の最小 PATH のままだと nix 側の git や node を見失う。
+                    PATH = "/Users/lume/.local/share/agent-switch/shims:/Users/lume/.nix-profile/bin:/etc/profiles/per-user/lume/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin";
+                  };
+                  StandardOutPath = "/Users/lume/Library/Logs/orca-app.log";
+                  StandardErrorPath = "/Users/lume/Library/Logs/orca-app.log";
+                };
+              };
+            }
           ];
         };
       }
