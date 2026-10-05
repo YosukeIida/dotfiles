@@ -152,6 +152,8 @@ in
 
   # 秘書の OpenClaw のダッシュボード（VM の中の 127.0.0.1:18789 でだけ待ち受ける）を、Mac Studio の
   # http://127.0.0.1:18789 で開けるように SSH のトンネルを常駐させる。外には開かない（両端とも loopback）。
+  # 18790 は、ダッシュボードの HTML の部品を読み込む sandbox の口（Control UI が部品の iframe をここから開く）。
+  # MacBook Air（macbook-air.nix）は、この Mac Studio 側の 18789・18790 へ SSH でさらにつなぐ。
   # 鍵で入る（~/.ssh/id_ed25519.pub を VM の ~/.ssh/authorized_keys に登録しておく）。VM の IP は Lume の NAT の
   # 既定（lume ls の 192.168.64.2）。VM が止まっている間は接続に失敗して、ThrottleInterval ごとに入り直す。
   # 16768 は VM の Orca の実行環境（6768）への転送。Mac Studio の Orca に environment「secretary-vm」として
@@ -174,6 +176,8 @@ in
         "ServerAliveCountMax=3"
         "-L"
         "127.0.0.1:18789:127.0.0.1:18789"
+        "-L"
+        "127.0.0.1:18790:127.0.0.1:18790"
         "-L"
         "127.0.0.1:16768:127.0.0.1:6768"
         "lume@192.168.64.2"
