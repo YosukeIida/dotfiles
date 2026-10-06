@@ -37,6 +37,7 @@
 - Grow the system in layers: start from the smallest version that works end to end, and never trade a working product for unfinished complexity.
 - Lean on the dependencies already in the project before writing your own or adding packages. Do not assume a library lacks a capability without checking its documentation and types.
 - Make architectural decisions for the long term. Do not accept a stopgap that only works for now and is meant to be replaced later.
+- 書き分け（t_wada）: コードには How、テストコードには What、コミットログには Why、コードコメントには Why not（あえて採らなかった方法とその理由）を書く。コードコメントには Why not 以外を基本的に書かない。
 
 ## ツールの入れ方
 
