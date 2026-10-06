@@ -25,7 +25,9 @@
       "Bash(rtk git diff:*)",
       "Bash(rtk git status)",
       "Bash(rtk git status:*)",
-      "Bash(intent-cli:*)"
+      "Bash(intent-cli:*)",
+      "Bash(orca orchestration:*)",
+      "Bash(bash /Users/yosuke/.claude/skills/orca-agent-team/scripts/orca-team.sh:*)"
     ],
     "deny": [
       "Bash(rm -rf *)",
@@ -304,7 +306,8 @@
     "security-guidance@claude-plugins-official": true,
     "cowork-plugin-management@synced": false,
     "data@synced": false,
-    "ponytail@ponytail": true
+    "ponytail@ponytail": true,
+    "qa-guide@claude-qamods": true
   },
   "extraKnownMarketplaces": {
     "YosukeIida": {
@@ -360,11 +363,26 @@
         "source": "github",
         "repo": "DietrichGebert/ponytail"
       }
+    },
+    "claude-qamods": {
+      "source": {
+        "source": "github",
+        "repo": "aieo-product/claude_qamods"
+      }
     }
   },
   "outputStyle": "Concise",
   "language": "Japanese",
   "advisorModel": "fable",
+  "pluginConfigs": {
+    "qa-guide@claude-qamods": {
+      "options": {
+        "language": "auto",
+        "showCost": "on",
+        "context": "full"
+      }
+    }
+  },
   "tui": "fullscreen",
   "autoMemoryEnabled": false,
   "skipWorkflowUsageWarning": true,
