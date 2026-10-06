@@ -215,6 +215,13 @@
         TrackpadTwoFingerFromRightEdgeSwipeGesture = 3;
       };
 
+      "com.apple.finder" = {
+        # 他のアプリからの「Finder で表示」（NSWorkspace の reveal）を、新しいウィンドウでなく
+        # 既存ウィンドウのタブで開く。システム設定の「書類を開くときはタブで」の Finder 限定版。
+        # 反映には Finder の再起動が要る。
+        AppleWindowTabbingMode = "always";
+      };
+
       "com.apple.dock" = {
         # トラックパッドのジェスチャに対応する Mission Control 側のスイッチ。
         # 上の Trackpad*Gesture だけでは有効にならない。
