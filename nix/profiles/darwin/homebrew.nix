@@ -112,6 +112,13 @@
       "lens"
       "libreoffice"
       "lm-studio"
+      # OpenClaw 秘書を閉じ込める macOS VM の土台（dotfiles-private の
+      # docs/2026-10-02_secretary-agent-base-selection.md）。公式 tap（trycua/lume）は
+      # 0.1.13 で止まっており、install スクリプトは自動更新と daemon の LaunchAgent まで
+      # 入れるため、公証済みの app だけを置く自前 cask を使う。formula にしないのは、
+      # Homebrew の再署名で com.apple.vm.networking の署名が崩れないようにするため。
+      # テレメトリは home.sessionVariables の LUME_TELEMETRY_ENABLED で止める。
+      "yosukeiida/casks-personal/lume"
       "microsoft-auto-update"
       "microsoft-excel"
       "microsoft-powerpoint"
