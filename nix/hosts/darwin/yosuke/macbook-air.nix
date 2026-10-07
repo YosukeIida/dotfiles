@@ -78,4 +78,37 @@ in
       StandardErrorPath = "${homedir}/Library/Logs/sleepctl-watcher.log";
     };
   };
+
+  # 秘書の OpenClaw のダッシュボードを、この機の http://127.0.0.1:18789 で開けるようにする。
+  # Mac Studio の secretaryDashboardTunnel（VM へのトンネル）が Mac Studio の loopback に出している
+  # 18789（ダッシュボード）と 18790（HTML の部品の sandbox）へ、tailnet 越しの SSH でさらにつなぐ。
+  # 入口は Mac Studio への SSH の鍵認証（ssh config の Host mac-studio。Mac Studio の sshd は tailnet からだけ受ける）。
+  # Mac Studio が止まっている・tailnet から外れている間は接続に失敗して、ThrottleInterval ごとに入り直す。
+  launchd.user.agents.secretaryDashboardTunnel = {
+    serviceConfig = {
+      Label = "com.yosuke.secretary-dashboard-tunnel";
+      ProgramArguments = [
+        "/usr/bin/ssh"
+        "-N"
+        "-o"
+        "BatchMode=yes"
+        "-o"
+        "ExitOnForwardFailure=yes"
+        "-o"
+        "ServerAliveInterval=30"
+        "-o"
+        "ServerAliveCountMax=3"
+        "-L"
+        "127.0.0.1:18789:127.0.0.1:18789"
+        "-L"
+        "127.0.0.1:18790:127.0.0.1:18790"
+        "mac-studio"
+      ];
+      RunAtLoad = true;
+      KeepAlive = true;
+      ThrottleInterval = 30;
+      StandardOutPath = "${homedir}/Library/Logs/secretary-dashboard-tunnel.log";
+      StandardErrorPath = "${homedir}/Library/Logs/secretary-dashboard-tunnel.log";
+    };
+  };
 }

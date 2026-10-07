@@ -122,6 +122,74 @@ in
     };
   };
 
+  # OpenClaw 秘書を閉じ込めた Lume の macOS VM（darwinConfigurations.secretary を適用したもの。
+  # 設計は dotfiles-private の docs/2026-10-02_secretary-agent-base-selection.md）を常駐させる。
+  # `lume run` は --detach を付けなければ VM が動いている間フォアグラウンドに留まり、VM が止まると
+  # 終了するので、KeepAlive で止まったら起動し直す。画面は VNC（画面共有）で見る。ネイティブの画面
+  # （`lume attach`）を付けたあとに VM が止まることが2回あった（2026-10-02、原因は未確定）。
+  # 意図して止めるときは `launchctl bootout gui/$UID/com.yosuke.secretary-vm`（`lume stop` だけだと
+  # KeepAlive がすぐ起動し直す）。
+  # 経験知（dotfiles-private/experience）を読み取り専用で共有し、秘書の記憶の検索に載せる
+  # （VM 内では /Volumes/My Shared Files/ の下に見える。秘書側の設定は dotfiles-private の secretary/）。
+  launchd.user.agents.secretaryVm = {
+    serviceConfig = {
+      Label = "com.yosuke.secretary-vm";
+      ProgramArguments = [
+        "/opt/homebrew/bin/lume"
+        "run"
+        "secretary"
+        "--no-display"
+        "--shared-dir"
+        "${homedir}/workspace/github.com/YosukeIida/dotfiles-private/experience:ro"
+      ];
+      RunAtLoad = true;
+      KeepAlive = true;
+      EnvironmentVariables.LUME_TELEMETRY_ENABLED = "false";
+      StandardOutPath = "${homedir}/Library/Logs/secretary-vm.log";
+      StandardErrorPath = "${homedir}/Library/Logs/secretary-vm.log";
+    };
+  };
+
+  # 秘書の OpenClaw のダッシュボード（VM の中の 127.0.0.1:18789 でだけ待ち受ける）を、Mac Studio の
+  # http://127.0.0.1:18789 で開けるように SSH のトンネルを常駐させる。外には開かない（両端とも loopback）。
+  # 18790 は、ダッシュボードの HTML の部品を読み込む sandbox の口（Control UI が部品の iframe をここから開く）。
+  # MacBook Air（macbook-air.nix）は、この Mac Studio 側の 18789・18790 へ SSH でさらにつなぐ。
+  # 鍵で入る（~/.ssh/id_ed25519.pub を VM の ~/.ssh/authorized_keys に登録しておく）。VM の IP は Lume の NAT の
+  # 既定（lume ls の 192.168.64.2）。VM が止まっている間は接続に失敗して、ThrottleInterval ごとに入り直す。
+  # 16768 は VM の Orca の実行環境（6768）への転送。Mac Studio の Orca に environment「secretary-vm」として
+  # ws://127.0.0.1:16768 で登録してある（Orca.app は VM の IP に直接つながらなかったので loopback を通す）。
+  launchd.user.agents.secretaryDashboardTunnel = {
+    serviceConfig = {
+      Label = "com.yosuke.secretary-dashboard-tunnel";
+      ProgramArguments = [
+        "/usr/bin/ssh"
+        "-N"
+        "-o"
+        "BatchMode=yes"
+        "-o"
+        "StrictHostKeyChecking=accept-new"
+        "-o"
+        "ExitOnForwardFailure=yes"
+        "-o"
+        "ServerAliveInterval=30"
+        "-o"
+        "ServerAliveCountMax=3"
+        "-L"
+        "127.0.0.1:18789:127.0.0.1:18789"
+        "-L"
+        "127.0.0.1:18790:127.0.0.1:18790"
+        "-L"
+        "127.0.0.1:16768:127.0.0.1:6768"
+        "lume@192.168.64.2"
+      ];
+      RunAtLoad = true;
+      KeepAlive = true;
+      ThrottleInterval = 30;
+      StandardOutPath = "${homedir}/Library/Logs/secretary-dashboard-tunnel.log";
+      StandardErrorPath = "${homedir}/Library/Logs/secretary-dashboard-tunnel.log";
+    };
+  };
+
   # Orca の runtime を launchd が所有する。GUI（Orca.app）は「別のクライアント」ではなく、
   # この同じプロセスがウィンドウを開いたものになる。単一インスタンスロックが GUI 起動を
   # 既存プロセスへの second-instance イベントとして配送し、

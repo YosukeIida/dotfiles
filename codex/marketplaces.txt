@@ -3,3 +3,4 @@
 # Codex built-in marketplaces (openai-curated, openai-primary-runtime,
 # openai-bundled) need no entry here.
 pbakaus/impeccable
+DietrichGebert/ponytail
