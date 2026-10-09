@@ -379,7 +379,8 @@
       "options": {
         "closeAfterAnswer": true,
         "context": "full",
-        "language": "auto"
+        "language": "auto",
+        "plainTextQuestions": false
       }
     }
   },
