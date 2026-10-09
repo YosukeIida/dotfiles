@@ -366,8 +366,8 @@
     },
     "claude-qamods": {
       "source": {
-        "source": "github",
-        "repo": "aieo-product/claude_qamods"
+        "source": "directory",
+        "path": "/Users/yosuke/workspace/github.com/YosukeIida/claude_qamods"
       }
     }
   },
@@ -377,9 +377,9 @@
   "pluginConfigs": {
     "qa-guide@claude-qamods": {
       "options": {
-        "language": "auto",
-        "showCost": "on",
-        "context": "full"
+        "closeAfterAnswer": true,
+        "context": "full",
+        "language": "auto"
       }
     }
   },
