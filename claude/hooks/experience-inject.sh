@@ -20,7 +20,7 @@ EXP="${EXPERIENCE_DIR:-}"
 [ -n "$EXP" ] && [ -d "$EXP" ] || exit 0
 
 OUT="$HOME/.claude/experience-index.md"
-LIMIT=60
+LIMIT=80
 
 # --- 現在の dir の短名を解決する ---
 root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
