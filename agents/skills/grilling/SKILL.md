@@ -4,7 +4,7 @@ description: Grill the user relentlessly about a plan, decision, or idea. Use wh
 metadata:
     vendor-repo: mattpocock/skills
     vendor-path: skills/productivity/grilling/SKILL.md
-    vendor-commit: 85f83d3fde1d3a90d5c9a657f6998c79a6c37308
+    vendor-commit: 95249b0b49782349740fd9b8c6ce32b4e59e497a
 ---
 
 Interview the user relentlessly until you reach a shared understanding. Map this as a **design tree**: every decision branches into the decisions that hang off it.
@@ -24,6 +24,8 @@ Format a round like so:
 
 ➡️ <your recommended answer>
 ```
+
+Word each question so "yes" accepts your recommended answer.
 
 Each round the user answers reshapes the tree: settled decisions push the frontier outward and unblock questions that depended on them. Recompute the frontier and ask the next round. A question whose answer depends on another question still open in this round belongs to a _later_ round, not this one.
 

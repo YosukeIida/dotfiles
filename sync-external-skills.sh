@@ -16,7 +16,7 @@
 #        writing-quotation（mathbullet/skills）は marketplace 構造の repo だが、
 #        `/plugin install` は使わない（~/.claude の mutable state に入り、
 #        nix/dotfiles の宣言的管理から外れるため。判断は dotfiles/AGENTS.md 参照）。
-#        domain-modeling は SKILL.md から ADR-FORMAT.md / CONTEXT-FORMAT.md を相対参照
+#        domain-modeling は SKILL.md から ADR-FORMAT.md / GLOSSARY-FORMAT.md を相対参照
 #        するため、この2ファイルも extra_files で同じ rev から一緒に vendor する。
 #        gws-multi-account（indentcorp/gws-multi-account）も同じ理由:
 #        本体は Bun/npm でビルドする Claude Code plugin（PreToolUse hook が
@@ -63,7 +63,7 @@ HERDR_REPO="ogulcancelik/herdr"
 # 2026-08 に upstream が SKILL.md を repo 直下から skills/herdr/SKILL.md へ移動
 # （gh skill install が要求する <name>/SKILL.md 構造に合わせた再編、と見られる）。
 HERDR_PATH="skills/herdr/SKILL.md"
-HERDR_REV="b99002ac99b09e00b4ca692436cb15a6b0d676f1"
+HERDR_REV="1ab85d31ac59c484a7347a237abfb072fe1cf166"
 
 # writing-quotation: 引用ブロックの書式規約（Bash等のツール呼び出しを一切含まない
 # 純粋な書式ガイドなので allowed-tools は付けない）。
@@ -79,15 +79,15 @@ WRITING_QUOTATION_REV="c1814f2850c2e18624a15206bc8b18b24cf3d3e8"
 # 単体でも自動発動する。パッチ不要。
 GRILLING_REPO="mattpocock/skills"
 GRILLING_PATH="skills/productivity/grilling/SKILL.md"
-GRILLING_REV="85f83d3fde1d3a90d5c9a657f6998c79a6c37308"
+GRILLING_REV="95249b0b49782349740fd9b8c6ce32b4e59e497a"
 
-# domain-modeling: CONTEXT.md / ADR の執筆規律。SKILL.md 本文が同ディレクトリの
-# ADR-FORMAT.md / CONTEXT-FORMAT.md を相対参照するため、この2ファイルも一緒に vendor
+# domain-modeling: GLOSSARY.md（2026-10 に upstream が CONTEXT.md から改名）/ ADR の執筆規律。SKILL.md 本文が同ディレクトリの
+# ADR-FORMAT.md / GLOSSARY-FORMAT.md を相対参照するため、この2ファイルも一緒に vendor
 # しないと壊れる（agents/openai.yaml は別インターフェース向けの metadata なので不要）。
 DOMAIN_MODELING_REPO="mattpocock/skills"
 DOMAIN_MODELING_PATH="skills/engineering/domain-modeling/SKILL.md"
-DOMAIN_MODELING_EXTRA="skills/engineering/domain-modeling/ADR-FORMAT.md skills/engineering/domain-modeling/CONTEXT-FORMAT.md"
-DOMAIN_MODELING_REV="321658273cb1d20b76026717d027d505790106d4"
+DOMAIN_MODELING_EXTRA="skills/engineering/domain-modeling/ADR-FORMAT.md skills/engineering/domain-modeling/GLOSSARY-FORMAT.md"
+DOMAIN_MODELING_REV="d80fa0f4ebe0c5714af0adf8670336065233ecc6"
 
 # grill-with-docs: 上記2つへの一行委譲オーケストレータ。upstream の
 # `disable-model-invocation: true` を strip_pattern で落とし、herdr と同様に
@@ -138,8 +138,8 @@ LATEX_DEVKIT_REV="a65e238f463fe5356fb2f785d185bdc30bd827a0"
 # 差し替える（2本とも標準ライブラリだけで動く）。
 YOMIYASU_REPO="nanaism/yomiyasu"
 YOMIYASU_PATH="skills/yomiyasu/SKILL.md"
-YOMIYASU_EXTRA="skills/yomiyasu/references/gemini-syntax.md:references/gemini-syntax.md skills/yomiyasu/references/slop-catalog.md:references/slop-catalog.md skills/yomiyasu/references/domains/tech.md:references/domains/tech.md skills/yomiyasu/references/domains/business.md:references/domains/business.md skills/yomiyasu/references/domains/essay.md:references/domains/essay.md skills/yomiyasu/scripts/yomiyasu_lint.py:scripts/yomiyasu_lint.py skills/yomiyasu/scripts/yomiyasu_diff.py:scripts/yomiyasu_diff.py"
-YOMIYASU_REV="c9aca1a06e1c9de4afbe232cc1ca9fe4293a7678"
+YOMIYASU_EXTRA="skills/yomiyasu/references/gemini-syntax.md:references/gemini-syntax.md skills/yomiyasu/references/slop-catalog.md:references/slop-catalog.md skills/yomiyasu/references/domains/tech.md:references/domains/tech.md skills/yomiyasu/references/domains/business.md:references/domains/business.md skills/yomiyasu/references/domains/essay.md:references/domains/essay.md skills/yomiyasu/scripts/yomiyasu_lint.py:scripts/yomiyasu_lint.py skills/yomiyasu/scripts/yomiyasu_diff.py:scripts/yomiyasu_diff.py skills/yomiyasu/scripts/markdown_visibility.py:scripts/markdown_visibility.py"
+YOMIYASU_REV="373356eb874af5184962c88e925ea7eb58450318"
 DEST="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/agents/skills"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
