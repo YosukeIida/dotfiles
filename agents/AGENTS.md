@@ -52,7 +52,3 @@
 
 過去の判断の前例: @~/.claude/experience-index.md
 `@` を展開しない agent（Codex など）は、判断に前例が要るときにこのパスを Read する。索引は SessionStart hook が生成するキャッシュで、正本は `dotfiles-private/experience/`。
-
-## 調査ツール
-
-grep / find / cat 相当の調査は Bash ではなくネイティブの Grep / Glob / Read を使う（Bash 経由は rtk の hook で書き換えられ、plan mode で確認が出る）。
