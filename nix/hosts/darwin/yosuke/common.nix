@@ -631,6 +631,7 @@ in
     # 個人リポジトリのパスを他人が fork する層に持ち込まないため。
     EXPERIENCE_DIR = "$HOME/workspace/github.com/YosukeIida/dotfiles-private/experience";
     EXPERIENCE_MANIFEST = "$HOME/workspace/github.com/YosukeIida/dotfiles-private/experience/manifest.tsv";
+    KNOWLEDGE_DIR = "$HOME/workspace/github.com/YosukeIida/knowledge";
   };
 
   environment.systemPackages = with pkgs; [

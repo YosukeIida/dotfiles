@@ -49,7 +49,17 @@
 - Node.js / npm をグローバルに入れない（`npm install -g` も素の `npx` も使わない）。node が要るプロジェクトは devshell に閉じ、node 依存の CLI はネイティブバイナリで置き換える
 - Python は uv 経由で使う（`uv run` / `uvx --with <pkg>`）。system python や `pip install --user` は使わない
 
-## 経験知の索引
+## 記録の置き場
+
+作業の外に残すものは、次の順に判定して置く。判断と事実が混ざったものは分けて書く。
+
+1. 毎セッション必ず守らせること → AGENTS.md
+2. 選択肢から選んだ判断で、agent の行動を変えるもの → experience（`dotfiles-private/experience/`、書式は同ディレクトリの CONVENTIONS.md）
+3. repo をまたいで使う理解 → knowledge の概念ノート（`~/workspace/github.com/YosukeIida/knowledge/`、書く前に同ディレクトリの CONVENTIONS.md を読む）
+4. その repo の中だけで使う理解 → その repo の docs か AGENTS.md
+5. repo の中の作業記録 → その repo の docs
+6. repo の外の作業記録 → knowledge の作業記録（`YYYY-MM-DD_<slug>.md`）
 
 過去の判断の前例: @~/.claude/experience-index.md
-`@` を展開しない agent（Codex など）は、判断に前例が要るときにこのパスを Read する。索引は SessionStart hook が生成するキャッシュで、正本は `dotfiles-private/experience/`。
+repo をまたぐ理解の目録: @~/workspace/github.com/YosukeIida/knowledge/index.md
+`@` を展開しない agent（Codex など）は、判断に前例が要るとき、または repo をまたぐ話題を調べる前に、これらのパスを Read する。experience の索引は SessionStart hook が生成するキャッシュで、正本は `dotfiles-private/experience/`。knowledge の本体は、目録から開くか knowledge の repo を rg で探す。

@@ -15,6 +15,7 @@ public 側のコードが private の実体を前提にしている箇所。priv
 
 - 経験知: `claude/hooks/experience-inject.sh` が `EXPERIENCE_DIR`（`nix/hosts/darwin/yosuke/common.nix` で `dotfiles-private/experience` を指す）を読み、`~/.claude/experience-index.md` を生成する
 - private skills: `yosuke/common.nix` の postActivation が `dotfiles-private/agents/skills/*` を `~/.claude/skills`・`~/.codex/skills` へ symlink する
+- knowledge: `agents/AGENTS.md` が `~/workspace/github.com/YosukeIida/knowledge/index.md` を @import し、`KNOWLEDGE_DIR`（`yosuke/common.nix`）を wrap-up skill が読む
 - `claude/hooks/suiko-lint.sh` は private の `style-notes` skill の作法を前提にしている
 
 ## skill の置き場所
