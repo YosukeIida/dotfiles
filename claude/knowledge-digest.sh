@@ -5,6 +5,7 @@
 #
 # 使い方: knowledge-digest.sh <transcript.jsonl> [--dry-run]
 #   --dry-run: 区切った入力を $STATE/dry-run/ に書き出すだけで、claude は呼ばない
+# 環境変数 KNOWLEDGE_DIGEST_MAX_7D=<%> を渡すと、7日の使用率がそこに達した時点で止まる（終了コード 3）
 set -euo pipefail
 
 K="${KNOWLEDGE_DIR:?KNOWLEDGE_DIR が未設定}"
@@ -64,6 +65,8 @@ prompt=$(cat <<'EOF'
 1. 先に CONVENTIONS.md と index.md を読む。規約に従って書く
 2. 記録から「repo をまたいで使う理解」だけを拾う。事実・仕組み・比較・手順のうち、別の repo の作業でも役に立つものである。次は拾わない
    - その repo の中だけで使う理解、作業の経過、作業記録
+   - 道具を作るときにしか使わない理解（その道具の内部の処理の直し方など）。道具を使う側の理解は拾う
+   - agent の行動の規則（「〜する」「〜しない」という指示の形のもの）
    - user の判断や好み（agent の行動を変える判断は experience が受け持つ）
    - 記録の中でまだ結論が出ていない議論、後の行で覆された結論
    - 秘密の値（token・パスワード・個人の連絡先）
@@ -80,6 +83,12 @@ prompt=${prompt//SID/$sid}; prompt=${prompt//NOW/$(date +%Y-%m-%dT%H:%M:%S%z | s
 
 for chunk in "$work"/chunk-*.txt; do
   [ -f "$chunk" ] || continue
+  if [ -n "${KNOWLEDGE_DIGEST_MAX_7D:-}" ]; then
+    # 使用率はステータスラインの取得とキャッシュ（5分）に任せる
+    echo '{}' | bash "$(dirname "$0")/statusline.sh" >/dev/null 2>&1 || true
+    u=$(jq -r '.seven_day.utilization // empty' "${TMPDIR:-/tmp}/claude-sl/ClaudeCodecredentials.json" 2>/dev/null | cut -d. -f1)
+    if [ -n "$u" ] && [ "$u" -ge "$KNOWLEDGE_DIGEST_MAX_7D" ]; then echo "7日の使用率が ${u}% で、上限 ${KNOWLEDGE_DIGEST_MAX_7D}% に達したので止める" >&2; exit 3; fi
+  fi
   b=$(basename "$chunk" .txt); a=$(echo "$b" | cut -d- -f2 | sed 's/^0*//'); z=$(echo "$b" | cut -d- -f3 | sed 's/^0*//')
   bytes=$(wc -c < "$chunk" | tr -d ' ')
   t0=$(date +%s)
