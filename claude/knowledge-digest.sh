@@ -68,7 +68,7 @@ prompt=$(cat <<'EOF'
    - 記録の中でまだ結論が出ていない議論、後の行で覆された結論
    - 秘密の値（token・パスワード・個人の連絡先）
 3. 拾ったものごとに、既存の概念ノートを Grep で探す。あれば書き直し（名前は変えない）、無ければ新しく作る。書いたノートは新規も書き直しも `status: draft` にする
-   - generated: { by: claude-code/claude-sonnet-5-5, at: <今の日時> }
+   - generated: { by: claude-code/claude-sonnet-5-5, at: NOW }
    - sources: 記録に出てきた一次資料（URL、repo の docs の GitHub URL）と、この記録そのもの `transcript:SID#L<最初>-L<最後>`（根拠にした行の範囲）
 4. index.md の目録を更新する
 5. 書くものが無ければ何もしない。迷ったら書かない。数を増やすことが目的ではない
@@ -76,7 +76,7 @@ prompt=$(cat <<'EOF'
 7. 最後に、作った・書き直したノートの名前と、拾った理由を1行ずつだけ出力する。何も書かなかったら「なし」とだけ出力する
 EOF
 )
-prompt=${prompt//SID/$sid}
+prompt=${prompt//SID/$sid}; prompt=${prompt//NOW/$(date +%Y-%m-%dT%H:%M:%S%z | sed -E "s/([0-9]{2})([0-9]{2})\$/\\1:\\2/")}
 
 for chunk in "$work"/chunk-*.txt; do
   [ -f "$chunk" ] || continue
@@ -96,7 +96,7 @@ for chunk in "$work"/chunk-*.txt; do
     git -C "$K" add -A
     git -C "$K" commit -q -m "digest: $sid L$a-L$z" -m "$(echo "$out" | jq -r '.result')"
   fi
-  printf '%s\t%s\tL%s-L%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$(date +%Y-%m-%dT%H:%M)" "$sid" "$a" "$z" "$bytes" \
+  printf '%s\t%s\tL%s-L%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$(date +%Y-%m-%dT%H:%M)" "$sid" "$a" "$z" "$bytes" \
     "$(echo "$out" | jq -r '[.usage.input_tokens, .usage.cache_creation_input_tokens, .usage.cache_read_input_tokens]|map(.//0)|add')" \
     "$(echo "$out" | jq -r '.usage.output_tokens // 0')" "$(echo "$out" | jq -r '.total_cost_usd // 0')" "$secs" "${changed:-なし}" >> "$STATE/log.tsv"
   # 区切りごとに位置を進める（途中で落ちても、次はそこから）
