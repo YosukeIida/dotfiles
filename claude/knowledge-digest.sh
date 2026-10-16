@@ -101,6 +101,9 @@ for chunk in "$work"/chunk-*.txt; do
   secs=$(( $(date +%s) - t0 ))
   [ "$(echo "$out" | jq -r '.is_error')" = "false" ] || { echo "$out" >&2; exit 1; }
   changed=$(git -C "$K" status --porcelain | awk '{print $2}' | paste -sd, -)
+  for m in $(git -C "$K" status --porcelain | awk '$2 ~ /\.md$/ {print $2}'); do
+    uvx --quiet --with pyyaml python -I -c "import sys,yaml;yaml.safe_load(open(sys.argv[1]).read().split('---')[1])" "$K/$m" 2>/dev/null || echo "警告: $m の frontmatter が YAML として読めない" >&2
+  done
   if [ -n "$changed" ]; then
     git -C "$K" add -A
     git -C "$K" commit -q -m "digest: $sid L$a-L$z" -m "$(echo "$out" | jq -r '.result')"
