@@ -14,7 +14,7 @@ CHUNK_BYTES="${KNOWLEDGE_DIGEST_CHUNK_BYTES:-300000}"
 TRUNC="${KNOWLEDGE_DIGEST_TRUNC:-1500}"
 MODEL="${KNOWLEDGE_DIGEST_MODEL:-sonnet}"
 # これより小さい区切りは、ほとんど何も書かれないので claude を呼ばずに処理済みにする
-MIN_CHUNK="${KNOWLEDGE_DIGEST_MIN_CHUNK:-20000}"
+MIN_CHUNK="${KNOWLEDGE_DIGEST_MIN_CHUNK:-8000}"
 
 jsonl="${1:?transcript の jsonl を渡す}"
 dry=0; [ "${2:-}" = "--dry-run" ] && dry=1
