@@ -13,6 +13,8 @@ STATE="${XDG_STATE_HOME:-$HOME/.local/state}/knowledge-digest"
 CHUNK_BYTES="${KNOWLEDGE_DIGEST_CHUNK_BYTES:-300000}"
 TRUNC="${KNOWLEDGE_DIGEST_TRUNC:-1500}"
 MODEL="${KNOWLEDGE_DIGEST_MODEL:-sonnet}"
+# これより小さい区切りは、ほとんど何も書かれないので claude を呼ばずに処理済みにする
+MIN_CHUNK="${KNOWLEDGE_DIGEST_MIN_CHUNK:-20000}"
 
 jsonl="${1:?transcript の jsonl を渡す}"
 dry=0; [ "${2:-}" = "--dry-run" ] && dry=1
@@ -91,6 +93,12 @@ for chunk in "$work"/chunk-*.txt; do
   fi
   b=$(basename "$chunk" .txt); a=$(echo "$b" | cut -d- -f2 | sed 's/^0*//'); z=$(echo "$b" | cut -d- -f3 | sed 's/^0*//')
   bytes=$(wc -c < "$chunk" | tr -d ' ')
+  if [ "$bytes" -lt "$MIN_CHUNK" ]; then
+    awk -F'\t' -v s="$sid" '$1!=s' "$STATE/cursor.tsv" > "$STATE/cursor.tmp"
+    printf '%s\t%s\n' "$sid" "$z" >> "$STATE/cursor.tmp"; mv "$STATE/cursor.tmp" "$STATE/cursor.tsv"
+    echo "$sid L$a-L$z: 小さいので飛ばす（${bytes}B）"
+    continue
+  fi
   t0=$(date +%s)
   # 子の claude は transcript を残さず、user の hook（experience の queue など）も読まない
   out=$(cd "$K" && EXPERIENCE_DIR= KNOWLEDGE_DIGEST=1 claude -p "$prompt" \
@@ -101,7 +109,7 @@ for chunk in "$work"/chunk-*.txt; do
   secs=$(( $(date +%s) - t0 ))
   [ "$(echo "$out" | jq -r '.is_error')" = "false" ] || { echo "$out" >&2; exit 1; }
   changed=$(git -C "$K" status --porcelain | awk '{print $2}' | paste -sd, -)
-  for m in $(git -C "$K" status --porcelain | awk '$2 ~ /\.md$/ {print $2}'); do
+  for m in $(git -C "$K" status --porcelain | awk '$2 ~ /\.md$/ && $2 != "index.md" {print $2}'); do
     uvx --quiet --with pyyaml python -I -c "import sys,yaml;yaml.safe_load(open(sys.argv[1]).read().split('---')[1])" "$K/$m" 2>/dev/null || echo "警告: $m の frontmatter が YAML として読めない" >&2
   done
   if [ -n "$changed" ]; then
