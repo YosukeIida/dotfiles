@@ -75,7 +75,7 @@ prompt=$(cat <<'EOF'
 3. 拾ったものごとに、既存の概念ノートを Grep で探す。あれば書き直し（名前は変えない）、無ければ新しく作る。書いたノートは新規も書き直しも `status: draft` にする
    - generated: { by: claude-code/claude-sonnet-5-5, at: NOW }
    - sources: 記録に出てきた一次資料（URL、repo の docs の GitHub URL）と、この記録そのもの `transcript:SID#L<最初>-L<最後>`（根拠にした行の範囲）
-4. index.md の目録を更新する
+4. index.md の目録を更新する。今の index.md は INDEX_BYTES バイトある。書き足すと CONVENTIONS の上限を超えるなら、規約どおり行を外して上限の内に収める
 5. 書くものが無ければ何もしない。迷ったら書かない。数を増やすことが目的ではない
 6. git は操作しない
 7. 最後に、作った・書き直したノートの名前と、拾った理由を1行ずつだけ出力する。何も書かなかったら「なし」とだけ出力する
@@ -101,7 +101,7 @@ for chunk in "$work"/chunk-*.txt; do
   fi
   t0=$(date +%s)
   # 子の claude は transcript を残さず、user の hook（experience の queue など）も読まない
-  out=$(cd "$K" && EXPERIENCE_DIR= KNOWLEDGE_DIGEST=1 claude -p "$prompt" \
+  out=$(cd "$K" && EXPERIENCE_DIR= KNOWLEDGE_DIGEST=1 claude -p "${prompt//INDEX_BYTES/$(wc -c < "$K/index.md" | tr -d ' ')}" \
           --model "$MODEL" --no-session-persistence --output-format json \
           --setting-sources project --strict-mcp-config \
           --permission-mode acceptEdits --allowedTools Read Glob Grep Write Edit \
