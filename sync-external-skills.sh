@@ -138,8 +138,8 @@ LATEX_DEVKIT_REV="a65e238f463fe5356fb2f785d185bdc30bd827a0"
 # 差し替える（2本とも標準ライブラリだけで動く）。
 YOMIYASU_REPO="nanaism/yomiyasu"
 YOMIYASU_PATH="skills/yomiyasu/SKILL.md"
-YOMIYASU_EXTRA="skills/yomiyasu/references/gemini-syntax.md:references/gemini-syntax.md skills/yomiyasu/references/slop-catalog.md:references/slop-catalog.md skills/yomiyasu/references/domains/tech.md:references/domains/tech.md skills/yomiyasu/references/domains/business.md:references/domains/business.md skills/yomiyasu/references/domains/essay.md:references/domains/essay.md skills/yomiyasu/scripts/yomiyasu_lint.py:scripts/yomiyasu_lint.py skills/yomiyasu/scripts/yomiyasu_diff.py:scripts/yomiyasu_diff.py skills/yomiyasu/scripts/markdown_visibility.py:scripts/markdown_visibility.py"
-YOMIYASU_REV="373356eb874af5184962c88e925ea7eb58450318"
+YOMIYASU_EXTRA="skills/yomiyasu/references/audience.md:references/audience.md skills/yomiyasu/references/doc-types/article.md:references/doc-types/article.md skills/yomiyasu/references/doc-types/essay.md:references/doc-types/essay.md skills/yomiyasu/references/doc-types/formal.md:references/doc-types/formal.md skills/yomiyasu/references/doc-types/incident.md:references/doc-types/incident.md skills/yomiyasu/references/doc-types/mail.md:references/doc-types/mail.md skills/yomiyasu/references/doc-types/manual.md:references/doc-types/manual.md skills/yomiyasu/references/doc-types/minutes.md:references/doc-types/minutes.md skills/yomiyasu/references/doc-types/paper.md:references/doc-types/paper.md skills/yomiyasu/references/doc-types/pr.md:references/doc-types/pr.md skills/yomiyasu/references/doc-types/promo.md:references/doc-types/promo.md skills/yomiyasu/references/doc-types/proposal.md:references/doc-types/proposal.md skills/yomiyasu/references/doc-types/slides.md:references/doc-types/slides.md skills/yomiyasu/references/domains/business.md:references/domains/business.md skills/yomiyasu/references/domains/essay.md:references/domains/essay.md skills/yomiyasu/references/domains/tech.md:references/domains/tech.md skills/yomiyasu/references/fact-recovery-details.md:references/fact-recovery-details.md skills/yomiyasu/references/fact-recovery.md:references/fact-recovery.md skills/yomiyasu/references/gemini-syntax.md:references/gemini-syntax.md skills/yomiyasu/references/lists/fact-gaps.txt:references/lists/fact-gaps.txt skills/yomiyasu/references/lists/feelings.txt:references/lists/feelings.txt skills/yomiyasu/references/lists/hedges.txt:references/lists/hedges.txt skills/yomiyasu/references/lists/intensifiers.txt:references/lists/intensifiers.txt skills/yomiyasu/references/lists/nominalization.txt:references/lists/nominalization.txt skills/yomiyasu/references/persona.md:references/persona.md skills/yomiyasu/references/rephrase-test.md:references/rephrase-test.md skills/yomiyasu/references/review-points.md:references/review-points.md skills/yomiyasu/references/slop-catalog.md:references/slop-catalog.md skills/yomiyasu/scripts/markdown_visibility.py:scripts/markdown_visibility.py skills/yomiyasu/scripts/yomiyasu_check.py:scripts/yomiyasu_check.py skills/yomiyasu/scripts/yomiyasu_diff.py:scripts/yomiyasu_diff.py skills/yomiyasu/scripts/yomiyasu_lint.py:scripts/yomiyasu_lint.py"
+YOMIYASU_REV="1bc21f9c8e6a55fc4ccd5a2c7dfe78a7b0d814c5"
 DEST="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/agents/skills"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -261,14 +261,23 @@ sync_repo_file() {
   # upstream の全 commit を「更新あり」と誤検知するのを避けるため。
   # vendor-extra-paths は extra_files の src を同じ vendor-commit 基準で
   # 追加チェックできるようにするための拡張（scan_vendor_pins 側で読む）。
+  # upstream が metadata: を持つとき（yomiyasu の version など）に2つ目の metadata:
+  # を足すと YAML のキー重複になるので、既存の metadata: の中へ同じ字下げで足す。
   awk -v repo="$repo" -v path="$path" -v rev="$rev" -v extra="$extra_srcs" '
+    function vendor(ind) {
+      print ind "vendor-repo: " repo
+      print ind "vendor-path: " path
+      print ind "vendor-commit: " rev
+      if (extra != "") print ind "vendor-extra-paths: " extra
+    }
     NR == 1 && $0 == "---" { print; infm = 1; next }
+    pending {
+      pending = 0
+      if (match($0, /^ +/)) vendor(substr($0, 1, RLENGTH)); else vendor("    ")
+    }
+    infm && /^metadata:[ \t]*$/ { print; pending = 1; has_meta = 1; next }
     infm && $0 == "---" {
-      print "metadata:"
-      print "    vendor-repo: " repo
-      print "    vendor-path: " path
-      print "    vendor-commit: " rev
-      if (extra != "") print "    vendor-extra-paths: " extra
+      if (!has_meta) { print "metadata:"; vendor("    ") }
       print
       infm = 0
       next
@@ -350,11 +359,11 @@ patch_gws_multi_account_node_path() {
 }
 # ローカルパッチ: yomiyasu の Step 3/4 は同梱スクリプトを素の `python3` で呼ぶが、
 # この環境の python3 ガードは devShell・python プロジェクトの外では拒否する。
-# 行頭の `python3 <スキル配置ディレクトリ>/scripts/...` の2箇所を uv 経由に替える。
+# 行頭とインラインコード内の `python3 <スキル配置ディレクトリ>/scripts/...` を uv 経由に替える。
 patch_yomiyasu_python() {
   local f="$DEST/yomiyasu/SKILL.md"
   [ -f "$f" ] || return 0
-  perl -CSD -Mutf8 -pi -e 's{^python3 (<スキル配置ディレクトリ>/scripts/)}{uv run --no-project python $1}' "$f"
+  perl -CSD -Mutf8 -pi -e 's{(^|`)python3 (<スキル配置ディレクトリ>/scripts/)}{$1uv run --no-project python $2}g' "$f"
 }
 if [ "$check_mode" -eq 0 ]; then
   patch_gws_multi_account_node_path
