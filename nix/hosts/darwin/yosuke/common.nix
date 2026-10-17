@@ -749,6 +749,28 @@ in
     };
   };
 
+  # 止まった Claude Code のセッションから、repo をまたぐ理解を knowledge に下書きとして
+  # 書き、push まで行う（1時間ごと）。両方の Mac で動かすのは transcript が機体ごとに
+  # あるため。7日の使用率が 48% に達したら止まる。設計は dotfiles-private の
+  # docs/2026-10-16_knowledge-capture-hybrid.md。
+  launchd.user.agents.knowledgeDigest = {
+    serviceConfig = {
+      Label = "com.yosuke.knowledge-digest";
+      ProgramArguments = [
+        "${publicDir}/claude/knowledge-digest-sweep.sh"
+      ];
+      StartInterval = 3600;
+      EnvironmentVariables = {
+        LANG = "en_US.UTF-8";
+        KNOWLEDGE_DIR = "${homedir}/workspace/github.com/YosukeIida/knowledge";
+        KNOWLEDGE_DIGEST_MAX_7D = "48";
+        PATH = "${homedir}/.nix-profile/bin:/etc/profiles/per-user/${username}/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+      };
+      StandardOutPath = "${homedir}/Library/Logs/knowledge-digest.log";
+      StandardErrorPath = "${homedir}/Library/Logs/knowledge-digest.log";
+    };
+  };
+
   # GUI アプリ（cmux 等）と、これ以降 launchd が起動する全プロセスに UTF-8 を渡す。
   # launchd のドメイン env は login shell を経ないアプリにも効くので、シェル経路の
   # home.sessionVariables（nix/home/packages.nix）では届かない範囲を埋める。
