@@ -78,7 +78,9 @@ prompt=$(cat <<'EOF'
 4. index.md の目録を更新する。今の index.md は INDEX_BYTES バイトある。書き足すと CONVENTIONS の上限を超えるなら、規約どおり行を外して上限の内に収める
 5. 書くものが無ければ何もしない。迷ったら書かない。数を増やすことが目的ではない
 6. git は操作しない
-7. 最後に、作った・書き直したノートの名前と、拾った理由を1行ずつだけ出力する。何も書かなかったら「なし」とだけ出力する
+7. 最後に、次の2つだけを出力する
+   - 書いたもの: 作った・書き直したノートの名前と、拾った理由を1行ずつ。無ければ「書いたもの: なし」
+   - 拾わなかった候補: 検討して書かなかったものを1行ずつ、当てはまった理由（2 のどの除外条件か、既存ノートにすでにあるか）と一緒に。無ければ「拾わなかった候補: なし」
 EOF
 )
 prompt=${prompt//SID/$sid}; prompt=${prompt//NOW/$(date +%Y-%m-%dT%H:%M:%S%z | sed -E "s/([0-9]{2})([0-9]{2})\$/\\1:\\2/")}
@@ -122,7 +124,7 @@ for chunk in "$work"/chunk-*.txt; do
   # 区切りごとに位置を進める（途中で落ちても、次はそこから）
   awk -F'\t' -v s="$sid" '$1!=s' "$STATE/cursor.tsv" > "$STATE/cursor.tmp"
   printf '%s\t%s\n' "$sid" "$z" >> "$STATE/cursor.tmp"; mv "$STATE/cursor.tmp" "$STATE/cursor.tsv"
-  echo "$sid L$a-L$z: $(echo "$out" | jq -r '.result' | head -5)"
+  echo "$sid L$a-L$z: $(echo "$out" | jq -r '.result')"
 done
 
 # 最後の区切りの後ろの、会話でない行（attachment など）まで処理済みにする
