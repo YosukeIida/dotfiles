@@ -66,7 +66,7 @@ prompt=$(cat <<'EOF'
 
 1. 先に CONVENTIONS.md と index.md を読む。規約に従って書く
 2. 記録から「repo をまたいで使う理解」だけを拾う。事実・仕組み・比較・手順のうち、別の repo の作業でも役に立つものである。次は拾わない
-   - その repo の中だけで使う理解、作業の経過、作業記録
+   - その repo の中だけで使う理解（その repo のコード・データ・決まりについての事実）、作業の経過、作業記録。ただし、外部の道具・サービス・ライブラリ（Gmail・FastAPI・Postgres・Slack・Claude Code・nix など）の挙動や落とし穴は、どの repo の作業で出てきたかに関係なく拾う。同じ道具を使う別の repo でも当てはまるからである。作業の途中で回り道して済ませた落とし穴も、道具の挙動なら拾う
    - 道具を作るときにしか使わない理解（その道具の内部の処理の直し方など）。道具を使う側の理解は拾う
    - agent の行動の規則（「〜する」「〜しない」という指示の形のもの）
    - user の判断や好み（agent の行動を変える判断は experience が受け持つ）
@@ -115,8 +115,11 @@ for chunk in "$work"/chunk-*.txt; do
     uvx --quiet --with pyyaml python -I -c "import sys,yaml;yaml.safe_load(open(sys.argv[1]).read().split('---')[1])" "$K/$m" 2>/dev/null || echo "警告: $m の frontmatter が YAML として読めない" >&2
   done
   if [ -n "$changed" ]; then
+    # ponytail: 並列で流すときの commit の取り合いを mkdir の排他で防ぐ。別の回の書きかけも一緒に commit されうる
+    until mkdir "$K/.git/digest-commit.lock" 2>/dev/null; do sleep 1; done
     git -C "$K" add -A
-    git -C "$K" commit -q -m "digest: $sid L$a-L$z" -m "$(echo "$out" | jq -r '.result')"
+    git -C "$K" commit -q -m "digest: $sid L$a-L$z" -m "$(echo "$out" | jq -r '.result')" || true
+    rmdir "$K/.git/digest-commit.lock"
   fi
   printf '%s\t%s\tL%s-L%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$(date +%Y-%m-%dT%H:%M)" "$sid" "$a" "$z" "$bytes" \
     "$(echo "$out" | jq -r '[.usage.input_tokens, .usage.cache_creation_input_tokens, .usage.cache_read_input_tokens]|map(.//0)|add')" \
