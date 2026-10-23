@@ -14,10 +14,10 @@ cwd=$(printf '%s' "$input" | jq -r '.cwd // empty' 2>/dev/null)
 
 # 小さい transcript（headless の一発実行・雑談）は積まない。全セッションを積むと
 # 通知が数日で壁紙化する（Obsidian 調査で確認済みの失敗型）。閾値は 50KB。
-if [ -n "$tp" ] && [ -f "$tp" ]; then
-  sz=$(stat -f%z "$tp" 2>/dev/null || echo 0)
-  [ "${sz:-0}" -lt 51200 ] && exit 0
-fi
+# transcript が無いセッション（開いてすぐ /resume で切り替えた、など）も積まない。
+[ -n "$tp" ] && [ -f "$tp" ] || exit 0
+sz=$(stat -f%z "$tp" 2>/dev/null || echo 0)
+[ "${sz:-0}" -lt 51200 ] && exit 0
 
 q="$EXPERIENCE_DIR/.queue.tsv"
 # 同一セッションの重複（PreCompact→SessionEnd 等）は1行に保つ
