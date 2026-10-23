@@ -30,7 +30,6 @@ TERM = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.\-]{2,}|[ァ-ヴー]{3,}|[一-龥々]
 RELATIVE = 0.6
 ERROR_LINE = re.compile(r"error|exception|traceback|failed|denied|not found|unavailable|エラー|失敗", re.I)
 REPO_ROOT = re.compile(r"~/workspace/github\.com/[^/\s]+/")
-ALIASES = re.compile(r"^\* \[[^\]]*\]\(([^)]+)\.md\).*（別名: ([^）]*)）", re.M)
 
 
 def frontmatter(text):
@@ -46,18 +45,13 @@ def frontmatter(text):
 
 
 def load_notes():
-    aliases = {}
-    index = KNOWLEDGE / "index.md"
-    if index.exists():
-        for slug, words in ALIASES.findall(index.read_text()):
-            aliases[slug] = words
     notes = []
     for path in sorted(KNOWLEDGE.glob("[a-z]*.md")):
         fields, body = frontmatter(path.read_text())
         if fields.get("type") != "Concept" or fields.get("status") == "deprecated":
             continue
         premise = next((l for l in body.splitlines() if l.startswith("前提")), "")
-        keys = " ".join([fields.get("title", ""), fields.get("description", ""), aliases.get(path.stem, ""),
+        keys = " ".join([fields.get("title", ""), fields.get("description", ""), fields.get("aliases", ""),
                          path.stem.replace("-", " ")])
         terms = {t.lower() for t in TERM.findall(keys)}
         notes.append({"slug": path.stem, "path": str(path), "title": fields.get("title", path.stem),

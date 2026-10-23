@@ -64,7 +64,7 @@ fi
 prompt=$(cat <<'EOF'
 あなたは knowledge（今の作業ディレクトリ）の手入れ役である。stdin に、ある coding agent のセッションの記録の一部がある（各行の先頭が L<行番号>）。
 
-1. 先に CONVENTIONS.md と index.md を読む。規約に従って書く
+1. 先に CONVENTIONS.md を読む。規約に従って書く
 2. 記録から「repo をまたいで使う理解」だけを拾う。事実・仕組み・比較・手順のうち、別の repo の作業でも役に立つものである。次は拾わない
    - その repo の中だけで使う理解（その repo のコード・データ・決まりについての事実）、作業の経過、作業記録。ただし、外部の道具・サービス・ライブラリ（Gmail・FastAPI・Postgres・Slack・Claude Code・nix など）の挙動や落とし穴は、どの repo の作業で出てきたかに関係なく拾う。同じ道具を使う別の repo でも当てはまるからである。作業の途中で回り道して済ませた落とし穴も、道具の挙動なら拾う
    - 道具を作るときにしか使わない理解（その道具の内部の処理の直し方など）。道具を使う側の理解は拾う
@@ -75,10 +75,10 @@ prompt=$(cat <<'EOF'
 3. 拾ったものごとに、既存の概念ノートを Grep で探す。あれば書き直し（名前は変えない）、無ければ新しく作る。書いたノートは新規も書き直しも `status: draft` にする
    - generated: { by: claude-code/claude-sonnet-5-5, at: NOW }
    - sources: 記録に出てきた一次資料（URL、repo の docs の GitHub URL）と、この記録そのもの `transcript:SID#L<最初>-L<最後>`（根拠にした行の範囲）
-4. index.md の目録を更新する。今の index.md は INDEX_BYTES バイトある。書き足すと CONVENTIONS の上限を超えるなら、規約どおり行を外して上限の内に収める
-5. 書くものが無ければ何もしない。迷ったら書かない。数を増やすことが目的ではない
-6. git は操作しない
-7. 最後に、次の2つだけを出力する
+   - aliases: 本文に出てこないが、検索で使われそうな言い方（英語表記・略称・製品名・言い換え）。agent にはこの語でもノートが届く
+4. 書くものが無ければ何もしない。迷ったら書かない。数を増やすことが目的ではない
+5. git は操作しない
+6. 最後に、次の2つだけを出力する
    - 書いたもの: 作った・書き直したノートの名前と、拾った理由を1行ずつ。無ければ「書いたもの: なし」
    - 拾わなかった候補: 検討して書かなかったものを1行ずつ、当てはまった理由（2 のどの除外条件か、既存ノートにすでにあるか）と一緒に。無ければ「拾わなかった候補: なし」
 EOF
@@ -103,7 +103,7 @@ for chunk in "$work"/chunk-*.txt; do
   fi
   t0=$(date +%s)
   # 子の claude は transcript を残さず、user の hook（experience の queue など）も読まない
-  out=$(cd "$K" && EXPERIENCE_DIR= KNOWLEDGE_DIGEST=1 claude -p "${prompt//INDEX_BYTES/$(wc -c < "$K/index.md" | tr -d ' ')}" \
+  out=$(cd "$K" && EXPERIENCE_DIR= KNOWLEDGE_DIGEST=1 claude -p "$prompt" \
           --model "$MODEL" --no-session-persistence --output-format json \
           --setting-sources project --strict-mcp-config \
           --permission-mode acceptEdits --allowedTools Read Glob Grep Write Edit \
@@ -111,7 +111,7 @@ for chunk in "$work"/chunk-*.txt; do
   secs=$(( $(date +%s) - t0 ))
   [ "$(echo "$out" | jq -r '.is_error')" = "false" ] || { echo "$out" >&2; exit 1; }
   changed=$(git -C "$K" status --porcelain | awk '{print $2}' | paste -sd, -)
-  for m in $(git -C "$K" status --porcelain | awk '$2 ~ /\.md$/ && $2 != "index.md" {print $2}'); do
+  for m in $(git -C "$K" status --porcelain | awk '$2 ~ /\.md$/ {print $2}'); do
     uvx --quiet --with pyyaml python -I -c "import sys,yaml;yaml.safe_load(open(sys.argv[1]).read().split('---')[1])" "$K/$m" 2>/dev/null || echo "警告: $m の frontmatter が YAML として読めない" >&2
   done
   if [ -n "$changed" ]; then

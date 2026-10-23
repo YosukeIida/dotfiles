@@ -61,5 +61,5 @@
 6. repo の外の作業記録 → knowledge の作業記録（`YYYY-MM-DD_<slug>.md`）
 
 過去の判断の前例: @~/.claude/experience-index.md
-repo をまたぐ理解の目録: @~/workspace/github.com/YosukeIida/knowledge/index.md
-`@` を展開しない agent（Codex など）は、判断に前例が要るとき、または repo をまたぐ話題を調べる前に、これらのパスを Read する。experience の索引は SessionStart hook が生成するキャッシュで、正本は `dotfiles-private/experience/`。knowledge の本体は、目録から開くか knowledge の repo を rg で探す。
+`@` を展開しない agent（Codex など）は、判断に前例が要るとき、このパスを Read する。experience の索引は SessionStart hook が生成するキャッシュで、正本は `dotfiles-private/experience/`。
+knowledge には目録を置かない。作業中に出た語で hook が関係するノートを差し込む。差し込まれなくても、repo をまたぐ話題を調べる前には knowledge の repo を rg で探す。

@@ -8,9 +8,9 @@ from pathlib import Path
 HOOK = Path(__file__).with_name("knowledge-recall.py")
 
 
-def note(dir, slug, title, description, status="draft"):
+def note(dir, slug, title, description, status="draft", aliases=""):
     (dir / f"{slug}.md").write_text(
-        f"---\ntype: Concept\ntitle: '{title}'\ndescription: '{description}'\nstatus: {status}\n---\n\n本文\n\n前提: {slug} の前提\n")
+        f"---\ntype: Concept\ntitle: '{title}'\ndescription: '{description}'\naliases: '{aliases}'\nstatus: {status}\n---\n\n本文\n\n前提: {slug} の前提\n")
 
 
 def run(tmp_path, event):
@@ -26,10 +26,10 @@ def knowledge(tmp_path):
     for i in range(30):
         note(k, f"filler-{i}", f"別の話題 {i}", f"関係のない説明 {i}")
     note(k, "omlx-load-failure", "omlx は読み込みの失敗を覚えて 409 を返す", "brew services restart で直る")
-    note(k, "docker-compose-volumes", "docker compose の volume は worktree ごとに空", "down -v は共有の volume も消す")
+    note(k, "docker-compose-volumes", "docker compose の volume は worktree ごとに空", "down -v は共有の volume も消す",
+         aliases="named volume, ボリューム")
     note(k, "old-omlx", "omlx の古い挙動", "409 を返す", status="deprecated")
     (k / "2026-10-21_omlx-log.md").write_text("---\ntype: Work Log\ntitle: omlx 409\n---\n")
-    (k / "index.md").write_text("* [x](docker-compose-volumes.md) - y（別名: named volume, ボリューム）\n")
 
 
 def prompt(text, session="s"):
@@ -63,7 +63,7 @@ def test_home_and_repo_root_in_paths_do_not_match(tmp_path):
     assert run(tmp_path, cmd) == ""
 
 
-def test_index_aliases_are_search_keys(tmp_path):
+def test_frontmatter_aliases_are_search_keys(tmp_path):
     knowledge(tmp_path)
     assert "docker compose" in run(tmp_path, prompt("named volume のボリュームが消えた"))
 
