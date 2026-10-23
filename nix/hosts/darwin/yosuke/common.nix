@@ -605,6 +605,14 @@ in
     ./codexbar.nix
   ];
 
+  # Orca（並列エージェントを worktree ごとに走らせる ADE）。upstream 公式 tap の cask でのみ配布されており
+  # homebrew-core にも nixpkgs にも無いため tap 修飾で入れる。秘書の VM は作業者を OpenClaw の ACP で動かすので、
+  # 共通の一覧（profiles/darwin/homebrew.nix）ではなく個人の Mac の層に置く。
+  homebrew.extraConfig = ''
+    tap "stablyai/orca", trusted: true
+  '';
+  homebrew.casks = [ "stablyai/orca/orca" ];
+
   environment.interactiveShellInit = ''
     if command -v brew-update-reminder >/dev/null 2>&1; then
       brew-update-reminder || true
