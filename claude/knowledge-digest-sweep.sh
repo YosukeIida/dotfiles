@@ -29,6 +29,7 @@ for f in "$HOME"/.claude/projects/*/*.jsonl; do
   [ -f "$f" ] && [ "$f" -nt "$since" ] || continue
   [ $((now - $(stat -f%m "$f"))) -ge "$IDLE" ] || continue
   [ "$(stat -f%z "$f")" -ge "$MIN_BYTES" ] || continue
+  "$(dirname "$0")/style-digest.sh" "$f" < /dev/null || echo "$(date +%FT%T) style-digest 失敗: $f" >&2
   "$(dirname "$0")/knowledge-digest.sh" "$f" < /dev/null
   rc=$?
   [ "$rc" -eq 3 ] && break
