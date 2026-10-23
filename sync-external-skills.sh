@@ -339,7 +339,7 @@ sync_repo_file "latex-devkit" "$LATEX_DEVKIT_REPO" "$LATEX_DEVKIT_PATH" "$LATEX_
   'description: latex-devkit を使って LaTeX を Docker でビルドする操作スキル。「PDFをビルドして」「latexでコンパイルして」「ビルドして」などの表現がトリガー。外部リポジトリの papers/ 以下のプロジェクトのビルドにも対応。※既存 LaTeX プロジェクトのビルド専用。サーベイ論文の執筆工程一式（文献収集〜章ドラフト〜PDF 化）は tmllab-academic-survey-paper が担当。'
 sync_repo_file "yomiyasu" "$YOMIYASU_REPO" "$YOMIYASU_PATH" "$YOMIYASU_REV" \
   "Read, Edit, Write, Bash(uv run:*)" \
-  'description: AIが生成した不自然な日本語を、人間が読みやすく情報密度の高い自然な文章へ書き直すAgent Skill。「この文章を読みやすくして」「aiっぽさをなくして」「AI臭さを消して」「自然な日本語にして」「文章を脱臭して」という依頼や、技術記事、業務仕様書・PR説明文、エッセイ・noteの推敲時に使用する。非生物主語の解体、比喩的動詞の具体化、絵文字や文末コロンの完全排除、不要な補足カッコの削除、英単語前後の不自然な半角空白の排除、過剰な太字・箇条書き・否定対比の平文化を行い、文単体で誰が何をどうしたかが伝わる文章へ再構築する。※学術原稿（.tex/.md）の推敲は tmllab-ja-prose-polish が担当。本 skill は技術記事・PR・仕様書・社内レポート・メールなど実務文を担う。Yosuke がまとまった文章を書くときは style-notes が入口になり、本 skill の lint・diff スクリプトを仕上げ検査に使う（規則が衝突したら style-notes が優先）。' \
+  'description: AIが生成した不自然な日本語を、人間が読みやすく情報密度の高い自然な文章へ書き直すAgent Skill。「この文章を読みやすくして」「aiっぽさをなくして」「AI臭さを消して」「自然な日本語にして」「文章を脱臭して」という依頼や、技術記事、業務仕様書・PR説明文、エッセイ・noteの推敲時に使用する。非生物主語の解体、比喩的動詞の具体化、絵文字や文末コロンの完全排除、不要な補足カッコの削除、英単語前後の不自然な半角空白の排除、過剰な太字・箇条書き・否定対比の平文化を行い、文単体で誰が何をどうしたかが伝わる文章へ再構築する。※学術原稿（.tex/.md）の推敲は tmllab-ja-prose-polish が担当。本 skill は技術記事・PR・仕様書・社内レポート・メールなど実務文を担う。Yosuke がまとまった文章を書くときは style-guide が入口になり、本 skill の lint・diff スクリプトを仕上げ検査に使う（規則が衝突したら style-guide が優先）。' \
   "" "$YOMIYASU_EXTRA"
 # ローカルパッチ: upstream の SKILL.md は accounts.json のマージに裸の `node -e` を
 # 使い、「Claude Code や opencode を動かすマシンには必ず node がある」という前提で
