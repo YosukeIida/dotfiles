@@ -246,6 +246,27 @@ codex() {
     fi
   fi
 
+  # Orca の端末では、Orca がシェルに定義する codex() が `--no-daemon` を付けて、端末ごとに
+  # 自前の app-server で動かす（設定 "Run each Codex terminal on its own server"、既定で有効）。
+  # この関数は同じ名前でそれを上書きしてしまうので、同じ規則をここで再現する。付けないと
+  # CODEX_HOME ごとに 1 つの共有 daemon につながり、その daemon は最初に起動した端末の
+  # ORCA_PANE_KEY を持ち続けるため、別の端末の状態がその端末のものとして Orca に報告される
+  # （stablyai/orca#22873・#23643。2026-10-11 実測）。
+  # Orca の関数を退避して呼ぶ形は採らない: 読み込み順に依存し、Orca 側の定義が変わると黙って壊れる。
+  # 除外する引数と ORCA_CODEX_ISOLATE=0（設定を切った状態）の扱いは Orca の
+  # src/shared/codex-shell-function.ts に合わせている。
+  if [[ -n "${ORCA_PANE_KEY:-}" && "${ORCA_CODEX_ISOLATE:-1}" != 0 ]]; then
+    local _orca_arg _orca_shared=0
+    for _orca_arg in "$@"; do
+      case "$_orca_arg" in agents|queue|--no-daemon|--remote|--remote=*) _orca_shared=1 ;; esac
+    done
+    # --help を毎回見るのは Orca と同じ理由: 0.155 以前は未知のフラグで exit 2 になり、
+    # 結果をキャッシュするとアップグレードの前後で古くなる。
+    if (( ! _orca_shared )) && [[ "$(command codex --help 2>/dev/null </dev/null)" == *--no-daemon* ]]; then
+      set -- --no-daemon "$@"
+    fi
+  fi
+
   # Gatekeeper の quarantine は casks-personal の codex cask が preflight で外す
   # （nix/profiles/darwin/homebrew.nix 参照）。起動側では扱わない。
 
