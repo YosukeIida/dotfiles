@@ -400,6 +400,11 @@
       }
     }
   },
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
   "outputStyle": "Concise",
   "language": "Japanese",
   "modelSettings": {
