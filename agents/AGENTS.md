@@ -1,5 +1,7 @@
 # Yosuke の環境メモ
 
+When a repository's documentation and its existing code disagree, follow the conventions used in the existing code, and in your final reply point out each inconsistency you found between the documentation and the code.
+
 ## 続ける／止まって聞く
 
 作業に入る前に、結果が大きく変わる判断だけをまとめて一度に聞く。それ以外は自分で決め、前提として明記して進める。
