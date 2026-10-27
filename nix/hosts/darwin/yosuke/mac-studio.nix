@@ -8,11 +8,22 @@
 #   平文で、at-rest 保護は FileVault 依存（yosuke/secrets.nix 冒頭を参照）。研究室は
 #   他人が物理アクセスしうるので、初回セットアップ時に手動で有効化を確認すること。
 # - リモートログイン(SSH): 必要になってから足す。開けっ放しにはしない。
-{ ... }:
+{ pkgs, ... }:
 
 let
   username = "yosuke";
   homedir = "/Users/${username}";
+
+  # tailnet のアドレスは repo に書かず、起動のたびに引く。ログイン直後でまだ無ければ失敗し、launchd が入り直させる。
+  secretaryGatewayTailnetTunnel = pkgs.writeShellScriptBin "secretary-gateway-tailnet-tunnel" ''
+    ip="$(/Applications/Tailscale.app/Contents/MacOS/Tailscale ip -4 2>/dev/null | /usr/bin/head -n1)"
+    [ -n "$ip" ] || { echo "tailnet のアドレスがまだ無い" >&2; exit 1; }
+    exec /usr/bin/ssh -N \
+      -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ExitOnForwardFailure=yes \
+      -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
+      -L "$ip:18789:127.0.0.1:18789" \
+      lume@192.168.64.2
+  '';
 in
 
 {
@@ -189,6 +200,22 @@ in
       ThrottleInterval = 30;
       StandardOutPath = "${homedir}/Library/Logs/secretary-dashboard-tunnel.log";
       StandardErrorPath = "${homedir}/Library/Logs/secretary-dashboard-tunnel.log";
+    };
+  };
+
+  # 秘書の Gateway を、この機の tailnet のアドレスの 18789 で iPhone の OpenClaw アプリに出す（wss。TLS は Gateway が終端する）。
+  # 上のダッシュボードのトンネルに -L を足さないのは、ログイン直後に tailnet のアドレスが無いと ExitOnForwardFailure で
+  # ダッシュボードの転送まで落ちるため。Tailscale Serve を使わないのは、研究室の headscale が端末の証明書を出さないため
+  # （dotfiles-private の docs/2026-10-27_openclaw-ios-pairing.md）。
+  launchd.user.agents.secretaryGatewayTailnetTunnel = {
+    serviceConfig = {
+      Label = "com.yosuke.secretary-gateway-tailnet-tunnel";
+      ProgramArguments = [ "${secretaryGatewayTailnetTunnel}/bin/secretary-gateway-tailnet-tunnel" ];
+      RunAtLoad = true;
+      KeepAlive = true;
+      ThrottleInterval = 30;
+      StandardOutPath = "${homedir}/Library/Logs/secretary-gateway-tailnet-tunnel.log";
+      StandardErrorPath = "${homedir}/Library/Logs/secretary-gateway-tailnet-tunnel.log";
     };
   };
 
