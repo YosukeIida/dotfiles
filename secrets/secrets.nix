@@ -22,6 +22,7 @@ in
   "raycast-pw.age".publicKeys = all;
   "cf-token.age".publicKeys = all;
   "headscale-ip.age".publicKeys = all;
+  "secretary-phone-ip.age".publicKeys = all; # 秘書の Gateway への転送を通す iPhone の tailnet のアドレス
   "printers.age".publicKeys = all;
   "figma-pat.age".publicKeys = all; # expires 2026-09-21
   "cctag-slack_tmllab_workspace.age".publicKeys = all;

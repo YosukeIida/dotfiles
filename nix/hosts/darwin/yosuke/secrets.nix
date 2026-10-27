@@ -22,6 +22,7 @@
   age.secrets."raycast-pw".file = ../../../../secrets/raycast-pw.age;
   age.secrets."cf-token".file = ../../../../secrets/cf-token.age;
   age.secrets."headscale-ip".file = ../../../../secrets/headscale-ip.age;
+  age.secrets."secretary-phone-ip".file = ../../../../secrets/secretary-phone-ip.age;
   age.secrets."printers".file = ../../../../secrets/printers.age;
   age.secrets."figma-pat".file = ../../../../secrets/figma-pat.age; # expires 2026-09-21
   age.secrets."cctag-slack_tmllab_workspace".file =

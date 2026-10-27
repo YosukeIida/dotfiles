@@ -15,14 +15,15 @@ let
   homedir = "/Users/${username}";
 
   # tailnet のアドレスは repo に書かず、起動のたびに引く。ログイン直後でまだ無ければ失敗し、launchd が入り直させる。
+  # 研究室の tailnet には他人の端末もいるので、iPhone のアドレス（agenix の secretary-phone-ip）以外は受けた直後に切る。
   secretaryGatewayTailnetTunnel = pkgs.writeShellScriptBin "secretary-gateway-tailnet-tunnel" ''
     ip="$(/Applications/Tailscale.app/Contents/MacOS/Tailscale ip -4 2>/dev/null | /usr/bin/head -n1)"
     [ -n "$ip" ] || { echo "tailnet のアドレスがまだ無い" >&2; exit 1; }
-    exec /usr/bin/ssh -N \
-      -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ExitOnForwardFailure=yes \
-      -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
-      -L "$ip:18789:127.0.0.1:18789" \
-      lume@192.168.64.2
+    phone="$(tr -d '[:space:]' < "${homedir}/.config/vpn/secretary-phone-ip")"
+    [ -n "$phone" ] || { echo "iPhone のアドレスが無い（agenix の secretary-phone-ip）" >&2; exit 1; }
+    exec ${pkgs.socat}/bin/socat \
+      "TCP-LISTEN:18789,bind=$ip,fork,reuseaddr,range=$phone/32" \
+      TCP:127.0.0.1:18789
   '';
 in
 
@@ -204,9 +205,11 @@ in
   };
 
   # 秘書の Gateway を、この機の tailnet のアドレスの 18789 で iPhone の OpenClaw アプリに出す（wss。TLS は Gateway が終端する）。
-  # 上のダッシュボードのトンネルに -L を足さないのは、ログイン直後に tailnet のアドレスが無いと ExitOnForwardFailure で
-  # ダッシュボードの転送まで落ちるため。Tailscale Serve を使わないのは、研究室の headscale が端末の証明書を出さないため
-  # （dotfiles-private の docs/2026-10-27_openclaw-ios-pairing.md）。
+  # 上のダッシュボードのトンネル（127.0.0.1:18789）へ socat で渡す。ssh -L を tailnet のアドレスで待ち受けないのは、
+  # 接続元で絞れず、研究室の誰の接続も Gateway には 127.0.0.1 に見えるため。Caddy で X-Forwarded-For を渡す形
+  # （docs/2026-10-05_secretary-dashboard-remote-access.md）を採らないのは、iPhone 1 台なら接続元の絞り込みで足りるため。
+  # Tailscale Serve を使わないのは、研究室の headscale が端末の証明書を出さないため（docs/2026-10-27_openclaw-ios-pairing.md）。
+  # 2 つの docs は dotfiles-private にある。
   launchd.user.agents.secretaryGatewayTailnetTunnel = {
     serviceConfig = {
       Label = "com.yosuke.secretary-gateway-tailnet-tunnel";
