@@ -7,8 +7,7 @@
 #   1. gist 由来（cognitive-rhythm-writing / japanese-tech-writing）
 #      → clone して SKILL.md をコピーする。REV_* で pin。
 #   2. repo 内の SKILL.md 由来（herdr, writing-quotation, grilling,
-#      domain-modeling, grill-with-docs, gws-multi-account, latex-devkit,
-#      yomiyasu）
+#      domain-modeling, grill-with-docs, gws-multi-account, latex-devkit）
 #      → gh api で1ファイルだけ取得し、ローカルのパッチと vendor-* metadata を注入する。
 #        gh skill install は使えない: 発見に `<name>/SKILL.md` のディレクトリ構造を要求し、
 #        リポジトリ直下の裸の SKILL.md を認識しない（`gh skill preview` が
@@ -126,20 +125,6 @@ LATEX_DEVKIT_REPO="TMLlaboratory/latex-devkit"
 LATEX_DEVKIT_PATH="skills/latex-devkit/SKILL.md"
 LATEX_DEVKIT_REV="a65e238f463fe5356fb2f785d185bdc30bd827a0"
 
-# yomiyasu: AI 生成の日本語を自然な日本語へ推敲するスキル（MIT）。2026-10 に
-# akubun-writing（youwei16/akubun-writing-skill）を外して、実務文の推敲担当をこちらに替えた。
-# SKILL.md が references/（domains/ 含む）と scripts/ の2本を相対参照するため、
-# gws-multi-account と同じく src:dest 形式で skills/yomiyasu/ 以下をまとめて vendor する
-# （assets/ と .claude-plugin/ は SKILL.md から参照されないので取らない）。
-# REV は upstream で skills/yomiyasu/ を最後に変更した commit（HEAD ではない）。
-# ローカルパッチ: description に他の文体系 skill との分担を足す。スクリプトの
-# 呼び出し `python3 ...` は、python3 ガード（system python を使わない方針）に
-# 拒否されるため、末尾の patch_yomiyasu_python で `uv run --no-project python ...` に
-# 差し替える（2本とも標準ライブラリだけで動く）。
-YOMIYASU_REPO="nanaism/yomiyasu"
-YOMIYASU_PATH="skills/yomiyasu/SKILL.md"
-YOMIYASU_EXTRA="skills/yomiyasu/references/audience.md:references/audience.md skills/yomiyasu/references/calques.md:references/calques.md skills/yomiyasu/references/doc-types/article.md:references/doc-types/article.md skills/yomiyasu/references/doc-types/essay.md:references/doc-types/essay.md skills/yomiyasu/references/doc-types/formal.md:references/doc-types/formal.md skills/yomiyasu/references/doc-types/incident.md:references/doc-types/incident.md skills/yomiyasu/references/doc-types/mail.md:references/doc-types/mail.md skills/yomiyasu/references/doc-types/manual.md:references/doc-types/manual.md skills/yomiyasu/references/doc-types/minutes.md:references/doc-types/minutes.md skills/yomiyasu/references/doc-types/paper.md:references/doc-types/paper.md skills/yomiyasu/references/doc-types/pr.md:references/doc-types/pr.md skills/yomiyasu/references/doc-types/promo.md:references/doc-types/promo.md skills/yomiyasu/references/doc-types/proposal.md:references/doc-types/proposal.md skills/yomiyasu/references/doc-types/script.md:references/doc-types/script.md skills/yomiyasu/references/doc-types/slides.md:references/doc-types/slides.md skills/yomiyasu/references/domains/business.md:references/domains/business.md skills/yomiyasu/references/domains/essay.md:references/domains/essay.md skills/yomiyasu/references/domains/tech.md:references/domains/tech.md skills/yomiyasu/references/fact-recovery-details.md:references/fact-recovery-details.md skills/yomiyasu/references/fact-recovery.md:references/fact-recovery.md skills/yomiyasu/references/gemini-syntax.md:references/gemini-syntax.md skills/yomiyasu/references/lists/fact-gaps.txt:references/lists/fact-gaps.txt skills/yomiyasu/references/lists/feelings.txt:references/lists/feelings.txt skills/yomiyasu/references/lists/hedges.txt:references/lists/hedges.txt skills/yomiyasu/references/lists/intensifiers.txt:references/lists/intensifiers.txt skills/yomiyasu/references/lists/katakana-terms.txt:references/lists/katakana-terms.txt skills/yomiyasu/references/lists/nominalization.txt:references/lists/nominalization.txt skills/yomiyasu/references/lists/renyo-nouns.txt:references/lists/renyo-nouns.txt skills/yomiyasu/references/lists/thin-evaluation.txt:references/lists/thin-evaluation.txt skills/yomiyasu/references/persona.md:references/persona.md skills/yomiyasu/references/rephrase-test.md:references/rephrase-test.md skills/yomiyasu/references/review-points.md:references/review-points.md skills/yomiyasu/references/slop-catalog.md:references/slop-catalog.md skills/yomiyasu/scripts/markdown_visibility.py:scripts/markdown_visibility.py skills/yomiyasu/scripts/yomiyasu_check.py:scripts/yomiyasu_check.py skills/yomiyasu/scripts/yomiyasu_diff.py:scripts/yomiyasu_diff.py skills/yomiyasu/scripts/yomiyasu_lint.py:scripts/yomiyasu_lint.py"
-YOMIYASU_REV="ae258d7a57b335673e30b88a018ae08d4f72c449"
 DEST="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/agents/skills"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -261,7 +246,7 @@ sync_repo_file() {
   # upstream の全 commit を「更新あり」と誤検知するのを避けるため。
   # vendor-extra-paths は extra_files の src を同じ vendor-commit 基準で
   # 追加チェックできるようにするための拡張（scan_vendor_pins 側で読む）。
-  # upstream が metadata: を持つとき（yomiyasu の version など）に2つ目の metadata:
+  # upstream が metadata: を持つとき（version など）に2つ目の metadata:
   # を足すと YAML のキー重複になるので、既存の metadata: の中へ同じ字下げで足す。
   awk -v repo="$repo" -v path="$path" -v rev="$rev" -v extra="$extra_srcs" '
     function vendor(ind) {
@@ -337,10 +322,6 @@ sync_repo_file "gws-multi-account" "$GWS_MULTI_ACCOUNT_REPO" "$GWS_MULTI_ACCOUNT
 sync_repo_file "latex-devkit" "$LATEX_DEVKIT_REPO" "$LATEX_DEVKIT_PATH" "$LATEX_DEVKIT_REV" \
   "Bash(make:*), Bash(docker:*)" \
   'description: latex-devkit を使って LaTeX を Docker でビルドする操作スキル。「PDFをビルドして」「latexでコンパイルして」「ビルドして」などの表現がトリガー。外部リポジトリの papers/ 以下のプロジェクトのビルドにも対応。※既存 LaTeX プロジェクトのビルド専用。サーベイ論文の執筆工程一式（文献収集〜章ドラフト〜PDF 化）は tmllab-academic-survey-paper が担当。'
-sync_repo_file "yomiyasu" "$YOMIYASU_REPO" "$YOMIYASU_PATH" "$YOMIYASU_REV" \
-  "Read, Edit, Write, Bash(uv run:*)" \
-  'description: AIが生成した不自然な日本語を、人間が読みやすく情報密度の高い自然な文章へ書き直すAgent Skill。「この文章を読みやすくして」「aiっぽさをなくして」「AI臭さを消して」「自然な日本語にして」「文章を脱臭して」という依頼や、技術記事、業務仕様書・PR説明文、エッセイ・noteの推敲時に使用する。非生物主語の解体、比喩的動詞の具体化、絵文字や文末コロンの完全排除、不要な補足カッコの削除、英単語前後の不自然な半角空白の排除、過剰な太字・箇条書き・否定対比の平文化を行い、文単体で誰が何をどうしたかが伝わる文章へ再構築する。※学術原稿（.tex/.md）の推敲は tmllab-ja-prose-polish が担当。本 skill は技術記事・PR・仕様書・社内レポート・メールなど実務文を担う。Yosuke がまとまった文章を書くときは style-guide が入口になり、本 skill の lint・diff スクリプトを仕上げ検査に使う（規則が衝突したら style-guide が優先）。' \
-  "" "$YOMIYASU_EXTRA"
 # ローカルパッチ: upstream の SKILL.md は accounts.json のマージに裸の `node -e` を
 # 使い、「Claude Code や opencode を動かすマシンには必ず node がある」という前提で
 # 書かれている。この環境には nodeless-policy により裸の node が PATH に無いため、
@@ -357,15 +338,6 @@ patch_gws_multi_account_node_path() {
     s/Use Node for cross-platform JSON merging — no `jq` dependency\. Node is guaranteed present on any machine running Claude Code or opencode\./Use "\$GWS_MULTI_ACCOUNT_NODE" (a nix-pinned Node.js binary) for cross-platform JSON merging — no `jq` dependency. There is no bare `node` on PATH in this environment by design; see the dotfiles nodeless policy./g;
   ' "$f"
 }
-# ローカルパッチ: yomiyasu の Step 3/4 は同梱スクリプトを素の `python3` で呼ぶが、
-# この環境の python3 ガードは devShell・python プロジェクトの外では拒否する。
-# 行頭とインラインコード内の `python3 <スキル配置ディレクトリ>/scripts/...` を uv 経由に替える。
-patch_yomiyasu_python() {
-  local f="$DEST/yomiyasu/SKILL.md"
-  [ -f "$f" ] || return 0
-  perl -CSD -Mutf8 -pi -e 's{(^|`)python3 (<スキル配置ディレクトリ>/scripts/)}{$1uv run --no-project python $2}g' "$f"
-}
 if [ "$check_mode" -eq 0 ]; then
   patch_gws_multi_account_node_path
-  patch_yomiyasu_python
 fi

@@ -341,6 +341,7 @@
     "cowork-plugin-management@synced": false,
     "data@synced": false,
     "ponytail@ponytail": true,
+    "yomiyasu@yomiyasu": true,
     "qa-guide@claude-qamods": true
   },
   "extraKnownMarketplaces": {
@@ -397,6 +398,13 @@
         "source": "github",
         "repo": "DietrichGebert/ponytail"
       }
+    },
+    "yomiyasu": {
+      "source": {
+        "source": "github",
+        "repo": "nanaism/yomiyasu"
+      },
+      "autoUpdate": true
     },
     "claude-qamods": {
       "source": {

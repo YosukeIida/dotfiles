@@ -175,6 +175,11 @@
     # Claude Code プラグインを自動インストール（ユーザー権限で実行）
     su - ${username} -c "bash $pub/claude/install-plugins.sh" || true
 
+    # yomiyasu は Claude Code の plugin として入れ、Codex には同じ marketplace の clone を
+    # skill として見せる。Codex の plugin として入れないのは、Codex 側に別の更新の仕組みを
+    # 足さずに、Claude Code の marketplace の自動更新（autoUpdate）で両方を更新するため。
+    _link "$home/.claude/plugins/marketplaces/yomiyasu/skills/yomiyasu" "$home/.codex/skills/yomiyasu"
+
     # Codex プラグインを希望リストから冪等にインストール
     su - ${username} -c "bash $pub/codex/install-plugins.sh" || true
 

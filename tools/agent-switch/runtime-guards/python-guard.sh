@@ -48,6 +48,13 @@ if [[ -n "${HERDR_HOOK_INPUT_FILE:-}" && -x "/usr/bin/$prog" ]]; then
   exec "/usr/bin/$prog" "$@"
 fi
 
+# yomiyasu（marketplace から入れる plugin）の SKILL.md は同梱スクリプトを素の python3 で呼ぶ。
+# SKILL.md を書き換えると自動更新のたびに消えるので、ここで uv に渡す。uv の probe は
+# このパスを引数に持たないため、上の 2. に書いたデッドロックは起きない。
+if [[ "${1:-}" == */yomiyasu/scripts/*.py ]]; then
+  exec uv run --no-project python "$@"
+fi
+
 # 3. どちらの根拠も無ければ拒否する（/usr/bin の system python への無自覚な
 #    フォールバックを防ぐ）。uv からの probe もここに落ちて 1 を返し、uv は
 #    この候補を諦めて managed python に進む。
