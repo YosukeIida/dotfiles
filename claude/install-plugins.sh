@@ -48,8 +48,13 @@ trap 'rm -rf "$work"' EXIT
 # `claude plugins marketplace add` は <source> 一つだけを取り、marketplace名は
 # 相手の marketplace.json の name フィールドから自動的に決まる(この dict の
 # key は決定に関与しない、あくまで人間向けのラベル)。
+# 登録済みの repo は add しない。add は settings.json の該当エントリを source だけで
+# 書き直し、autoUpdate などのキーを消す（2026-10、Claude Code 2.1.311 で確認）。
+claude plugins marketplace list --json 2>/dev/null | jq -r '.[].repo // empty' | sort >"$work/known.txt" \
+  || : >"$work/known.txt"
 jq -r '.extraKnownMarketplaces // {} | to_entries[]
        | select(.value.source.source == "github") | .value.source.repo' "$SETTINGS" \
+  | sort | comm -23 - "$work/known.txt" \
   | while IFS= read -r repo; do
       [ -n "$repo" ] || continue
       claude plugins marketplace add "$repo" >/dev/null 2>&1 || true
