@@ -23,10 +23,11 @@ public 側のコードが private の実体を前提にしている箇所。priv
 |---|---|---|
 | 自作・公開できる | `YosukeIida/personal-agent-skills`（別 repo、root 直下に `<skill>/SKILL.md`） | 編集即時反映 |
 | 自作・公開したくない | `dotfiles-private/agents/skills/` | 編集即時反映 |
-| 外部・公開 repo/gist 由来 | `agents/skills/<name>`（vendor） | `sync-external-skills.sh`（rev pin）→ diff を目視 → commit |
+| 外部・upstream が marketplace を配っている | plugin（`claude/settings.json` の `extraKnownMarketplaces` に `autoUpdate`、`enabledPlugins`） | 自動更新。diff の目視はしない |
+| 外部・公開 repo/gist 由来（marketplace が無い） | `agents/skills/<name>`（vendor） | `sync-external-skills.sh`（rev pin）→ diff を目視 → commit |
 | 外部・研究室（private repo 由来） | `dotfiles-private/agents/skills/tmllab-*`（vendor） | `dotfiles-private/sync-lab-skills.sh` → diff を目視 → commit |
 
-- 外部 skill は vendor と sync スクリプトで取り込み、取り込むたびに内容の diff を目視する（プロンプトインジェクション対策）。agent-skills-nix のような skill ごとの derivation 配備は使わない（skill 間の `../other-skill/` 参照が symlink 越しの `..` 解決で壊れる）
+- 外部 skill は、upstream が marketplace を配っていれば plugin として入れ、`autoUpdate` で最新に保つ（例: yomiyasu）。環境との差（python3 ガードなど）は plugin を書き換えずに環境の側の例外で吸収する。marketplace が無いものは vendor と sync スクリプトで取り込み、取り込むたびに内容の diff を目視する（プロンプトインジェクション対策）。agent-skills-nix のような skill ごとの derivation 配備は使わない（skill 間の `../other-skill/` 参照が symlink 越しの `..` 解決で壊れる）
 - `gh skill` は preview / search / publish だけに使い、`install` / `update` で自分の環境に配備しない。`darwin-switch` のたびに両 sync スクリプトの `--check` が走り、upstream の更新を通知する（読み取り専用）
 - 新しい skill ディレクトリを足したら `darwin-switch` が要る（symlink を張るため）。リンク切れは switch 時に掃除される
 
