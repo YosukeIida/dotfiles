@@ -28,6 +28,8 @@
       tap "steipete/tap", trusted: true
       tap "xoshbin/asyar", trusted: true
       tap "yosukeiida/casks-personal", trusted: true
+      tap "mantrakp04/tap", trusted: true
+      tap "yetanotherbrowser/tap", trusted: true
     '';
 
     brews = [
@@ -86,6 +88,7 @@
       # リダイレクト後の名前と一致せず「Untrusted tap」になる（2026-08-20 に遭遇）。
       "solarphlare/tap/airmute"
       "arc"
+      "mantrakp04/tap/ardia"
       "xoshbin/asyar/asyar"
       "chatgpt"
       "chrome-remote-desktop-host"
@@ -101,6 +104,7 @@
       # 外す以外は公式と同じ cask を使う（詳細は casks-personal の Casks/codex.rb）。
       "yosukeiida/casks-personal/codex"
       "codexbar"
+      "yosukeiida/casks-personal/cra"
       "discord"
       "figma@beta"
       "ghostty@tip"
@@ -142,6 +146,7 @@
       "thebrowsercompany-dia"
       "visual-studio-code"
       "wezterm@nightly"
+      "yetanotherbrowser/tap/yab"
       "zed"
       # 個人 fork の自前ビルドなので ad-hoc 署名（TeamIdentifier なし、spctl は rejected）で、
       # quarantine 属性が付くと Gatekeeper に起動を止められる。ただしここで
