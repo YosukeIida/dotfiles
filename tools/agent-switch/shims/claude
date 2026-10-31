@@ -31,6 +31,14 @@ _self_dir_phys="$(cd -- "$_self_dir" 2>/dev/null && pwd -P || printf '%s' "$_sel
 _rt_bin="$HOME/.local/share/claude-runtime/bin"
 _rt_fallback="$HOME/.local/share/claude-runtime/fallback"
 
+# 0. 起動した場所の direnv（.envrc の devshell）を読み込む。agent のコマンドは
+#    非対話のシェルで走り direnv の hook を通らないので、起動時の env に載せて継承させる。
+#    `direnv exec` で包まないのは argv[0] を "claude"/"codex" のまま渡すため（下の exec -a）。
+#    既に同じ env なら export は空、.envrc が無い・未 allow なら何も変えない。
+if command -v direnv >/dev/null 2>&1; then
+  eval "$(DIRENV_LOG_FORMAT= direnv export bash 2>/dev/null)"
+fi
+
 # 1. 自分のディレクトリを PATH から外す（シムが自分自身を再実行しないように）
 #
 # PATH は手動で分解する。`IFS=:` の単語分割では末尾の空要素が落ちるため

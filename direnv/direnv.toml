@@ -1,4 +1,8 @@
 [whitelist]
-# TMLlaboratory 配下の worktree を全て自動信頼する
-# git worktree で作成したディレクトリで direnv allow が不要になる
-prefix = ["/Users/yosuke/workspace/github.com/TMLlaboratory/"]
+# TMLlaboratory 配下と Orca の worktree を全て自動信頼する
+# git worktree で作成したディレクトリで direnv allow が不要になる。Orca の worktree は
+# agent-switch の shim が起動時に .envrc を読むので、allow が無いと席に devshell が載らない
+prefix = [
+  "/Users/yosuke/workspace/github.com/TMLlaboratory/",
+  "/Users/yosuke/orca/workspaces/",
+]
