@@ -37,6 +37,13 @@ dot_path_priority() {
   path=("${_prio[@]}" "${path[@]}")
   export PATH
 }
+
+# SSH で渡されたコマンド（`ssh host cmd`）は login でない zsh で走り、zprofile の
+# brew shellenv を通らないので Homebrew が PATH に無い。Herdr app が Machines の
+# 接続先で `command -v herdr-core` を探すのもこの経路。login shell は zprofile が足すので触らない。
+if [[ -n "${SSH_CONNECTION}" ]] && ! [[ -o login ]] && [[ -d /opt/homebrew/bin ]]; then
+  (( ${path[(Ie)/opt/homebrew/bin]} )) || path+=(/opt/homebrew/bin /opt/homebrew/sbin)
+fi
 dot_path_priority
 
 # Figma PAT for figma-console-mcp (expires 2026-09-21; managed by agenix)
