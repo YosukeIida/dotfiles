@@ -130,7 +130,7 @@ fi
 #
 #   personal = ChatGPT Plus / labteam = Team プラン（同一メールだが別枠）
 #
-# 既定を export しておけば、herdr の pane で起動する omp もこれを継承する。
+# 既定を export しておけば、Orca の端末で起動する omp もこれを継承する。
 # 一時的に切り替えたいときだけ omp-personal / omp-labteam を使う。
 #
 # 注意: 同一プロファイルに両方ログインすると omp はセッションごとに round-robin で

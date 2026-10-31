@@ -663,7 +663,7 @@ in
   # これが無いと direnv は組み込みの use_flake に無言で落ち、print-dev-env が
   # export する TMPDIR=.../nix-shell.XXXXXX が復元されないまま残る（nix-direnv 版は
   # NIX_BUILD_TOP/TMP/TMPDIR/TEMP/TEMPDIR を退避復元して nix-shell.* を消す）。
-  # 実害: herdr --remote の ssh ControlMaster ソケットのパスが AF_UNIX の
+  # 実害: TMPDIR 配下に作る ssh ControlMaster ソケットなどのパスが AF_UNIX の
   # 103 バイト上限を超えて接続できなくなる（macOS の $TMPDIR は既に 48 文字）。
   environment.pathsToLink = [ "/share/nix-direnv" ];
 
@@ -786,13 +786,6 @@ in
   # ことからも、これが想定された用法。
   launchd.user.envVariables.LANG = "en_US.UTF-8";
 
-  # herdr server の常駐は mac-studio.nix にある（2026-09-16 に Studio 専用へ移した）。
-  # pane と agent の実体は Studio 側の1箇所に置き、Air からは
-  # `herdr --remote ${username}@mac-studio` で attach する。両機で server を上げると
-  # workspace / pane id が機ごとに別空間になり、intent-cli の topology がどちらの
-  # pane を指すのか決まらなくなる。herdr バイナリ自体は client として両機に要るので
-  # homebrew.nix の brews からは外さない。
-
   # cctag spoke は launchd 常駐をやめ、1つのターミナルで手動起動する運用に変更した
   # (2026-07-27)。同じ owner の Spoke が2つ繋がると Hub が古い接続を切り、KeepAlive で
   # 蘇った側と手動起動側が永久に蹴り合う再接続ストームになったため。ログも
@@ -900,10 +893,8 @@ in
     fi
 
     # Claude Code の settings.json 一式（2026-08-24 に common 層から移設）。
-    # 監査 2026-07-08 の指摘: 中身が個人の permissions・model・herdr hook の絶対パスで、
+    # 監査 2026-07-08 の指摘: 中身が個人の permissions・model・hook の絶対パスで、
     # fork 可能層で配ると他者環境で毎 SessionStart に exit 127 が出続ける。
-    # 下の herdr integration install より **前** に置くこと — herdr の ensure は
-    # この symlink 越しに settings.json を書くので、初回機ではリンクが先に必要。
     # settings.json は「実ファイルなら dotfiles に取り込んで symlink 化」を初回だけ行う。
     # 既に symlink なら張り替えない: cc api が settings.api.json へ差し替えた
     # モード選択を darwin-switch が巻き戻さないようにするため。
@@ -946,31 +937,6 @@ in
       fi
     done
     unset _ompProfile _ompCfg _ompDir
-
-    # omp はこの機体ではプロファイル分離運用（--profile personal/labteam）しかせず、
-    # 素の（プロファイル無指定の）omp を起動する機会が無いため、プロファイル非依存の
-    # ~/.omp/agent/extensions/ が自然にはできない。herdr の `integration install omp`
-    # はこのディレクトリが無いと mkdir せず即エラーになる（2026-09 実測）ため、ここで
-    # 先回りして作っておく。実際の統合インストールは claude と違い手動（`herdr
-    # integration install omp`）のまま — herdr 本体が所有・生成するファイルなので
-    # vendor しない方針は変えない。
-    su - ${username} -c "mkdir -p '$home/.omp/agent/extensions'" || true
-
-    # herdr の agent-state hook（~/.claude/hooks/herdr-agent-state.sh）を毎 switch で
-    # 流し直す。intent-cli の skill install と同型で、**vendor しない**のが要点：
-    # このスクリプトは herdr 本体が所有・生成し（`integration status` が `current (v8)` の
-    # ように版を報告する）、herdr は Homebrew で自動更新される。repo に固定すると
-    # 0.7.4→0.7.5 の terminal_id→pane_id 破壊のときのように静かに古くなる。
-    #
-    # なぜ必要か: settings.json（commit 済み）の SessionStart hook がこのパスを呼ぶが、
-    # スクリプト実体は dotfiles 管理外で、消えても git では検知できない。実際 2026-08 に
-    # ~/.claude/hooks/ ごと消えており、sessionId が herdr に報告されない →
-    # cctag が transcript を特定できず Slack に「テキスト応答なし」を返していた。
-    # install は冪等で settings.json を書き換えない（2回連続実行で実測）。
-    su - ${username} -c '
-      command -v herdr >/dev/null 2>&1 || { echo "herdr: PATH に無いため integration install を skip" >&2; exit 0; }
-      herdr integration install claude >/dev/null
-    ' || true
 
     # agenix デーモン（org.nixos.activate-agenix）は非同期で /run/agenix へ復号する。
     # 初回 switch / boot 時は _place より後に復号が終わる可能性があるため、完了を待つ（最大 ~30秒）。

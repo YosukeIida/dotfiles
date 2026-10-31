@@ -6,7 +6,7 @@
 # 扱う2系統:
 #   1. gist 由来（cognitive-rhythm-writing / japanese-tech-writing）
 #      → clone して SKILL.md をコピーする。REV_* で pin。
-#   2. repo 内の SKILL.md 由来（herdr, writing-quotation, grilling,
+#   2. repo 内の SKILL.md 由来（writing-quotation, grilling,
 #      domain-modeling, grill-with-docs, gws-multi-account, latex-devkit）
 #      → gh api で1ファイルだけ取得し、ローカルのパッチと vendor-* metadata を注入する。
 #        gh skill install は使えない: 発見に `<name>/SKILL.md` のディレクトリ構造を要求し、
@@ -58,11 +58,6 @@ GIST_JAPANESE_TECH_WRITING="https://gist.github.com/k16shikano/fd287c3133457c4fd
 # （リポジトリの HEAD ではない。活発な repo なので HEAD で pin すると無関係な
 # commit で「更新あり」になる）。更新確認は agent-skills-outdated が
 # vendor-* metadata を読んで行う。
-HERDR_REPO="ogulcancelik/herdr"
-# 2026-08 に upstream が SKILL.md を repo 直下から skills/herdr/SKILL.md へ移動
-# （gh skill install が要求する <name>/SKILL.md 構造に合わせた再編、と見られる）。
-HERDR_PATH="skills/herdr/SKILL.md"
-HERDR_REV="1cbd794559fb139f95f1bdb4b2a8998082017d0e"
 
 # writing-quotation: 引用ブロックの書式規約（Bash等のツール呼び出しを一切含まない
 # 純粋な書式ガイドなので allowed-tools は付けない）。
@@ -72,7 +67,7 @@ WRITING_QUOTATION_REV="3b039715d24b401eb3495dd4154ce9b6f39b3c68"
 
 # grill-me系（mattpocock/skills）。3 skill は依存関係がある:
 #   grill-with-docs → /grilling + /domain-modeling に一行委譲
-# 各 REV は該当 SKILL.md を最後に変更した commit（HEAD ではない。理由は上の HERDR と同じ）。
+# 各 REV は該当 SKILL.md を最後に変更した commit（HEAD ではない。理由は上と同じ）。
 
 # grilling: interview の共通原始単位。upstream に disable-model-invocation は無く、
 # 単体でも自動発動する。パッチ不要。
@@ -89,7 +84,7 @@ DOMAIN_MODELING_EXTRA="skills/engineering/domain-modeling/ADR-FORMAT.md skills/e
 DOMAIN_MODELING_REV="d80fa0f4ebe0c5714af0adf8670336065233ecc6"
 
 # grill-with-docs: 上記2つへの一行委譲オーケストレータ。upstream の
-# `disable-model-invocation: true` を strip_pattern で落とし、herdr と同様に
+# `disable-model-invocation: true` を strip_pattern で落とし、
 # 自作 skill 全体の方針（disable-model-invocation を使わず自動発動を保つ）に揃える。
 GRILL_WITH_DOCS_REPO="mattpocock/skills"
 GRILL_WITH_DOCS_PATH="skills/engineering/grill-with-docs/SKILL.md"
@@ -208,8 +203,7 @@ sync_repo_file() {
   fi
 
   # --- ローカルパッチ2: description を差し戻す（指定した skill のみ） ---------
-  # herdr は upstream が 2026-07 に「Herdr を明示的に言及したときのみ使う」方向へ
-  # 絞ったが、ここでは herdr 内にいれば自動発動する挙動を維持する（自作 skill
+  # upstream が発動条件を絞った skill でも、ここでは自動発動する挙動を維持する（自作 skill
   # 全体の方針。disable-model-invocation を使わず発動を保つ、という判断に揃える）。
   if [ -n "$desc_override" ]; then
     if ! grep -q '^description: ' "$raw"; then
@@ -308,9 +302,6 @@ sync_repo_file() {
 
 sync_one "cognitive-rhythm-writing" "$GIST_COGNITIVE_RHYTHM" "$REV_COGNITIVE_RHYTHM"
 sync_one "japanese-tech-writing" "$GIST_JAPANESE_TECH_WRITING" "$REV_JAPANESE_TECH_WRITING"
-sync_repo_file "herdr" "$HERDR_REPO" "$HERDR_PATH" "$HERDR_REV" \
-  "Bash(herdr:*), Bash(python3:*)" \
-  'description: "Control herdr from inside it. Manage workspaces and tabs, split panes, spawn agents, read output, and wait for state changes — all via CLI commands that talk to the running herdr instance over a local unix socket. Use when running inside herdr (HERDR_ENV=1)."'
 sync_repo_file "writing-quotation" "$WRITING_QUOTATION_REPO" "$WRITING_QUOTATION_PATH" "$WRITING_QUOTATION_REV"
 sync_repo_file "grilling" "$GRILLING_REPO" "$GRILLING_PATH" "$GRILLING_REV"
 sync_repo_file "domain-modeling" "$DOMAIN_MODELING_REPO" "$DOMAIN_MODELING_PATH" "$DOMAIN_MODELING_REV" \

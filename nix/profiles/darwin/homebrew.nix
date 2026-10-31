@@ -60,7 +60,6 @@
       # 運用に一本化した。skill 側の PreToolUse hook が CONFIG_DIR 未指定の
       # 裸の `gws` 呼び出しを弾く。
       "googleworkspace-cli"
-      "herdr"
       # hermes-agent は brew ではなく nix flake input（upstream 自身の uv2nix
       # packaging）から home.packages 経由で導入する（nix/home/packages.nix の
       # hermesAgentPkgs.full）。brew formula は node を depends_on して
@@ -110,6 +109,12 @@
       "ghostty@tip"
       "google-chrome"
       "hammerspoon"
+      # Herdr app と herdr-core（hc）。公式の配布は releases.herdr.dev の install.sh だけで、
+      # nixpkgs にも homebrew にも無いため、同じ manifest を指す自前 cask を使う。
+      # 更新は app と `hc update` が自分で行う（cask は auto_updates）。nix にしないのは、
+      # app が自分の bundle を置き換えて更新するため（store は書き込めない）。
+      "yosukeiida/casks-personal/herdr-app"
+      "yosukeiida/casks-personal/herdr-core"
       "karabiner-elements"
       "lens"
       "libreoffice"

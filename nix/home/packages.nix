@@ -76,7 +76,7 @@ in
     # ja_JP ではなく en_US にするのは、ツールのメッセージを英語のまま保ち、英語出力を
     # 前提にしたスクリプトを壊さないため（必要なのは文字コードだけ）。
     # これはシェル経路の分。GUI アプリ・launchd 経路は host 層の
-    # launchd.user.envVariables と herdr agent の plist で別途設定する。
+    # launchd.user.envVariables と各 launchd agent の plist で別途設定する。
     LANG = "en_US.UTF-8";
     # gws-multi-account skill（agents/skills/gws-multi-account/、vendor元は
     # indentcorp/gws-multi-account）の PreToolUse hook（hooks/hook.js）と、

@@ -8,7 +8,7 @@
 #
 # zsh 関数版は**対話 zsh でしか定義されない**ため、
 #   - 非対話シェル（zsh -c / bash / sh）からの起動
-#   - herdr / cmux などが自プロセスの env のまま spawn した claude
+#   - Orca / cmux などが自プロセスの env のまま spawn した claude
 #   - 関数が定義される前に起動していた古いシェル
 # では注入が効かず、openai-codex / impeccable プラグインの hook が
 #   SessionEnd hook [node "${CLAUDE_PLUGIN_ROOT}/scripts/..."] failed:
@@ -16,7 +16,7 @@
 # で落ちていた（2026-07-28 に実測で再現。hook は claude プロセスの env を
 # そのまま継承するので、claude の PATH に node が無いことが唯一の原因）。
 # シムは実行可能ファイルなのでシェルの種類に依存せず、PATH を継承した
-# 子プロセス（herdr server → claude 等）にも効く。
+# 子プロセス（Orca → claude 等）にも効く。
 # -f: PATH 要素に含まれるワイルドカードを glob 展開させない
 # （実測 2026-07-28: PATH="/usr/bin:$dir/a*:/bin" が a* にマッチする実ディレクトリの
 #   数だけエントリに増え、コマンド解決先が変わった）
@@ -83,5 +83,5 @@ if [[ "$_real" -ef "$_self" ]]; then
 fi
 
 # argv[0] は "claude" のまま渡す（zsh 関数版の `command claude` と同じ見え方を保つ。
-# herdr の agent 検出や ps を見るスクリプトの挙動を変えないため）。
+# Orca の agent 検出や ps を見るスクリプトの挙動を変えないため）。
 exec -a claude "$_real" "$@"

@@ -1,7 +1,7 @@
 # >>> nix-direnv >>>
 # 見つからないときに無言で通過させない。組み込みの use_flake に落ちると
 # print-dev-env の TMPDIR=.../nix-shell.XXXXXX が復元されず、AF_UNIX の
-# 103 バイト上限に当たる（herdr --remote が繋がらなくなる）。
+# 103 バイト上限に当たる（ssh の ControlMaster ソケットが作れなくなる）。
 # 配備には environment.pathsToLink += "/share/nix-direnv" が必要。
 if [ -r /run/current-system/sw/share/nix-direnv/direnvrc ]; then
   source /run/current-system/sw/share/nix-direnv/direnvrc

@@ -11,7 +11,7 @@ self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$prog"
 # 1. nix devShell が有効（IN_NIX_SHELL）なら、devShell が提供する本物の python に委譲する
 #    （自分自身と /usr/bin/<prog> は候補から除外する）。
 #    候補リストは fd 3 で読む: `done < <(...)` だと exec される python の stdin が
-#    候補リストに差し替わり、`python3 - <<EOF` 形式（herdr の SessionStart フック等）が
+#    候補リストに差し替わり、`python3 - <<EOF` 形式（heredoc を渡す hook 等）が
 #    「候補パスの残りを Python コードとして解釈 → SyntaxError」で全滅するため。
 #    （mapfile は macOS の bash 3.2 に無いので使わない）
 if [[ -n "${IN_NIX_SHELL:-}" ]]; then
@@ -38,15 +38,6 @@ while [[ "$dir" != "/" && "$dir" != "$HOME" ]]; do
   fi
   dir="$(dirname "$dir")"
 done
-
-# herdr の Claude 統合フック（~/.claude/hooks/herdr-agent-state.sh）は、pane に
-# session id を報告するために標準ライブラリのみの python を必要とする
-# （unix socket に JSON を 1 行書くだけ）。HERDR_HOOK_INPUT_FILE はこのフックが
-# python を呼ぶときだけ設定する変数なので、対象を正確に絞れる。
-# パッケージは一切入れないので「system python を汚さない」方針は維持される。
-if [[ -n "${HERDR_HOOK_INPUT_FILE:-}" && -x "/usr/bin/$prog" ]]; then
-  exec "/usr/bin/$prog" "$@"
-fi
 
 # yomiyasu（marketplace から入れる plugin）の SKILL.md は同梱スクリプトを素の python3 で呼ぶ。
 # SKILL.md を書き換えると自動更新のたびに消えるので、ここで uv に渡す。uv の probe は

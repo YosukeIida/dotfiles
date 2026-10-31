@@ -108,7 +108,7 @@
     # Claude Code
     # settings.json / settings.api.json とその git clean filter は **ここには無い** —
     # nix/hosts/darwin/yosuke/common.nix に移した（2026-08-24、監査 2026-07-08 の指摘）。
-    # 中身が個人の permissions・model・herdr hook のパスなので、fork 層で配ると
+    # 中身が個人の permissions・model・hook のパスなので、fork 層で配ると
     # 他者環境で毎 SessionStart に「そのファイルは無い」と言われ続ける。
     # 下の statusline 等は settings.json から参照されるだけの部品なので common に残す。
     _link "$pub/claude/get_key.sh"                 "$home/.claude/get_key.sh"
