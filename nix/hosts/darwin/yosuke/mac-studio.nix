@@ -253,6 +253,32 @@ in
     };
   };
 
+  # herdr-core のサーバを Aqua のセッションで常駐させる。Herdr app（Air からの SSH も）は
+  # 動いているサーバにつなぐだけになる。SSH の connect にサーバを起こさせると、TCC が
+  # サーバの中の agent のアクセスを sshd に帰属させ、herdr-core に付けたフルディスク
+  # アクセスが効かない（2026-10-31 に実測）。バイナリは版の入らない ~/.local/bin の
+  # 自己署名のコピー（dotfiles-private/macos-fda/stable-sign）を指し、付与を更新で外さない。
+  #
+  # 注意: この agent を再起動すると、サーバの中の端末と agent が全部落ちる。
+  launchd.user.agents.herdrCore = {
+    serviceConfig = {
+      Label = "com.yosuke.herdr-core";
+      ProgramArguments = [
+        "${homedir}/.local/bin/herdr-core"
+        "serve"
+      ];
+      RunAtLoad = true;
+      KeepAlive = true;
+      EnvironmentVariables = {
+        # launchd は login shell を経ないので、LANG と PATH を orcaApp と同じ理由で渡す。
+        LANG = "en_US.UTF-8";
+        PATH = "${homedir}/.local/share/agent-switch/shims:${homedir}/.local/bin:${homedir}/.nix-profile/bin:/etc/profiles/per-user/${username}/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin";
+      };
+      StandardOutPath = "${homedir}/Library/Logs/herdr-core.log";
+      StandardErrorPath = "${homedir}/Library/Logs/herdr-core.log";
+    };
+  };
+
   # darwin-switch のたびに Orca を launchd の管理下に置く。RunAtLoad は plist が
   # 変わって読み直されたときしか走らないので、Cmd+Q 後などジョブが止まったままの状態を
   # ここで kickstart して戻す。Orca が既に動いているときは kickstart しない
@@ -271,5 +297,11 @@ in
     else
       launchctl kickstart "$orca_job" || true
     fi
+
+    # brew で上がった herdr-core を ~/.local/bin の自己署名のコピーへ反映する。
+    # キーチェーンが使えない（SSH から darwin-switch した等）ときは失敗するが、古いコピーで動き続ける。
+    launchctl asuser "$orca_uid" sudo -u ${username} -- \
+      ${homedir}/workspace/github.com/YosukeIida/dotfiles-private/macos-fda/stable-sign \
+      || echo "stable-sign に失敗しました。GUI の端末で手動で実行してください。" >&2
   '';
 }
