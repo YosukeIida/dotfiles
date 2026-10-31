@@ -35,6 +35,10 @@ in
   '';
   homebrew.brews = [ "jundot/omlx/omlx" ];
 
+  # Xcode は Swift のビルド（ararat など）に要る。宣言に無い App Store アプリは
+  # cleanup = "zap" が uninstall しようとする（2026-10-31 に sudo の失敗で止まって残った）。
+  homebrew.masApps.Xcode = 497799835;
+
   # HuggingFace のキャッシュ（モデル・データセット）を外付け SSD（PRO-G40, 4TB）に置く。
   # 既定は yosuke/common.nix の mkDefault（~/.cache/huggingface）で、ここで素の値で上書きする。
   # ディスク未接続時はこのパスが存在せず、ロードもダウンロードも失敗する。
