@@ -300,7 +300,7 @@ in
 
     # brew で上がった herdr-core を ~/.local/bin の自己署名のコピーへ反映する。
     # キーチェーンが使えない（SSH から darwin-switch した等）ときは失敗するが、古いコピーで動き続ける。
-    launchctl asuser "$orca_uid" sudo -u ${username} -- \
+    launchctl asuser "$orca_uid" sudo -H -u ${username} -- \
       ${homedir}/workspace/github.com/YosukeIida/dotfiles-private/macos-fda/stable-sign \
       || echo "stable-sign に失敗しました。GUI の端末で手動で実行してください。" >&2
   '';
