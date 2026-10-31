@@ -892,6 +892,24 @@ in
       fi
     fi
 
+    # Herdr app の端末のフォントを宣言値に揃える（~/.claude.json と同じ方式）。
+    # symlink しないのは、settings.json を Herdr app 自身が Settings の操作のたびに
+    # 書き戻すため（zoom・sounds も同じファイルにある）。フォントは JetBrains Mono 14px。
+    # Settings で変えても、次の darwin-switch でこの値に戻る。
+    _herdrPrefs='{"font":"JetBrains Mono","font_size":14}'
+    _hs="$home/.config/herdr-app/settings.json"
+    if [ -f "$_hs" ]; then
+      if [ "$(su - ${username} -c "${pkgs.jq}/bin/jq -r --argjson d '$_herdrPrefs' '. as \$c | if any(\$d|to_entries[]; \$c[.key] != .value) then \"differs\" else \"same\" end' '$_hs'" 2>/dev/null)" = "differs" ]; then
+        if su - ${username} -c "${pkgs.jq}/bin/jq --argjson d '$_herdrPrefs' '. * \$d' '$_hs' > '$_hs.new' && cat '$_hs.new' > '$_hs' && rm -f '$_hs.new'"; then
+          echo "herdr-app prefs: ~/.config/herdr-app/settings.json を dotfiles の宣言値に更新した"
+        else
+          echo >&2 "warning: ~/.config/herdr-app/settings.json の更新に失敗した（内容は変更されていない）"
+        fi
+      fi
+    else
+      su - ${username} -c "mkdir -p '$home/.config/herdr-app' && printf '%s\n' '$_herdrPrefs' > '$_hs'" || true
+    fi
+
     # Claude Code の settings.json 一式（2026-08-24 に common 層から移設）。
     # 監査 2026-07-08 の指摘: 中身が個人の permissions・model・hook の絶対パスで、
     # fork 可能層で配ると他者環境で毎 SessionStart に exit 127 が出続ける。
