@@ -112,7 +112,7 @@
       # Herdr app。公式の配布は releases.herdr.dev の install.sh だけで、nixpkgs にも
       # homebrew にも無いため、同じ manifest を指す自前 cask を使う。herdr-core は brew では
       # 入れない（brew の管理下だと core が自己更新を断り、フルディスクアクセスを保つ署名も
-      # できない）。導入と更新は common.nix の herdrCoreSync が受け持つ。
+      # できない）。導入と更新は profiles/darwin/herdr-core.nix の herdrCoreSync が受け持つ。
       # nix にしないのは、app が自分の bundle を置き換えて更新するため（store は書き込めない）。
       "yosukeiida/casks-personal/herdr-app"
       "karabiner-elements"
