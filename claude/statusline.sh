@@ -105,6 +105,11 @@ CWD=$(echo "$input"   | jq -r '.workspace.current_dir // ""')
 CTX=$(echo "$input"   | jq -r '.context_window.used_percentage // 0' | cut -d. -f1)
 [ -z "$CTX" ] || [ "$CTX" = "null" ] && CTX=0
 
+
+# ── Prompt cache ─────────────────────────────────────────────
+PC=$(echo "$input" | jq -c '.prompt_cache // empty')
+fmt_k() { local n=${1:-0}; [ "$n" -ge 1000 ] && printf '%dk' "$(( (n+500)/1000 ))" || printf '%d' "$n"; }
+
 REPO=$(basename "${CWD:-.}" 2>/dev/null || echo "—")
 
 # Git: branch + 実際の変更行数
@@ -222,6 +227,24 @@ L1+="$(bg $BG1)$(fg 245) ctx "
 L1+="$(bar_fine "$CTX")$(rst)"
 L1+="$(bg $BG1)$(gradient "$CTX")$(bld) ${CTX}%$(rst)"
 L1+="$(bg $BG1) $(rst)"
+
+if [ -n "$PC" ]; then
+  _warm=$(jq -r '.warm' <<<"$PC"); _exp=$(jq -r '.expires_at // empty' <<<"$PC")
+  _hit=$(jq -r 'if .hit_ratio == null then "—" else (.hit_ratio*100|floor|tostring) end' <<<"$PC")
+  _miss=$(jq -r '.misses // 0' <<<"$PC"); _cause=$(jq -r '.last_miss_cause.causes[0] // empty' <<<"$PC")
+  _re=$(jq -r '.recache_tokens_if_cold // empty' <<<"$PC")
+  L1+="$(bg $BG1)$(div)"
+  if [ "$_warm" = "true" ]; then
+    L1+="$(bg $BG1)$(fg 114)$(bld)●warm$(rst)"
+    [ -n "$_exp" ] && L1+="$(bg $BG1)$(fg 243) ~$(date -r "$_exp" +%H:%M)$(rst)"
+  else
+    L1+="$(bg $BG1)$(fg 203)$(bld)○cold$(rst)"
+  fi
+  L1+="$(bg $BG1)$(fg 245) hit $(fg 252)${_hit}%$(rst)"
+  [ "$_miss" -gt 0 ] && L1+="$(bg $BG1)$(fg 245) miss $(fg 215)${_miss}${_cause:+ ($_cause)}$(rst)"
+  [ -n "$_re" ] && L1+="$(bg $BG1)$(fg 245) recache $(fg 252)$(fmt_k "$_re")$(rst)"
+  L1+="$(bg $BG1) $(rst)"
+fi
 
 # ═══════════════════════════════════════════════════════════════
 # Line 2 —  5h [bar] XX% ↻HH:MM:SS  │  7d [bar] XX% ↻HH:MM:SS
