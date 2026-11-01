@@ -37,10 +37,6 @@
       # yosukeiida/casks-personal 版は upstream が npm optionalDependency で配布している
       # プリコンパイル済みネイティブバイナリ（darwin-arm64）を直接installし、node依存ゼロ。
       "yosukeiida/casks-personal/backlog-md"
-      # herdr-core（hc）。GUI の無い CLI なので cask ではなく formula にした。公式の
-      # ビルド済みバイナリを置くだけで、ソースからは作らない（ghostty の submodule に Zig が要る）。
-      # 版は tap の bump が上げる。`hc update` は使わず、`brew upgrade herdr-core` で更新する。
-      "yosukeiida/casks-personal/herdr-core"
       "bat"
       "brightness"
       # omp（oh my pi）。formula は release の単体バイナリを置くだけで depends_on ゼロ
@@ -114,7 +110,9 @@
       "google-chrome"
       "hammerspoon"
       # Herdr app。公式の配布は releases.herdr.dev の install.sh だけで、nixpkgs にも
-      # homebrew にも無いため、同じ manifest を指す自前 cask を使う（herdr-core は brews）。
+      # homebrew にも無いため、同じ manifest を指す自前 cask を使う。herdr-core は brew では
+      # 入れない（brew の管理下だと core が自己更新を断り、フルディスクアクセスを保つ署名も
+      # できない）。導入と更新は common.nix の herdrCoreSync が受け持つ。
       # nix にしないのは、app が自分の bundle を置き換えて更新するため（store は書き込めない）。
       "yosukeiida/casks-personal/herdr-app"
       "karabiner-elements"

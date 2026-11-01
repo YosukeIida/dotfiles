@@ -737,6 +737,56 @@ in
     };
   };
 
+  # herdr-core（~/.local/bin、自己署名でフルディスクアクセスを付ける）の導入と更新。
+  # Herdr app の Updates や `hc update` に任せないのは、ad-hoc の版がこのパスで保護された
+  # ファイルに触れると、TCC が付与ごと無効にするため（2026-11-02 に実測）。公式の版を
+  # 署名してから `hc update --from` で入れ替える。~/.local/bin を見張るのは、Herdr app が
+  # ad-hoc の版を置いたとき、動く前に署名した版へ戻すため。証明書が無い機体では、
+  # GUI の端末で一度 `herdr-core-sync --grant` を実行するまで失敗し続ける。
+  launchd.user.agents.herdrCoreSync = {
+    serviceConfig = {
+      Label = "com.yosuke.herdr-core-sync";
+      ProgramArguments = [
+        "${privateDir}/macos-fda/herdr-core-sync"
+      ];
+      WatchPaths = [
+        "${homedir}/.local/bin"
+      ];
+      StartInterval = 3600;
+      RunAtLoad = true;
+      ThrottleInterval = 30;
+      StandardOutPath = "${homedir}/Library/Logs/herdr-core-sync.log";
+      StandardErrorPath = "${homedir}/Library/Logs/herdr-core-sync.log";
+    };
+  };
+
+  # herdr-core のサーバを Aqua のセッションで起こす。Herdr app（別の機体からの SSH も）は
+  # 動いているサーバにつなぐだけになる。SSH の connect にサーバを起こさせると、TCC が
+  # サーバの中の agent のアクセスを sshd に帰属させ、herdr-core に付けたフルディスク
+  # アクセスが効かない（2026-10-31 に実測）。core は更新のたびに自分で起動し直し、元の
+  # プロセスは 0 で終わるので、KeepAlive は異常終了のときだけにする（true だと、既に
+  # 動いているサーバを見て 0 で終わる起動を繰り返す）。起動し直しても端末は残る。
+  launchd.user.agents.herdrCore = {
+    serviceConfig = {
+      Label = "com.yosuke.herdr-core";
+      ProgramArguments = [
+        "${homedir}/.local/bin/herdr-core"
+        "serve"
+      ];
+      RunAtLoad = true;
+      KeepAlive = {
+        SuccessfulExit = false;
+      };
+      EnvironmentVariables = {
+        # launchd は login shell を経ないので、LANG と PATH を orcaApp と同じ理由で渡す。
+        LANG = "en_US.UTF-8";
+        PATH = "${homedir}/.local/share/agent-switch/shims:${homedir}/.local/bin:${homedir}/.nix-profile/bin:/etc/profiles/per-user/${username}/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin";
+      };
+      StandardOutPath = "${homedir}/Library/Logs/herdr-core.log";
+      StandardErrorPath = "${homedir}/Library/Logs/herdr-core.log";
+    };
+  };
+
   # figma-pat.age の失効前チェック（週次月曜 10:00）。期限はスクリプト内の定数で管理。
   # /bin/bash を挟まない理由は codex-auth-watch と同じ（表示名が "bash" になるため）。
   launchd.user.agents.figmaPatExpiryCheck = {
