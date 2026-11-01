@@ -737,12 +737,13 @@ in
     };
   };
 
-  # herdr-core（~/.local/bin、自己署名でフルディスクアクセスを付ける）の導入と更新。
-  # Herdr app の Updates や `hc update` に任せないのは、ad-hoc の版がこのパスで保護された
-  # ファイルに触れると、TCC が付与ごと無効にするため（2026-11-02 に実測）。公式の版を
-  # 署名してから `hc update --from` で入れ替える。~/.local/bin を見張るのは、Herdr app が
-  # ad-hoc の版を置いたとき、動く前に署名した版へ戻すため。証明書が無い機体では、
-  # GUI の端末で一度 `herdr-core-sync --grant` を実行するまで失敗し続ける。
+  # herdr-core（実ファイルは ~/.local/share/herdr-core/Cellar、自己署名でフルディスクアクセスを
+  # 付ける）の導入と更新。Herdr app の自動更新（`hc update`）に任せないのは、ad-hoc の版が
+  # 付与したパスで保護されたファイルに触れると、TCC が付与ごと無効にするため（2026-11-02 に
+  # 実測）。パスに /Cellar/ を含めて core に `hc update` を断らせ、公式の版を署名してから置く。
+  # ~/.local/bin を見張るのは、Herdr app の install.sh が symlink を実ファイルで置き換えたとき
+  # 張り直すため。証明書が無い機体では、GUI の端末で一度 `herdr-core-sync --grant` を
+  # 実行するまで失敗し続ける。
   launchd.user.agents.herdrCoreSync = {
     serviceConfig = {
       Label = "com.yosuke.herdr-core-sync";
@@ -755,6 +756,11 @@ in
       StartInterval = 3600;
       RunAtLoad = true;
       ThrottleInterval = 30;
+      EnvironmentVariables = {
+        # 起動し直した core はこの環境を引き継ぐので、serve と同じものを渡す。
+        LANG = "en_US.UTF-8";
+        PATH = "${homedir}/.local/share/agent-switch/shims:${homedir}/.local/bin:${homedir}/.nix-profile/bin:/etc/profiles/per-user/${username}/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin";
+      };
       StandardOutPath = "${homedir}/Library/Logs/herdr-core-sync.log";
       StandardErrorPath = "${homedir}/Library/Logs/herdr-core-sync.log";
     };
@@ -770,7 +776,7 @@ in
     serviceConfig = {
       Label = "com.yosuke.herdr-core";
       ProgramArguments = [
-        "${homedir}/.local/bin/herdr-core"
+        "${homedir}/.local/share/herdr-core/Cellar/herdr-core"
         "serve"
       ];
       RunAtLoad = true;
