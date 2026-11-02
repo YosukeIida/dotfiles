@@ -34,8 +34,13 @@ _rt_fallback="$HOME/.local/share/claude-runtime/fallback"
 # 0. 起動した場所の direnv（.envrc の devshell）を読み込む。agent のコマンドは
 #    非対話のシェルで走り direnv の hook を通らないので、起動時の env に載せて継承させる。
 #    `direnv exec` で包まないのは argv[0] を "claude"/"codex" のまま渡すため（下の exec -a）。
-#    既に同じ env なら export は空、.envrc が無い・未 allow なら何も変えない。
+#    .envrc が無い・未 allow なら何も変えない。
+#    読み込み済みの印は消して必ず読み直す: ~/.zshenv の export の後に ~/.zprofile の
+#    brew shellenv が PATH を並べ替え、印が残ると export が空になり Homebrew の cargo などが
+#    devshell のものを隠す。印を残して再読み込みさせる（WATCHES だけ消す）方法は採らない:
+#    差分の巻き戻しで PATH が zshenv の時点に戻り、brew の PATH が消える。
 if command -v direnv >/dev/null 2>&1; then
+  unset DIRENV_DIR DIRENV_DIFF DIRENV_WATCHES
   eval "$(DIRENV_LOG_FORMAT= direnv export bash 2>/dev/null)"
 fi
 
