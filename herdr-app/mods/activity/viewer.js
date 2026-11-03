@@ -243,7 +243,7 @@ export class Viewer {
     const width = this.pageWidth(), height = Math.round(width * this.ph / this.pw), gap = 12;
     const page = (n) => {
       const d = this.drawn.get(n);
-      return this.wheelZoom(div().id(`v-page-${n}`).w_full().h(height + gap).flex_none().flex().justify_center().pt(gap))
+      return div().id(`v-page-${n}`).w_full().h(height + gap).flex_none().flex().justify_center().pt(gap)
         .child(div().w(width).h(height).flex_none().bg("#ffffff").shadow_sm().relative()
           .when(Boolean(d?.src), (el) => el.child(image(d.src).w(width).h(height)))
           .when(Boolean(d?.error), (el) => el.child(div().p(12).text_color("#b00020").text_size(12).child(d.error)))
@@ -252,7 +252,7 @@ export class Viewer {
     const contentW = Math.max(width + 48, this.box.width || 0);
     return this.measured(div().id("v-pdf-box").flex_1().min_h(0).relative().bg(t.raised))
       .child(div().id("v-pdf-x").size_full().overflow_x_scrollbar()
-        .child(div().w(contentW).h_full().child(v_virtual_list("v-pdf", this.pages, height + gap, (i) => `p${i}`, (range) => {
+        .child(this.wheelZoom(div().id("v-pdf-content").w(contentW).h_full()).child(v_virtual_list("v-pdf", this.pages, height + gap, (i) => `p${i}`, (range) => {
           if (range.start !== this.want.start || range.end !== this.want.end) this.want = { start: range.start, end: range.end };
           const out = [];
           for (let n = range.start; n < range.end; n++) out.push(page(n));
