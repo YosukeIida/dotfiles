@@ -37,6 +37,9 @@
       # yosukeiida/casks-personal 版は upstream が npm optionalDependency で配布している
       # プリコンパイル済みネイティブバイナリ（darwin-arm64）を直接installし、node依存ゼロ。
       "yosukeiida/casks-personal/backlog-md"
+      # RaTeX の ratex-svg（TeX の数式を SVG に）。Herdr app の activity の Markdown の数式に使う。
+      # nixpkgs にも homebrew-core にも無く、公式のビルド済みの CLI を置く自前の formula で入れる。
+      "yosukeiida/casks-personal/ratex"
       "bat"
       "brightness"
       # omp（oh my pi）。formula は release の単体バイナリを置くだけで depends_on ゼロ
