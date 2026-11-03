@@ -10,14 +10,22 @@ Herdr app の自作の layout と、それが使う mod。darwin-switch が `ins
   - 左の sidebar の上半分 `spaces` → `paddock`（project・worktree・agent・sub-agent の木）。下半分の `agents` は同梱のまま
   - 右の panel の Files `files` → `activity` の `browse` の画面（Names・Contents の検索バーと、ファイルツリー。押したファイルを terminal の右の editor の pane で開く）
 
+## 自作の mod
+
+- `mods/confirm-close/`: cmd-w でタブを閉じる前に、ダイアログで確かめる（Enter で閉じる、Esc でやめる。ダイアログが出ている間にもう一度 cmd-w を押すと、やめる）。同梱の `tab.close` は、space の最後のタブのときしか確かめない。`install.sh` が `keys.json` の `cmd-w` を、同梱の既定の `tab.close` のときだけ `mod.open:confirm-close` に替える。layout によらず効く
+
 ## 外部の mod
 
 | mod | upstream | rev | 扱い |
 |---|---|---|---|
-| `mods/paddock/` | https://github.com/choam2426/herdr-paddock の `mods/paddock/` | `540e3d20d7b960ac325fd5a5401f905b40e93953` | vendor（手で編集しない） |
+| `mods/paddock/` | https://github.com/choam2426/herdr-paddock の `mods/paddock/` | `540e3d20d7b960ac325fd5a5401f905b40e93953` | fork（下の変更を加えている） |
 | `mods/activity/` | https://github.com/yama-lei/herdr-editor-layout の `mods/activity/` | `5220dcd` | fork（下の変更を加えている） |
 
-どちらも Apache-2.0（各 folder の `LICENSE`）。更新は upstream の新しい rev を取り込み、diff を読んでから commit する。`activity` は、取り込むときに下の変更を残す。
+どちらも Apache-2.0（各 folder の `LICENSE`）。更新は upstream の新しい rev を取り込み、diff を読んでから commit する。取り込むときは、下の変更を残す。
+
+`paddock` に加えた変更:
+
+- この Mac の project・機体の行の `+` で、`space.new` に `machine: ""` を渡す（`main.js`・`overlay.js`）。upstream は機体を省いており、Herdr app はクリックで省かれた機体を「選んでいる space の機体」と解釈する。別の機体の space を選んでいると、その機体でこの Mac の folder に端末を起こそうとし、`space.new failed: cannot start a terminal` になった
 
 `activity` に加えた変更:
 

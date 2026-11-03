@@ -13,7 +13,7 @@ import { projectList, addProject, removeProject, editProject, taken } from "./pr
 export const STORE = "paddock.projects";
 export const store = () => shared(STORE) ?? {};
 export const project = (machine, id) => projectList(store(), machine).find((p) => p.id === id);
-export const newSpaceIn = (p, machine) => run("space.new", { folder: p.root, ...(machine ? { machine } : {}) });
+export const newSpaceIn = (p, machine) => run("space.new", { folder: p.root, machine: machine ?? "" });
 
 // A folder's real path on its machine, or null when there's none. There, the shell
 // expands "~" and resolves the path. Here, a program can't start in a missing folder

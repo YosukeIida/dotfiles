@@ -25,3 +25,10 @@ if [ -f "$state" ]; then
   done < "$state"
 fi
 printf '%s\n' "${managed[@]}" > "$state"
+
+# cmd-w は同梱の既定（確認なしの tab.close）のときだけ confirm-close に替える。
+# keys.json を丸ごと配らないのは、Herdr app の中で変えたほかのキーを消さないため。
+keys="$dst/keys.json"
+if [ -f "$keys" ] && [ "$(jq -r '.global["cmd-w"] // ""' "$keys")" = "tab.close" ]; then
+  jq '.global["cmd-w"] = "mod.open:confirm-close"' "$keys" > "$keys.tmp" && mv "$keys.tmp" "$keys"
+fi
