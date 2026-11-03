@@ -9,6 +9,7 @@ import { iconButton, icon, READ, AREA, editorKey, setEditorSpec, fileImage, segm
 import { Viewer, viewerKind, human, openExternally } from "./viewer.js";
 import { writeRemoteText, stat } from "./io.js";
 import { splitMath, drawn, draw } from "./math.js";
+import { inlineMath } from "./tex.js";
 
 const MD = /\.(md|markdown|mdx)$/i;
 // TextView.html() は CSS を扱わず、mod には web view も無いので、HTML は中で描かずに既定のブラウザへ渡す。
@@ -118,7 +119,7 @@ export default class EditorPane {
   markdown(text, t, cx) {
     const color = t.foreground;
     return splitMath(text).map((p, i) => {
-      if (p.md !== undefined) return TextView.markdown(`ed-md-${i}`, p.md).selectable();
+      if (p.md !== undefined) return TextView.markdown(`ed-md-${i}`, inlineMath(p.md)).selectable();
       const m = drawn(p.tex, color);
       if (!m) cx.spawn(async (cx) => { await draw(p.tex, color); cx.notify(); });
       if (m?.src) return div().w_full().py(6).flex().justify_center().child(image(m.src).w(m.w).h(m.h).flex_none());

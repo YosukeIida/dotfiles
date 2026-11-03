@@ -1,0 +1,15 @@
+import { texToText as t, inlineMath } from "../mods/activity/tex.js";
+const eq = (a, b) => { if (a !== b) { console.error("FAIL", JSON.stringify(a), "!=", JSON.stringify(b)); process.exitCode = 1; } };
+eq(t("H(X|S)"), "H(X|S)");
+eq(t("X \\perp S"), "X ⊥ S");
+eq(t("S_\\text{struct}"), "S_struct");
+eq(t("x^2 + y_1"), "x² + y₁");
+eq(t("\\log \\lambda_\\text{max}"), "log λₘₐₓ");
+eq(t("\\sum \\log|D|"), "∑ log|D|");
+eq(t("\\frac{1}{2}"), "1/2");
+eq(t("\\frac{a+b}{n}"), "(a+b)/n");
+eq(t("D=0"), "D=0");
+eq(t("\\mathbb{E}[X]"), "𝔼[X]");
+eq(t("I(V;S_\\text{dom}|T)"), "I(V;S_dom|T)");
+eq(inlineMath("cost $5 and $10, `$x$` and $\\Delta$"), "cost $5 and $10, `$x$` and Δ");
+eq(inlineMath("$S_a$ and $V_b$"), "Sₐ and V\\_b");

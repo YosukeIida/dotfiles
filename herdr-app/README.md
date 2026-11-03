@@ -26,7 +26,7 @@ Herdr app の自作の layout と、それが使う mod。darwin-switch が `ins
 - 各画面の見出しを大文字にしない。Explorer の見出しを Files にした
 - editor の見出しから Open in VS Code を消した
 - Markdown は Preview で開く。Preview・Side by side・Edit を切り替えるボタンを並べた（`common.js` の `segmented`）
-- Markdown の Preview で、別の行の数式（`$$…$$`、`\[…\]`）を RaTeX の `ratex-svg` で SVG にして表示する（`math.js`）。`ratex-svg` は dotfiles の `homebrew.nix` が `yosukeiida/casks-personal/ratex` で入れる。文中の数式（`$…$`）は、Herdr app の Markdown の表示が文中の画像を描かないので、生の TeX のまま残る
+- Markdown の Preview で、別の行の数式（`$$…$$`、`\[…\]`）を RaTeX の `ratex-svg` で SVG にして表示する（`math.js`）。`ratex-svg` は dotfiles の `homebrew.nix` が `yosukeiida/casks-personal/ratex` で入れる。文中の数式（`$…$`）は Unicode の文字に置き換えて表示する（`tex.js`。ギリシャ文字・記号・上付きと下付き・`\frac` を a/b に）。Herdr app の Markdown の表示は、文中の画像も `<sub>`・`<sup>` も描かないため。確認は `bun tests/tex.test.mjs`
 - HTML のファイルは、開くと既定のブラウザでも開く。editor の pane にはソースと「Open in browser」のボタンを出す
 - PDF のページに付けていた Ctrl+ホイールの拡大（`on_scroll_wheel`）を、ページの外側の要素に移した（`viewer.js`）。`v_virtual_list` の renderer の中で handler を付けると例外になり、PDF のページが 1 枚も描かれなかった
 - Files の定期の再読み込み（`files.js` の `REFRESH`）で、開いたフォルダの中身が 1 つ前に開いたフォルダのものにずれる不具合を直した。JS が先頭に root（`""`）を渡しているのに、shell の側でも root を足しており、root の一覧が 2 回出ていた
