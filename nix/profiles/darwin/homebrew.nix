@@ -29,7 +29,6 @@
       tap "xoshbin/asyar", trusted: true
       tap "yosukeiida/casks-personal", trusted: true
       tap "mantrakp04/tap", trusted: true
-      tap "yetanotherbrowser/tap", trusted: true
     '';
 
     brews = [
@@ -154,7 +153,6 @@
       "thebrowsercompany-dia"
       "visual-studio-code"
       "wezterm@nightly"
-      "yetanotherbrowser/tap/yab"
       "zed"
       # 個人 fork の自前ビルドなので ad-hoc 署名（TeamIdentifier なし、spctl は rejected）で、
       # quarantine 属性が付くと Gatekeeper に起動を止められる。ただしここで
