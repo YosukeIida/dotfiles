@@ -1,0 +1,19 @@
+Paddock (herdr-paddock)
+Copyright 2026 choam2426
+
+This product includes software derived from Herdr
+(https://github.com/herdrdev/herdr-app), Copyright the Herdr authors, licensed
+under the Apache License, Version 2.0:
+
+- mods/paddock/main.js is Herdr 0.1.11's shipped `spaces` mod, modified to group
+  spaces by project, show each space's agents under it, pin spaces, and draw
+  every row with one kind of tile. It says so at its top.
+
+mods/paddock/session.js has the same code as in herdr-session-titles
+(https://github.com/choam2426/herdr-session-titles), by the same author, with its
+header comment adapted. mods/paddock/projects.js, overlay.js, agents.js,
+agents-data.js and tests/ are original to this project.
+
+mods/paddock/icons/panels-top-left.svg is from Lucide (https://lucide.dev),
+Copyright Lucide Icons and Contributors, licensed under the ISC License: see
+mods/paddock/icons/LICENSE-lucide.txt.
