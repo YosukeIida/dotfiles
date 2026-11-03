@@ -53,7 +53,8 @@ in
     lazydocker
     lazygit
     neovim
-    poppler
+    # pdfinfo・pdftoppm（Herdr app の activity の PDF 表示）。`poppler` は glib の library だけで CLI を含まない。
+    poppler-utils
     python3Packages.twscrape
     rclone
     tmux

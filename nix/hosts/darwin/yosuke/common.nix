@@ -911,6 +911,10 @@ in
       su - ${username} -c "mkdir -p '$home/.config/herdr-app' && printf '%s\n' '$_herdrPrefs' > '$_hs'" || true
     fi
 
+    # Herdr app の自作の layout・mod（herdr-app/README.md）。同梱のものと並べて入れ、
+    # どれを使うかは Herdr app の中で切り替える。
+    su - ${username} -c "bash $pub/herdr-app/install.sh" || echo >&2 "warning: herdr-app/install.sh が失敗した"
+
     # Claude Code の settings.json 一式（2026-08-24 に common 層から移設）。
     # 監査 2026-07-08 の指摘: 中身が個人の permissions・model・hook の絶対パスで、
     # fork 可能層で配ると他者環境で毎 SessionStart に exit 127 が出続ける。
