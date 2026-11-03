@@ -25,7 +25,7 @@ Herdr app の自作の layout と、それが使う mod。darwin-switch が `ins
 
 `paddock` に加えた変更:
 
-- この Mac の project・機体の行の `+` で、`space.new` に `machine: ""` を渡す（`main.js`・`overlay.js`）。upstream は機体を省いており、Herdr app はクリックで省かれた機体を「選んでいる space の機体」と解釈する。別の機体の space を選んでいると、その機体でこの Mac の folder に端末を起こそうとし、`space.new failed: cannot start a terminal` になった
+- この Mac の project・機体の行の `+` で、`space.new` に `machine: ""` を渡す（`main.js`・`overlay.js`）。upstream は機体を省いており、Herdr app はクリックで省かれた機体を「選んでいる space の機体」と解釈する。別の機体の space を選んでいると、その機体でこの Mac の folder に端末を起こそうとし、`space.new failed: cannot start a terminal` になった。upstream への PR: https://github.com/choam2426/herdr-paddock/pull/1（取り込まれたら、この変更は upstream の rev を取り込むだけで済む）
 
 `activity` に加えた変更:
 
