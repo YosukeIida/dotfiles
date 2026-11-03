@@ -23,7 +23,7 @@ cwd=$1; shift
 top=$(cd "$cwd" 2>/dev/null && git rev-parse --show-toplevel 2>/dev/null)
 root=\${top:-$cwd}
 printf '%s' "$top"
-for f in "" "$@"; do
+for f in "$@"; do
   printf '\\n@@HERDR-SEP@@\\n'
   if [ -z "$f" ]; then d=$root; else d=$root/$f; fi
   list "$d" || printf '@@ERR'

@@ -29,5 +29,6 @@ Herdr app の自作の layout と、それが使う mod。darwin-switch が `ins
 - Markdown の Preview で、別の行の数式（`$$…$$`、`\[…\]`）を RaTeX の `ratex-svg` で SVG にして表示する（`math.js`）。`ratex-svg` は dotfiles の `homebrew.nix` が `yosukeiida/casks-personal/ratex` で入れる。文中の数式（`$…$`）は、Herdr app の Markdown の表示が文中の画像を描かないので、生の TeX のまま残る
 - HTML のファイルは、開くと既定のブラウザでも開く。editor の pane にはソースと「Open in browser」のボタンを出す
 - PDF のページに付けていた Ctrl+ホイールの拡大（`on_scroll_wheel`）を、ページの外側の要素に移した（`viewer.js`）。`v_virtual_list` の renderer の中で handler を付けると例外になり、PDF のページが 1 枚も描かれなかった
+- Files の定期の再読み込み（`files.js` の `REFRESH`）で、開いたフォルダの中身が 1 つ前に開いたフォルダのものにずれる不具合を直した。JS が先頭に root（`""`）を渡しているのに、shell の側でも root を足しており、root の一覧が 2 回出ていた
 
 `activity` は Linux で作られており、macOS では次の機能が動かない: Explorer の削除（`gio trash`）、file の clipboard（`wl-clipboard`・`xclip`）。PDF の表示は `pdftoppm`、画像・動画は `ffmpeg`・`ffprobe` が要る。
