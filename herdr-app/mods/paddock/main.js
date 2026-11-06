@@ -10,7 +10,7 @@
 import { View, div, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
 import { spaces, machines, panes, agents, terminals, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, layout, props, home, readTextFile } from "herdr";
-import { agentRow, subRow, tree, byParent } from "./agents.js";
+import { agentRow, subRow, tree, byParent, nested, role } from "./agents.js";
 import { groupRows, reposToAdd, projectList, addProject, urgent, fromSpaceFolders, placedOf, placeSpace, reorderProject, naturalProject, prunePlaced } from "./projects.js";
 import { Overlay, STORE, store, openMenu, openAdd, newSpaceIn } from "./overlay.js";
 
@@ -548,8 +548,12 @@ export default class Spaces extends View {
   readAgents() {
     const now = Date.now(), by = {}, list = agents();
     let dirty = false;
-    // Live terminals by parent, for sub-agents.
-    this.kids = byParent(terminals());
+    // Live terminals by parent, for sub-agents; each terminal's parent and name.
+    const all = terminals();
+    this.kids = byParent(all);
+    this.term = new Map(all.map((k) => [k.address, k]));
+    this.parentOf = new Map(all.map((k) => [k.address, k.parent]));
+    this.agentOf = new Map(list.map((a) => [a.address, a]));
     this.listed = new Map(list.map((a) => [a.address, a.status]));
     for (const a of list) {
       (by[a.space] ??= []).push(a);
@@ -586,10 +590,12 @@ export default class Spaces extends View {
     const list = this.byspace[w.id] ?? [];
     if (!list.length || this.shut.has(w.id)) return [];
     const now = Date.now();
-    // Each agent, then the sub-agents it started under it.
-    return list.flatMap((a) => [
-      agentRow(a, t, { inset, since: this.changed[a.address]?.at ?? 0, now }),
-      ...tree(this.kids ?? new Map(), a.address).map((s) => subRow(s, t, { inset, listed: this.listed })),
+    const full = (a, lines = null) => agentRow(a, t, { inset, since: this.changed[a.address]?.at ?? 0, now, lines, termName: role(this.term?.get(a.address)) });
+    // Each agent, then the ones it started under it: a full row for one with a pane
+    // (it is left out of its own place), a sub-agent's row for one without.
+    return list.filter((a) => !nested(a, this.parentOf ?? new Map(), this.listed ?? new Map())).flatMap((a) => [
+      full(a),
+      ...tree(this.kids ?? new Map(), a.address).map((s) => this.agentOf?.has(s.k.address) ? full(this.agentOf.get(s.k.address), s.lines) : subRow(s, t, { inset, listed: this.listed })),
     ]);
   }
 

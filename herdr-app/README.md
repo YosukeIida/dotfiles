@@ -7,12 +7,14 @@ Herdr app の自作の layout と、それが使う mod。darwin-switch が `ins
 ## layout
 
 - `layouts/pasture.json`: 同梱の `main` を複製し、次の 2 か所を差し替えたもの。
-  - 左の sidebar の上半分 `spaces` → `paddock`（project・worktree・agent・sub-agent の木）。下半分の `agents` は同梱のまま
+  - 左の sidebar の上半分 `spaces` → `paddock`（project・worktree・agent・sub-agent の木）。下半分 `agents` → `agents-tree`
   - 右の panel の Files `files` → `activity` の `browse` の画面（Names・Contents の検索バーと、ファイルツリー。押したファイルを terminal の右の editor の pane で開く）
 
 ## 自作の mod
 
 - `mods/confirm-close/`: cmd-w でタブを閉じる前に、ダイアログで確かめる（Enter で閉じる、Esc でやめる。ダイアログが出ている間にもう一度 cmd-w を押すと、やめる）。同梱の `tab.close` は、space の最後のタブのときしか確かめない。`install.sh` が `keys.json` の `cmd-w` を、同梱の既定の `tab.close` のときだけ `mod.open:confirm-close` に替える。layout によらず効く
+
+- `mods/agents-tree/`: 同梱の `agents`（0.1.13）の複製。別の agent が起動した agent でペインを持つもの（herdr-agent-team の席など）を、親の行の下に通常の行として字下げして並べ、上の階層には出さない（同梱の版は、親の下の木と自分の行の 2 回出す）。同じタブに agent が複数あるときは、各行にタブ名ではなく、herdr-agent-team の席なら label の `herdr-team.role`、それ以外は hc の端末名、名前が無ければ agent のタイトルを出す。同梱の版の更新は自動では入らないので、取り込むときは `cloned_from` の版との diff を読む
 
 ## 外部の mod
 
@@ -25,6 +27,7 @@ Herdr app の自作の layout と、それが使う mod。darwin-switch が `ins
 
 `paddock` に加えた変更:
 
+- 別の agent が起動した agent でペインを持つものを、親の行の下に通常の行（`agentRow` に木の線）として並べ、自分の space の位置には出さない。hc の名前を持つ端末は、行の後半に session ではなくlabel の `herdr-team.role`（無ければ端末名）を出す（`agents-data.js` の `nested`・`role`、`agents.js`、`main.js` の `agentRows`）。確認は `bun tests/paddock-agents.test.mjs`
 - この Mac の project・機体の行の `+` で、`space.new` に `machine: ""` を渡す（`main.js`・`overlay.js`）。upstream は機体を省いており、Herdr app はクリックで省かれた機体を「選んでいる space の機体」と解釈する。別の機体の space を選んでいると、その機体でこの Mac の folder に端末を起こそうとし、`space.new failed: cannot start a terminal` になった
 
 `activity` に加えた変更:

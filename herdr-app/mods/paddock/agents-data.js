@@ -37,3 +37,15 @@ export function tree(kids, addr, lead = [], seen = new Set([addr])) {
     return [{ k, lines: [...lead, last ? "└" : "├"] }, ...tree(kids, k.address, [...lead, last ? "" : "│"], seen)];
   });
 }
+
+// An agent started by another agent that also has a pane: drawn under that parent
+// with the tree lines, not on its own as well. `parentOf`: address → parent address.
+export function nested(a, parentOf, listed) {
+  return listed.has(parentOf.get(a.address));
+}
+
+// What a named terminal is for: the role a herdr-agent-team seat carries
+// (label `herdr-team.role`), else its name.
+export function role(term) {
+  return term?.labels?.["herdr-team.role"] || term?.name || "";
+}
