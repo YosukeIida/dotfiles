@@ -85,7 +85,7 @@ in
     # SKILL.md 内の accounts.json 更新スニペットが使う。nodeless-policy
     # （裸の node を PATH に常駐させない）のため、nix pin 済みの node を
     # この専用変数経由でだけ触れるようにしている。
-    GWS_MULTI_ACCOUNT_NODE = "${pkgs.nodejs_22}/bin/node";
+    GWS_MULTI_ACCOUNT_NODE = "${pkgs.nodejs}/bin/node";
     # agent-browser は headed（通常ウィンドウ・ハードウェア GPU）で起動する。
     # headless だと swiftshader（CPU での GPU エミュレーション）で描画され、
     # 閉じ忘れた放置ページが数コアを焼き続ける事故が起きた（2026-08-03〜06）。
