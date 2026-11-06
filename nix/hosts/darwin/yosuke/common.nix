@@ -1014,6 +1014,10 @@ in
     # （user layer は system layer より優先されるため、残すと新しい system 設定が無視される）。
     su - ${username} -c "bash $pub/codex/migrate-user-config.sh" || true
 
+    # opencode の TUI の設定（cli.json・tui.json）は plugin の登録などで opencode 自身が書き換えるため、
+    # dotfiles から配らず opencode に所有させる。
+    _link "$pub/opencode/opencode.json" "$home/.config/opencode/opencode.json"
+
     # Stats 設定を dotfiles（public）から毎回インポート
     if [ -f "$pub/config/Stats-current.plist" ]; then
       launchctl asuser "$(id -u -- ${username})" \
