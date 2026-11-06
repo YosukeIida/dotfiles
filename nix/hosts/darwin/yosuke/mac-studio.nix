@@ -29,11 +29,27 @@ in
 
 {
   # omlx（jundot/omlx）は formula の upgrade/ビルドが重く、持ち歩く Air には不要なため
-  # Studio 専用インストールにする（profiles/darwin/homebrew.nix は両機共通の一覧）。
+  # Studio 専用インストールにする。ローカルの LLM は Studio では omlx に一本化する（LM Studio は Air だけ）。
   homebrew.extraConfig = ''
     tap "jundot/omlx", "https://github.com/jundot/omlx", trusted: true
   '';
-  homebrew.brews = [ "jundot/omlx/omlx" ];
+  homebrew.brews = [
+    "jundot/omlx/omlx"
+    # Apple Container 本体（CLI + XPC バックエンド）。Orchard（cask）はこの GUI フロント
+    # エンドで、本体がないと "XPC connection error" になる。常駐サービス化はせず、
+    # 使うときに `container system start` を手動実行する運用。
+    "container"
+  ];
+  homebrew.casks = [
+    # OpenClaw 秘書を閉じ込める macOS VM の土台（dotfiles-private の
+    # docs/2026-10-02_secretary-agent-base-selection.md）。公式 tap（trycua/lume）は
+    # 0.1.13 で止まっており、install スクリプトは自動更新と daemon の LaunchAgent まで
+    # 入れるため、公証済みの app だけを置く自前 cask を使う。formula にしないのは、
+    # Homebrew の再署名で com.apple.vm.networking の署名が崩れないようにするため。
+    # テレメトリは home.sessionVariables の LUME_TELEMETRY_ENABLED で止める。
+    "yosukeiida/casks-personal/lume"
+    "orchard"
+  ];
 
   # Xcode は Swift のビルド（ararat など）に要る。宣言に無い App Store アプリは
   # cleanup = "zap" が uninstall しようとする（2026-10-31 に sudo の失敗で止まって残った）。

@@ -97,8 +97,8 @@
 
         # OpenClaw 秘書を閉じ込める Lume の macOS VM（設計は dotfiles-private の
         # docs/2026-10-02_secretary-agent-base-selection.md）。example と同じく共通層だけを使い、
-        # 個人の層（yosuke/common.nix: agenix の secret、Tailscale の自動接続、WARP）は入れない。
-        # VM では App Store にサインインできず mas の導入で brew bundle ごと失敗するので、masApps だけ外す。
+        # 個人の層（yosuke/common.nix: agenix の secret、Tailscale の自動接続、WARP、個人の Mac のアプリ）は入れない。
+        # VM だけで使うもの（Office・OpenClaw.app など）は profiles/darwin/secretary.nix に置く。
         # VM の HostName は `sudo scutil --set HostName secretary` で固定する。
         secretary = nix-darwin.lib.darwinSystem {
           inherit system;
@@ -109,12 +109,7 @@
               homedir = "/Users/lume";
               inherit pkgsUnstable;
             })
-            { homebrew.masApps = nixpkgs.lib.mkForce { }; }
-            # OpenClaw の GitHub 接続（tools.github）は Gateway の PATH から gh を探す。Gateway の LaunchAgent の
-            # PATH は /opt/homebrew/bin までで、nix の gh（/etc/profiles/per-user/lume/bin）は見えないので brew でも入れる。
-            { homebrew.brews = [ "gh" ]; }
-            # 秘書の作業者を herdr-core の端末で起こし、ホストの Herdr app から見て介入するため。
-            (import ./nix/profiles/darwin/herdr-core.nix {
+            (import ./nix/profiles/darwin/secretary.nix {
               username = "lume";
               homedir = "/Users/lume";
               privateDir = "/Users/lume/workspace/github.com/YosukeIida/dotfiles-private";

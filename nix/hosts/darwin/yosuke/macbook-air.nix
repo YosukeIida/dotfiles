@@ -54,6 +54,9 @@ let
 in
 
 {
+  # 緊急時と移動中にローカルで LLM を動かす。Studio は omlx を使うので入れない。
+  homebrew.casks = [ "lm-studio" ];
+
   # sleepctl: 蓋を閉じても処理を継続する状態 (pmset -a disablesleep) を
   # zsh関数 sleepctl(on/off) と raycast-scripts/sleepctl_{on,off}.sh から
   # パスワードなしで切り替えるためのルール。引数は完全一致のみ許可する。

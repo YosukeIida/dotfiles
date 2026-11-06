@@ -603,20 +603,8 @@ in
   imports = [
     ./printers.nix
     ./codexbar.nix
+    ./homebrew.nix
     (import ../../../profiles/darwin/herdr-core.nix { inherit username homedir privateDir; })
-  ];
-
-  # Orca（並列エージェントを worktree ごとに走らせる ADE）。upstream 公式 tap の cask でのみ配布されており
-  # homebrew-core にも nixpkgs にも無いため tap 修飾で入れる。秘書の VM は作業者を OpenClaw の ACP で動かすので、
-  # 共通の一覧（profiles/darwin/homebrew.nix）ではなく個人の Mac の層に置く。
-  # yab（ブラウザ）も秘書の VM で使わず、配布元の証明書のエラーで VM の brew bundle を止めるので、ここに置く。
-  homebrew.extraConfig = ''
-    tap "stablyai/orca", trusted: true
-    tap "yetanotherbrowser/tap", trusted: true
-  '';
-  homebrew.casks = [
-    "stablyai/orca/orca"
-    "yetanotherbrowser/tap/yab"
   ];
 
   environment.interactiveShellInit = ''

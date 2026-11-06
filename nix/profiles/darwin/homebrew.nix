@@ -1,3 +1,6 @@
+# 全構成（fork の土台の example・秘書の VM・Yosuke の各 Mac）に入る最小の一覧。
+# 個人の Mac だけで使うものは nix/hosts/darwin/yosuke/homebrew.nix、Office は office.nix、
+# 秘書の VM だけで使うものは secretary.nix に置く。
 {
   homebrew = {
     enable = true;
@@ -22,33 +25,13 @@
     # extraConfig（Brewfile 末尾にそのまま追記される）で tap を宣言する。bundle は tap 依存を
     # 名前で解決する（installer.rb の tap_dependencies）ため、Brewfile 内での行順は問題ない。
     # nix-darwin が trusted オプションに対応したら taps に戻すこと。
+    # 各層の extraConfig は連結される（types.lines）ので、tap はそれを使う cask と同じ層に置く。
     extraConfig = ''
-      tap "can1357/tap", trusted: true
-      tap "solarphlare/tap", trusted: true
-      tap "steipete/tap", trusted: true
-      tap "xoshbin/asyar", trusted: true
       tap "yosukeiida/casks-personal", trusted: true
-      tap "mantrakp04/tap", trusted: true
     '';
 
     brews = [
-      # homebrew-core 版は node 依存（scripts/cli.cjs の薄い dispatcher のためだけ）。
-      # yosukeiida/casks-personal 版は upstream が npm optionalDependency で配布している
-      # プリコンパイル済みネイティブバイナリ（darwin-arm64）を直接installし、node依存ゼロ。
-      "yosukeiida/casks-personal/backlog-md"
-      # RaTeX の ratex-svg（TeX の数式を SVG に）。Herdr app の activity の Markdown の数式に使う。
-      # nixpkgs にも homebrew-core にも無く、公式のビルド済みの CLI を置く自前の formula で入れる。
-      "yosukeiida/casks-personal/ratex"
       "bat"
-      "brightness"
-      # omp（oh my pi）。formula は release の単体バイナリを置くだけで depends_on ゼロ
-      # （node/bun 非依存）。nixpkgs には無く、derivation を書いても formula と同内容に
-      # なるうえ version/sha256 の手動追随が増えるため homebrew 側で管理する。
-      "can1357/tap/omp"
-      # Apple Container 本体（CLI + XPC バックエンド）。Orchard（cask）はこの GUI フロント
-      # エンドで、本体がないと "XPC connection error" になる。常駐サービス化はせず、
-      # 使うときに `container system start` を手動実行する運用。
-      "container"
       "ffmpeg"
       "git-delta"
       "glow"
@@ -62,110 +45,22 @@
       # 運用に一本化した。skill 側の PreToolUse hook が CONFIG_DIR 未指定の
       # 裸の `gws` 呼び出しを弾く。
       "googleworkspace-cli"
-      # hermes-agent は brew ではなく nix flake input（upstream 自身の uv2nix
-      # packaging）から home.packages 経由で導入する（nix/home/packages.nix の
-      # hermesAgentPkgs.full）。brew formula は node を depends_on して
-      # /opt/homebrew/bin にリンクしてしまう（nodeless 方針違反）ため使わない。
       "hunk"
-      "mas"
       "rtk"
-      "xcodegen"
     ];
 
-    # Mac App Store アプリ（mas 経由）。Bitwarden は agenix バックアップ鍵の回収に必要なため
-    # flake から再現する（App Store へのサインインのみ手動。README 参照）。
-    masApps = {
-      Bitwarden = 1352778147;
-    };
-
     casks = [
-      "adobe-acrobat-reader"
-      "affinity"
-      # tap 修飾必須、かつ **solarphlare/tap** を使うこと（solarphlare/airmute ではない）。
-      # solarphlare/homebrew-airmute は GitHub 上で homebrew-tap にリネームされており、
-      # 参照すると Homebrew が「Redirected tap solarphlare/airmute to tap solarphlare/tap」
-      # と言ってリダイレクト先も tap するため、両方が存在して裸の "airmute" が
-      # 「exists in multiple taps」で bundle 全体を止める。trusted: の宣言も
-      # リダイレクト後の名前と一致せず「Untrusted tap」になる（2026-08-20 に遭遇）。
-      "solarphlare/tap/airmute"
-      "arc"
-      "mantrakp04/tap/ardia"
-      "xoshbin/asyar/asyar"
-      "chatgpt"
-      "chrome-remote-desktop-host"
-      "claude"
       # 公式 cask は quarantine 付きのまま置くので、更新後の初回起動で Gatekeeper の
       # ダイアログが出て止まる。preflight で quarantine を外す以外は公式と同じ cask
       # を使う（詳細は casks-personal の Casks/claude-code@latest.rb）。
       "yosukeiida/casks-personal/claude-code@latest"
-      "yosukeiida/casks-personal/claude-science"
-      "cloudflare-warp@beta"
       # 公式 cask は更新時に quarantine 付きの bin/codex で補完を生成するため、
       # Gatekeeper のダイアログで brew upgrade が止まる。preflight で quarantine を
       # 外す以外は公式と同じ cask を使う（詳細は casks-personal の Casks/codex.rb）。
       "yosukeiida/casks-personal/codex"
+      # 秘書の VM では、OpenClaw 同梱の skill model-usage が CodexBar の記録から利用量を集計する。
       "codexbar"
-      "yosukeiida/casks-personal/cra"
-      "discord"
-      "figma@beta"
-      "ghostty@tip"
       "google-chrome"
-      "hammerspoon"
-      # Herdr app。公式の配布は releases.herdr.dev の install.sh だけで、nixpkgs にも
-      # homebrew にも無いため、同じ manifest を指す自前 cask を使う。herdr-core は brew では
-      # 入れない（brew の管理下だと core が自己更新を断り、フルディスクアクセスを保つ署名も
-      # できない）。導入と更新は profiles/darwin/herdr-core.nix の herdrCoreSync が受け持つ。
-      # nix にしないのは、app が自分の bundle を置き換えて更新するため（store は書き込めない）。
-      "yosukeiida/casks-personal/herdr-app"
-      "karabiner-elements"
-      "lens"
-      "libreoffice"
-      "lm-studio"
-      # OpenClaw 秘書を閉じ込める macOS VM の土台（dotfiles-private の
-      # docs/2026-10-02_secretary-agent-base-selection.md）。公式 tap（trycua/lume）は
-      # 0.1.13 で止まっており、install スクリプトは自動更新と daemon の LaunchAgent まで
-      # 入れるため、公証済みの app だけを置く自前 cask を使う。formula にしないのは、
-      # Homebrew の再署名で com.apple.vm.networking の署名が崩れないようにするため。
-      # テレメトリは home.sessionVariables の LUME_TELEMETRY_ENABLED で止める。
-      "yosukeiida/casks-personal/lume"
-      "microsoft-auto-update"
-      "microsoft-excel"
-      "microsoft-powerpoint"
-      "microsoft-teams"
-      "microsoft-word"
-      "nani"
-      "yosukeiida/casks-personal/nimbus"
-      "notion"
-      "notion-calendar"
-      "obsidian"
-      "onlyoffice"
-      "orbstack"
-      "orchard"
-      "yosukeiida/casks-personal/pindrop"
-      "yosukeiida/casks-personal/powerglance"
-      "raycast"
-      "scansnap-home"
-      "shottr"
-      "skim"
-      "slack"
-      "stats"
-      "tailscale-app"
-      "thebrowsercompany-dia"
-      "visual-studio-code"
-      "wezterm@nightly"
-      "zed"
-      # 個人 fork の自前ビルドなので ad-hoc 署名（TeamIdentifier なし、spctl は rejected）で、
-      # quarantine 属性が付くと Gatekeeper に起動を止められる。ただしここで
-      # args = { no_quarantine = true; } は指定できない: Homebrew 6 には install 時に
-      # quarantine を無効化する手段がそもそも存在しない。--no-quarantine は CLI フラグとして
-      # 廃止されたうえ、HOMEBREW_CASK_OPTS 経由でも効かない（判定関数
-      # EnvConfig.cask_opts_quarantine? は env_config.rb:983 に定義が残るだけで呼び出し元ゼロ。
-      # cmd/install.rb:372,420 は Cask::Installer に quarantine: を渡さないため、
-      # installer.rb:42 の既定値 true が常に使われる）。加えて brew bundle は args を
-      # そのまま "--#{key}" に変換して渡すため（bundle/cask.rb:78-88）install 自体が失敗し、
-      # upgrade 経路では args を渡さない（同 76）。対処は cask 側の postflight で
-      # xattr -dr する（検証: Homebrew 6.0.12）。
-      "yosukeiida/casks-personal/zed-dev-ratex"
     ];
   };
 }
