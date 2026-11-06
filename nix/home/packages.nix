@@ -39,7 +39,6 @@ in
 {
   home.packages = with pkgs; [
     age
-    bun
     cloudflared
     duti
     fzf
@@ -67,6 +66,8 @@ in
     # nixpkgs-25.11-darwin（stable）には未収録（新規パッケージは stable に
     # バックポートされない）ため、nixpkgs-unstable から個別に引く。
     pkgsUnstable.agent-browser
+    # 26.05 の bun は 1.3.13 で止まっており、Ovis が要る 1.4 以上は unstable にしか無い。
+    pkgsUnstable.bun
   ];
 
   home.sessionVariables = {
