@@ -32,7 +32,8 @@
       "Bash(rtk git status:*)",
       "Bash(intent-cli:*)",
       "Bash(orca orchestration:*)",
-      "Bash(bash /Users/yosuke/.claude/skills/orca-agent-team/scripts/orca-team.sh:*)"
+      "Bash(bash /Users/yosuke/.claude/skills/orca-agent-team/scripts/orca-team.sh:*)",
+      "Bash(bash /Users/yosuke/.claude/skills/herdr-agent-team/scripts/herdr-team.sh:*)"
     ],
     "deny": [
       "Bash(rm -rf *)",
@@ -318,7 +319,7 @@
     "document-skills@anthropic-agent-skills": false,
     "exa@claude-plugins-official": true,
     "figma@claude-plugins-official": false,
-    "frontend-design@claude-plugins-official": false,
+    "frontend-design@claude-plugins-official": true,
     "lualatex-pdf@YosukeIida": false,
     "daymade-docs@daymade-skills": false,
     "rust-analyzer-lsp@claude-plugins-official": true,
