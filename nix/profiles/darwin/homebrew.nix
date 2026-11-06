@@ -26,8 +26,11 @@
     # 名前で解決する（installer.rb の tap_dependencies）ため、Brewfile 内での行順は問題ない。
     # nix-darwin が trusted オプションに対応したら taps に戻すこと。
     # 各層の extraConfig は連結される（types.lines）ので、tap はそれを使う cask と同じ層に置く。
+    # steipete/tap は codexbar（作者の tap）の入手元。一度その tap から入れた機械では、宣言から外すと
+    # brew cleanup が未信頼の tap の cask を読めずに失敗し、untap もできない（2026-11-06 に秘書の VM で遭遇）。
     extraConfig = ''
       tap "yosukeiida/casks-personal", trusted: true
+      tap "steipete/tap", trusted: true
     '';
 
     brews = [

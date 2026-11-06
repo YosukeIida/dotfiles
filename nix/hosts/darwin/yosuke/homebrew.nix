@@ -8,7 +8,6 @@
     tap "mantrakp04/tap", trusted: true
     tap "solarphlare/tap", trusted: true
     tap "stablyai/orca", trusted: true
-    tap "steipete/tap", trusted: true
     tap "xoshbin/asyar", trusted: true
     tap "yetanotherbrowser/tap", trusted: true
   '';
