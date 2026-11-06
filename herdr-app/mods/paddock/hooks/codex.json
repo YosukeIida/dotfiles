@@ -1,0 +1,8 @@
+{
+  "_comment": "Paddock's Codex hooks: merge into ~/.codex/hooks.json (or $CODEX_HOME/hooks.json; see README, 'Sub-agents of Claude Code and Codex'). Replace <HOOKS> with the absolute path of this folder, with forward slashes. Append each group at the END of its event's list: Codex trusts hooks by their position, so inserting or removing a group before another one makes it ask again. Then trust them in Codex with /hooks.",
+  "hooks": {
+    "SubagentStart": [{ "hooks": [{ "type": "command", "command": "sh '<HOOKS>/subagents.sh' codex", "commandWindows": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"<HOOKS>/subagents.ps1\" codex", "async": true, "timeout": 10 }] }],
+    "SubagentStop": [{ "hooks": [{ "type": "command", "command": "sh '<HOOKS>/subagents.sh' codex", "commandWindows": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"<HOOKS>/subagents.ps1\" codex", "async": true, "timeout": 10 }] }],
+    "SessionStart": [{ "hooks": [{ "type": "command", "command": "sh '<HOOKS>/subagents.sh' codex", "commandWindows": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"<HOOKS>/subagents.ps1\" codex", "async": true, "timeout": 10 }] }]
+  }
+}

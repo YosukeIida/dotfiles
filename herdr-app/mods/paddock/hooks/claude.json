@@ -1,0 +1,10 @@
+{
+  "_comment": "Paddock's Claude Code hooks: merge into ~/.claude/settings.json (see README, 'Sub-agents of Claude Code and Codex'). Replace <HOOKS> with the absolute path of this folder, with forward slashes. Append each group at the END of its event's list; never replace or reorder other groups.",
+  "hooks": {
+    "SubagentStart": [{ "matcher": "", "hooks": [{ "type": "command", "command": "sh \"<HOOKS>/subagents.sh\" claude", "async": true, "timeout": 10 }] }],
+    "SubagentStop": [{ "matcher": "", "hooks": [{ "type": "command", "command": "sh \"<HOOKS>/subagents.sh\" claude", "async": true, "timeout": 10 }] }],
+    "StopFailure": [{ "matcher": "", "hooks": [{ "type": "command", "command": "sh \"<HOOKS>/subagents.sh\" claude", "async": true, "timeout": 10 }] }],
+    "SessionStart": [{ "matcher": "", "hooks": [{ "type": "command", "command": "sh \"<HOOKS>/subagents.sh\" claude", "async": true, "timeout": 10 }] }],
+    "SessionEnd": [{ "matcher": "", "hooks": [{ "type": "command", "command": "sh \"<HOOKS>/subagents.sh\" claude", "async": true, "timeout": 10 }] }]
+  }
+}

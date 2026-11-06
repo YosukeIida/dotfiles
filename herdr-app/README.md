@@ -20,7 +20,7 @@ Herdr app の自作の layout と、それが使う mod。darwin-switch が `ins
 
 | mod | upstream | rev | 扱い |
 |---|---|---|---|
-| `mods/paddock/` | https://github.com/choam2426/herdr-paddock の `mods/paddock/` | `540e3d20d7b960ac325fd5a5401f905b40e93953` | fork（下の変更を加えている） |
+| `mods/paddock/` | https://github.com/choam2426/herdr-paddock の `mods/paddock/` | `8c02b94fedbf13e5654b3ef6b76c705510984434` | fork（下の変更を加えている） |
 | `mods/activity/` | https://github.com/yama-lei/herdr-editor-layout の `mods/activity/` | `5220dcd` | fork（下の変更を加えている） |
 
 どちらも Apache-2.0（各 folder の `LICENSE`）。更新は upstream の新しい rev を取り込み、diff を読んでから commit する。取り込むときは、下の変更を残す。
@@ -29,6 +29,7 @@ Herdr app の自作の layout と、それが使う mod。darwin-switch が `ins
 
 - 別の agent が起動した agent でペインを持つものを、親の行の下に通常の行（`agentRow` に木の線）として並べ、自分の space の位置には出さない。hc の名前を持つ端末は、行の後半に session ではなく label の `herdr-team.role`（無ければ端末名）を出す（`agents-data.js` の `nested`・`role`、`agents.js`、`main.js` の `agentRows`）。確認は `bun tests/paddock-agents.test.mjs`
 - この Mac の project・機体の行の `+` で、`space.new` に `machine: ""` を渡す（`main.js`・`overlay.js`）。upstream は機体を省いており、Herdr app はクリックで省かれた機体を「選んでいる space の機体」と解釈する。別の機体の space を選んでいると、その機体でこの Mac の folder に端末を起こそうとし、`space.new failed: cannot start a terminal` になった。upstream への PR: https://github.com/choam2426/herdr-paddock/pull/1（取り込まれたら、この変更は upstream の rev を取り込むだけで済む）
+- upstream の `hooks/`（Claude Code・Codex・Pi の内部の sub-agent を label で載せる hook）は取り込んだが、settings.json には登録していない。登録しない間は、内部の sub-agent の行は出ない。`main.js` の `agentRows` は、ペインを持つ席の行（上の変更）と、upstream の内部の sub-agent の行（`joinSubs`）を両方並べる
 
 `activity` に加えた変更:
 
