@@ -12,7 +12,7 @@ Herdr app の自作の layout と、それが使う mod。darwin-switch が `ins
 
 ## 自作の mod
 
-- `mods/confirm-close/`: cmd-w でタブを閉じる前に、ダイアログで確かめる（Enter で閉じる、Esc でやめる。ダイアログが出ている間にもう一度 cmd-w を押すと、やめる）。同梱の `tab.close` は、space の最後のタブのときしか確かめない。`install.sh` が `keys.json` の `cmd-w` を、同梱の既定の `tab.close` のときだけ `mod.open:confirm-close` に替える。layout によらず効く
+- `mods/confirm-close/`: cmd-w で、フォーカスしている pane を閉じる前にダイアログで確かめる。タブの pane が 1 つだけのときはタブを閉じる（iTerm2 と同じ）（Enter で閉じる、Esc でやめる。ダイアログが出ている間にもう一度 cmd-w を押すと、やめる）。同梱の `tab.close` は、space の最後のタブのときしか確かめない。`install.sh` が `keys.json` の `cmd-w` を、同梱の既定の `tab.close` のときだけ `mod.open:confirm-close` に替える。layout によらず効く
 
 - `mods/agents-tree/`: 同梱の `agents`（0.1.13）の複製。別の agent が起動した agent でペインを持つもの（herdr-agent-team の席など）を、親の行の下に通常の行として字下げして並べ、上の階層には出さない（同梱の版は、親の下の木と自分の行の 2 回出す）。同じタブに agent が複数あるときは、各行にタブ名ではなく、herdr-agent-team の席なら label の `herdr-team.role`、それ以外は hc の端末名、名前が無ければ agent のタイトルを出す。同梱の版の更新は自動では入らないので、取り込むときは `cloned_from` の版との diff を読む
 

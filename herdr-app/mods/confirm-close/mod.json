@@ -1,1 +1,1 @@
-{ "place": "none", "title": "Close tab?", "overlay": { "kind": "dialog", "width": 380, "height": 150 } }
+{ "place": "none", "title": "Close?", "overlay": { "kind": "dialog", "width": 380, "height": 150 } }

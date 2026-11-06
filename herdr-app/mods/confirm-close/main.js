@@ -1,15 +1,19 @@
-// cmd-w の tab.close の前に確かめる。同梱の confirm を openOverlay で開かないのは、
+// cmd-w の前に確かめる。同梱の confirm を openOverlay で開かないのは、
 // cmd-w を押すたびに confirm が重なるため。自分を dialog にすれば、mod.open が
 // 開いている自分を閉じるので重ならない。
+// 最後の pane を pane.close に任せないのは、タブを閉じるかどうかを同梱の挙動ではなく
+// ここで決め、ダイアログの文言と実際に閉じるものを一致させるため。
 import { View, div } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
-import { run, props, closeOverlay, focused, spaces, theme } from "herdr";
+import { run, props, closeOverlay, focused, spaces, panes, theme } from "herdr";
 
 export default class ConfirmClose extends View {
   init(_props, cx) {
     const f = focused();
     this.space = spaces().find((s) => s.id === f?.space);
     this.tab = this.space?.tabs.find((t) => t.id === f?.tab);
+    this.pane = f?.pane ? panes().find((p) => p.pane === f.pane) : null;
+    this.lastPane = !this.pane || this.tab?.panes <= 1;
     this.handle = cx.focus_handle();
     this.handle.focus();
   }
@@ -21,14 +25,23 @@ export default class ConfirmClose extends View {
 
   yes() {
     this.close();
-    if (this.tab) run("tab.close", { id: this.tab.id, confirmed: true });
+    if (!this.tab) return;
+    if (this.lastPane) run("tab.close", { id: this.tab.id, confirmed: true });
+    else run("pane.close", { pane: this.pane.pane });
   }
 
   render() {
     const t = theme();
     const tab = this.tab;
-    const title = tab ? `Close tab "${tab.name}"?` : "No tab to close";
-    const detail = !tab ? "" : this.space.tabs.length === 1 ? `This is the last tab, so the space "${this.space.name}" closes too.` : "Its terminals end.";
+    let title = "Nothing to close";
+    let detail = "";
+    if (tab && !this.lastPane) {
+      title = `Close pane "${this.pane.title}"?`;
+      detail = this.pane.terminal ? "Its terminal ends." : "";
+    } else if (tab) {
+      title = `Close tab "${tab.name}"?`;
+      detail = this.space.tabs.length === 1 ? `This is the last tab, so the space "${this.space.name}" closes too.` : "Its terminals end.";
+    }
     const button = (id, label, bg, fg, onClick) =>
       h_flex().id(id).h(32).px(14).items_center().rounded(8).border_1().border_color(id === "no" ? t.input : bg).bg(bg).text_color(fg).cursor_pointer().hover((s) => s.opacity(0.88)).on_click(onClick).child(label);
     return v_flex()
