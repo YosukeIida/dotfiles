@@ -1,5 +1,5 @@
 # 全構成（fork の土台の example・秘書の VM・Yosuke の各 Mac）に入る最小の一覧。
-# 個人の Mac だけで使うものは nix/hosts/darwin/yosuke/homebrew.nix、Office は office.nix、
+# 個人の Mac だけで使うものは dotfiles-private の nix/hosts/yosuke/homebrew.nix、Office は office.nix、
 # 秘書の VM だけで使うものは secretary.nix に置く。
 {
   homebrew = {

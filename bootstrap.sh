@@ -48,15 +48,16 @@ warn() { echo "  ! $*"; }
 step 0 "前提レイヤの確認（Xcode CLT / Nix / Homebrew）"
 
 # flake attr が存在しないホスト名のまま進むと Step 2 が必ず失敗するので、先に照合する。
-if nix eval --raw "$DOTFILES_DIR#darwinConfigurations.$DARWIN_HOST.system" &>/dev/null; then
+if nix eval --raw "$PRIVATE_DIR#darwinConfigurations.$DARWIN_HOST.system" \
+  --override-input dotfiles "git+file://$DOTFILES_DIR" &>/dev/null; then
   ok "flake attribute が見つかりました: #$DARWIN_HOST"
 else
-  warn "flake attribute #$DARWIN_HOST が flake.nix にありません（hostname -s = $DARWIN_HOST）。"
+  warn "flake attribute #$DARWIN_HOST が dotfiles-private の flake.nix にありません（hostname -s = $DARWIN_HOST）。"
   warn "  macOS の hostname -s は HostName 未設定だと DHCP/逆引き DNS 由来で動的に決まります。"
   warn "  新しいマシンでは先にホスト名を固定してください:"
   warn "     sudo scutil --set HostName <Yosukes-Mac-Studio 等>"
   warn "  そのうえで flake.nix の darwinConfigurations に同名の attr を追加してから再実行します。"
-  warn "  （Nix 未導入の初回はこの照合自体ができないため、この警告は無視して構いません）"
+  warn "  （Nix 未導入・dotfiles-private 未 clone の初回はこの照合自体ができないため、この警告は無視して構いません）"
 fi
 
 if xcode-select -p &>/dev/null; then
@@ -147,9 +148,24 @@ fi
 
 # ── Step 2: nix-darwin の適用 ─────────────────────────────────────────
 step 2 "nix-darwin のビルドと適用（macOS defaults もここで適用）"
+# 個人の Mac の構成は dotfiles-private の flake にあるので、switch の前に clone する。
+# gh は switch で入るので、初回は nixpkgs の gh を一時的に使う。
+if [[ -d "$PRIVATE_DIR/.git" ]]; then
+  ok "$PRIVATE_DIR は既に存在します"
+elif command -v nix &>/dev/null && ask "dotfiles-private を clone しますか？（switch に必要。gh の認証を求められます）"; then
+  gh_cmd=(gh)
+  command -v gh &>/dev/null || gh_cmd=(nix run nixpkgs#gh --)
+  { "${gh_cmd[@]}" auth status &>/dev/null || "${gh_cmd[@]}" auth login; } \
+    && "${gh_cmd[@]}" repo clone YosukeIida/dotfiles-private "$PRIVATE_DIR" \
+    && ok "clone 完了" \
+    || warn "dotfiles-private の clone に失敗（switch はできません）"
+else
+  warn "dotfiles-private が無いので switch できません（clone してから再実行してください）"
+fi
 if command -v darwin-rebuild &>/dev/null; then
   if ask "darwin-switch を実行しますか？"; then
-    sudo darwin-rebuild switch --flake "$DOTFILES_DIR#$DARWIN_HOST" \
+    sudo darwin-rebuild switch --flake "$PRIVATE_DIR#$DARWIN_HOST" \
+      --override-input dotfiles "git+file://$DOTFILES_DIR" \
       && ok "nix-darwin 完了（agenix が secret を ~/.config 等へ配置）" \
       || warn "nix-darwin 失敗（続行します）"
   else
@@ -159,7 +175,8 @@ else
   warn "darwin-rebuild が未導入です（初回はこれが正常）。"
   if command -v nix &>/dev/null && ask "初回の nix-darwin 適用を実行しますか？（nix run 経由・初回のみ）"; then
     # ブランチは flake.nix の nix-darwin input と揃えること（ズレると別バージョンで初回適用される）。
-    sudo nix run nix-darwin/nix-darwin-26.05#darwin-rebuild -- switch --flake "$DOTFILES_DIR#$DARWIN_HOST" \
+    sudo nix run nix-darwin/nix-darwin-26.05#darwin-rebuild -- switch --flake "$PRIVATE_DIR#$DARWIN_HOST" \
+      --override-input dotfiles "git+file://$DOTFILES_DIR" \
       && ok "初回 nix-darwin 適用が完了（以後は darwin-switch コマンドが使えます）" \
       || warn "初回 nix-darwin 適用に失敗（Nix 導入・agenix 鍵・Homebrew を確認して再実行）"
   else
@@ -168,7 +185,7 @@ else
 fi
 
 # ── Step 3: private overlay（個人 skills）の clone ────────────────────
-step 3 "skills リポジトリの取得（dotfiles-private / personal-agent-skills）"
+step 3 "skills リポジトリの取得（personal-agent-skills）"
 # gh は darwin-switch（Step 2）でしか入らないため、初回はここで未導入 or 未認証のことがある。
 # Step 3/4 は gh を使うので、認証だけ先に済ませる。
 if command -v gh &>/dev/null; then
@@ -182,16 +199,6 @@ if command -v gh &>/dev/null; then
 else
   warn "gh が未導入（Step 2 完了後に再実行すると使えます）"
 fi
-if [[ -d "$PRIVATE_DIR/.git" ]]; then
-  ok "$PRIVATE_DIR は既に存在します"
-elif command -v gh &>/dev/null && ask "gh で dotfiles-private を clone しますか？（HTTPS）"; then
-  gh repo clone YosukeIida/dotfiles-private "$PRIVATE_DIR" \
-    && ok "clone 完了。darwin-switch を再実行すると skills が symlink されます" \
-    || warn "clone 失敗（gh auth login 済みか確認）"
-else
-  skip "private overlay の clone（個人 skills が無くても本体は動作します）"
-fi
-
 # 自作の公開 skills。activation（yosuke/common.nix）が skillsPubDir を symlink 元にするが、
 # clone が無いと「リンク切れが自動掃除されるだけ」で静かに skills が丸ごと欠ける。
 if [[ -d "$SKILLS_PUB_DIR/.git" ]]; then
@@ -253,14 +260,13 @@ echo "  bootstrap 完了"
 echo ""
 echo "  初回の推奨順序（各ステップは前段の完了を前提とする）:"
 echo "    Step 0 → Nix / Homebrew を導入 → 新しいシェルを開く"
-echo "    Step 2 → 初回 nix-darwin 適用（darwin-rebuild が使えるようになる）"
-echo "    → gh auth login → Step 3（private clone）→ Step 4（SSH 化）"
+echo "    Step 2 → dotfiles-private の clone と初回 nix-darwin 適用（darwin-rebuild が使えるようになる）"
+echo "    → Step 3（personal-agent-skills の clone）→ Step 4（SSH 化）"
 echo "    → Raycast 導入後に Step 5（.rayconfig import）を再実行"
 echo ""
 echo "  個別に再実行できます:"
 echo "    Step 2: darwin-switch"
-echo "    Step 3: gh repo clone YosukeIida/dotfiles-private $PRIVATE_DIR"
-echo "            gh repo clone YosukeIida/personal-agent-skills $SKILLS_PUB_DIR"
+echo "    Step 3: gh repo clone YosukeIida/personal-agent-skills $SKILLS_PUB_DIR"
 echo "            → darwin-switch"
 echo "    Step 4: gh ssh-key add ~/.ssh/id_ed25519.pub && git remote set-url ..."
 echo ""

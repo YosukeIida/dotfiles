@@ -1,21 +1,21 @@
 # dotfiles
 
-Yosuke の Mac 環境の本体 flake（nix-darwin・home-manager・Homebrew・agenix）。**public repo**。
+Mac の nix-darwin・home-manager・Homebrew の共通層と、agent の設定の本体。**public repo**。Yosuke の Mac 2 台と秘書の VM の構成は `../dotfiles-private` の flake にあり、この repo を flake input として使う。
 
 ## public / private の境界
 
 - ここには公開できるものだけを置く。公開したくない自作 skill・経験知・調査記録・研究室 skill の vendor は `../dotfiles-private`（private repo）にある。判断に迷ったら private 側に置く（後から public へ昇格できる）
 - public flake は private へのアクセスなしで評価できること。private なソースを flake input にしない（公開 CI が壊れる）。private なものは実行時の存在チェックで任意化する
-- `nix/hosts/darwin/common/` は他人も fork して使う層、`nix/hosts/darwin/yosuke/` は Yosuke 専用の層（`common.nix` が全機共通、`macbook-air.nix` / `mac-studio.nix` が機種固有）。個人の値を common/ に入れない
-- 秘密値は agenix（`secrets/*.age`）で持つ
+- `nix/hosts/darwin/common/` は他人も fork して使う層で、`darwinFunctions.common` として export する。個人の値を入れない。Yosuke 専用の層は `dotfiles-private` の `nix/hosts/yosuke/`（`common.nix` が全機共通、`macbook-air.nix` / `mac-studio.nix` が機種固有）
+- 秘密値は agenix の暗号文（`secrets/*.age`）と recipients（`secrets/secrets.nix`）でここに持ち、`dotfiles-private` の `nix/hosts/yosuke/secrets.nix` が参照する。`agenix -e` / `-r` はこの repo の `secrets/` で行う
 
 ## private への実行時依存
 
 public 側のコードが private の実体を前提にしている箇所。private 側の構成を変えるときはここを確認する。
 
-- 経験知: `claude/hooks/experience-inject.sh` が `EXPERIENCE_DIR`（`nix/hosts/darwin/yosuke/common.nix` で `dotfiles-private/experience` を指す）を読み、`~/.claude/experience-index.md` を生成する
+- 経験知: `claude/hooks/experience-inject.sh` が `EXPERIENCE_DIR`（`dotfiles-private` の `nix/hosts/yosuke/common.nix` で `dotfiles-private/experience` を指す）を読み、`~/.claude/experience-index.md` を生成する
 - private skills: `yosuke/common.nix` の postActivation が `dotfiles-private/agents/skills/*` を `~/.claude/skills`・`~/.codex/skills` へ symlink する
-- knowledge: `agents/AGENTS.md` が `~/workspace/github.com/YosukeIida/knowledge/index.md` を @import し、`KNOWLEDGE_DIR`（`yosuke/common.nix`）を wrap-up skill が読む
+- knowledge: 目録は置かない。`claude/hooks/knowledge-recall.py` が `KNOWLEDGE_DIR`（`yosuke/common.nix`）のノートを作業中の語で引いて差し込み、wrap-up skill も同じ変数を読む
 
 ## skill の置き場所
 
@@ -35,5 +35,5 @@ public 側のコードが private の実体を前提にしている箇所。priv
 
 - `~/.claude/` と `~/.codex/` の設定ファイルの多くはこの repo への symlink で、定義は `nix/hosts/darwin/common/default.nix` と `yosuke/common.nix` の postActivation が正。`/plugin install` などによる `~/.claude/settings.json` の書き換えはこの repo の `claude/settings.json` に直接入るので、`git status` に出た差分は user に報告する
 - plugin は `claude/settings.json` の `enabledPlugins` が正で、`claude/install-plugins.sh` が `darwin-switch` 時に同期する（削除も追従する）
-- `darwin-switch` の実体は `sudo darwin-rebuild switch --flake .#<attr>`。attr 名は各機の `hostname -s` と一致させる
+- `darwin-switch` の実体は `sudo darwin-rebuild switch --flake <dotfiles-private>#<attr> --override-input dotfiles git+file://<この repo>`。attr 名は各機の `hostname -s` と一致させる。この repo の nix の変更も、private の flake を通して効く
 - Claude Code / Codex のアカウント切替は `tools/agent-switch/`（設計と検証記録は同 README）

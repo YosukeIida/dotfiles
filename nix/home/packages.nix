@@ -97,7 +97,7 @@ in
     # libs/lume/src/Telemetry/TelemetryClient.swift）。
     LUME_TELEMETRY_ENABLED = "false";
     # HF_HOME は機ごとに置き場所が変わりうるので、ここ（他人も fork して使う共通層）
-    # ではなく nix/hosts/darwin/yosuke/common.nix に置いてある。
+    # ではなく dotfiles-private の nix/hosts/yosuke/common.nix に置いてある。
   };
 
   # figma-console-mcp の Desktop Bridge プラグインを安定パスへ実体コピーする。

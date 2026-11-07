@@ -11,6 +11,7 @@
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    # public では使わない。private の flake に agenix の input を持たせない: 版が public とずれ、lock が二重になる
     agenix.url = "github:ryantm/agenix";
     agenix.inputs.nixpkgs.follows = "nixpkgs";
   };
@@ -21,7 +22,6 @@
       nixpkgs,
       nixpkgs-unstable,
       home-manager,
-      agenix,
       ...
     }:
     let
@@ -32,32 +32,6 @@
       python = if pkgs ? python313 then pkgs.python313 else pkgs.python3;
       uv = if pkgs ? uv then pkgs.uv else pkgs.python3Packages.uv;
       nodejs = if pkgs ? nodejs_22 then pkgs.nodejs_22 else pkgs.nodejs;
-
-      # Yosuke の Mac 1台分の構成。共通の個人設定（yosuke/common.nix）に
-      # 機種固有モジュールを重ねる。darwinHost は darwin-switch / darwin-update が
-      # 指す flake attribute 名で、attr 名と同じ値を渡す。
-      mkYosukeHost =
-        darwinHost: hostModule:
-        nix-darwin.lib.darwinSystem {
-          inherit system;
-          modules = [
-            home-manager.darwinModules.home-manager
-            (import ./nix/hosts/darwin/common {
-              username = "yosuke";
-              homedir = "/Users/yosuke";
-              inherit pkgsUnstable;
-            })
-            agenix.darwinModules.default
-            # agenix CLI（`agenix -e` の編集・`agenix -r` の recipient 追加時の再暗号化に使う）。
-            # nixpkgs には収録されていないため flake input のパッケージを直接入れる。
-            # home.packages ではなくここに置くのは、agenix を import する host だけの依存で、
-            # 他者向けの example 構成や共通 home 層に持ち込みたくないため。
-            { environment.systemPackages = [ agenix.packages.${system}.default ]; }
-            ./nix/hosts/darwin/yosuke/secrets.nix
-            (import ./nix/hosts/darwin/yosuke/common.nix { inherit darwinHost; })
-            hostModule
-          ];
-        };
     in
     {
       formatter.${system} = pkgs.writeShellApplication {
@@ -90,40 +64,11 @@
             (import ./nix/hosts/darwin/common {
               username = "example";
               homedir = "/Users/example";
+              darwinPublicConfigDir = "/Users/example/workspace/dotfiles";
               inherit pkgsUnstable;
             })
           ];
         };
-
-        # OpenClaw 秘書を閉じ込める Lume の macOS VM（設計は dotfiles-private の
-        # docs/2026-10-02_secretary-agent-base-selection.md）。example と同じく共通層だけを使い、
-        # 個人の層（yosuke/common.nix: agenix の secret、Tailscale の自動接続、WARP、個人の Mac のアプリ）は入れない。
-        # VM だけで使うもの（Office・OpenClaw.app など）は profiles/darwin/secretary.nix に置く。
-        # VM の HostName は `sudo scutil --set HostName secretary` で固定する。
-        secretary = nix-darwin.lib.darwinSystem {
-          inherit system;
-          modules = [
-            home-manager.darwinModules.home-manager
-            (import ./nix/hosts/darwin/common {
-              username = "lume";
-              homedir = "/Users/lume";
-              inherit pkgsUnstable;
-            })
-            (import ./nix/profiles/darwin/secretary.nix {
-              username = "lume";
-              homedir = "/Users/lume";
-              privateDir = "/Users/lume/workspace/github.com/YosukeIida/dotfiles-private";
-            })
-          ];
-        };
-      }
-      # Yosuke の各 Mac。attr 名は必ずその機の `hostname -s` と一致させること
-      # （apply.sh が hostname -s で attr を引く）。macOS の hostname -s は HostName が
-      # 未設定だと DHCP/逆引き DNS 由来で動的に決まるので、新機では
-      # `sudo scutil --set HostName <name>` で固定してから登録する。
-      // builtins.mapAttrs mkYosukeHost {
-        "Yosukes-MacBook-Air" = ./nix/hosts/darwin/yosuke/macbook-air.nix;
-        "Yosukes-Mac-Studio" = ./nix/hosts/darwin/yosuke/mac-studio.nix;
       };
 
       devShells.${system} = {

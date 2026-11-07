@@ -1,7 +1,8 @@
 {
   username ? "user",
   homedir ? "/Users/${username}",
-  darwinPublicConfigDir ? "/Users/${username}/workspace/github.com/YosukeIida/dotfiles",
+  darwinPublicConfigDir,
+  agentInstructionsFile ? "${darwinPublicConfigDir}/agents/AGENTS.md",
   pkgsUnstable,
   ...
 }:
@@ -107,15 +108,15 @@
     su - ${username} -c "cd $pub && git config filter.strip-selected.clean '${pkgs.gawk}/bin/awk -f \"\$(git rev-parse --show-toplevel)/karabiner/git-filters/strip-selected-clean.awk\"' && git config filter.strip-selected.smudge cat" || true
     # Claude Code
     # settings.json / settings.api.json とその git clean filter は **ここには無い** —
-    # nix/hosts/darwin/yosuke/common.nix に移した（2026-08-24、監査 2026-07-08 の指摘）。
+    # dotfiles-private の nix/hosts/yosuke/common.nix に移した（2026-08-24、監査 2026-07-08 の指摘）。
     # 中身が個人の permissions・model・hook のパスなので、fork 層で配ると
     # 他者環境で毎 SessionStart に「そのファイルは無い」と言われ続ける。
     # 下の statusline 等は settings.json から参照されるだけの部品なので common に残す。
     _link "$pub/claude/get_key.sh"                 "$home/.claude/get_key.sh"
     _link "$pub/claude/statusline.sh"              "$home/.claude/statusline.sh"
     _link "$pub/claude/subagent-statusline.sh"     "$home/.claude/subagent-statusline.sh"
-    _link "$pub/agents/AGENTS.md"                  "$home/.claude/CLAUDE.md"
-    _link "$pub/agents/AGENTS.md"                  "$home/.codex/AGENTS.md"
+    _link "${agentInstructionsFile}"                "$home/.claude/CLAUDE.md"
+    _link "${agentInstructionsFile}"                "$home/.codex/AGENTS.md"
 
     # public skills を ~/.claude/skills/ に展開
     # ~/.claude/skills が symlink なら実ディレクトリに移行
