@@ -6,7 +6,7 @@
 #   - 非対話シェル（zsh -c / bash / sh）からの起動
 #   - Orca などが自プロセスの env のまま spawn した codex
 #     （launchd agent の PATH 先頭にこの shims dir を置いてあるのはこのため。
-#      nix/hosts/darwin/yosuke/mac-studio.nix の launchd.user.agents.orcaApp 参照）
+#      dotfiles-private の nix/hosts/yosuke/mac-studio.nix の launchd.user.agents.orcaApp 参照）
 #   - 関数が定義される前に起動していた古いシェル
 # では関数側の処理（MCP サーバ用 node の PATH 注入）が効かない。
 # シムは実行可能ファイルなのでシェルの種類に依存せず、PATH を継承した子プロセスにも効く。

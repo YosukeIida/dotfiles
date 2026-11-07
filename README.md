@@ -1,7 +1,7 @@
 # dotfiles
 
-Yosuke の Mac 環境の本体 flake。nix-darwin / home-manager・Homebrew・agenix シークレットを
-一元管理する。設計や運用の詳細は [`AGENTS.md`](./AGENTS.md) と [`docs/`](./docs/) を参照。
+Mac の nix-darwin / home-manager・Homebrew の共通層と、agent の設定の本体。Yosuke の Mac の構成は
+private の repo（dotfiles-private）の flake にあり、この repo を flake input として使う。設計や運用の詳細は [`AGENTS.md`](./AGENTS.md) と [`docs/`](./docs/) を参照。
 
 ---
 
@@ -50,7 +50,7 @@ brew-upgrade-all     # brew の一括更新
 
 秘密値（SSH config・Cloudflare token・Headscale IP・プリンタ・Raycast パスワード・Figma PAT・
 Anthropic API キー）は [`secrets/*.age`](./secrets/) に暗号化して置き、`darwin-switch` 時に
-`~/.config` 等の安定パスへ復号配置する。詳細は [`nix/hosts/darwin/yosuke/secrets.nix`](./nix/hosts/darwin/yosuke/secrets.nix)。
+`~/.config` 等の安定パスへ復号配置する。暗号文を参照する module は private の repo の `nix/hosts/yosuke/secrets.nix` にある。
 
 - 復号 identity は `~/.ssh/id_ed25519` と `~/.config/agenix/key.txt`（Bitwarden 保管の共通鍵）の
   いずれか。2 台目を足すときはその公開鍵を [`secrets/secrets.nix`](./secrets/secrets.nix) の
@@ -61,13 +61,12 @@ Anthropic API キー）は [`secrets/*.age`](./secrets/) に暗号化して置�
 
 ## 他の人がこのリポジトリを使う場合
 
-このリポジトリは公開しているが、`nix/hosts/darwin/yosuke/` 以下（`Yosukes-MacBook-Air` /
-`Yosukes-Mac-Studio`）は Yosuke 専用。他の人は **`darwinConfigurations.example`**
+このリポジトリの構成は **`darwinConfigurations.example`** だけである。他の人はこれ
 （agenix を import しない構成）を土台にし、fork して以下を自分の値に書き換える:
 
-- [`flake.nix`](./flake.nix) の `example`: `username` / `homedir`
-- [`nix/hosts/darwin/common/default.nix`](./nix/hosts/darwin/common/default.nix) 冒頭の
-  `darwinPublicConfigDir` の既定パス（自分の clone 先に）
+- [`flake.nix`](./flake.nix) の `example`: `username` / `homedir` / `darwinPublicConfigDir`（自分の clone 先）
+- agent の指示（`~/.claude/CLAUDE.md`・`~/.codex/AGENTS.md`）は既定で [`agents/AGENTS.md`](./agents/AGENTS.md) を指す。
+  自分の指示を使うなら、共通層に `agentInstructionsFile` を渡す
 - git identity は [`git/gitconfig`](./git/gitconfig) が `~/.gitconfig.local` を `[include]` する
   形なので、`~/.gitconfig.local` に自分の `[user]` を書けばよい（Yosuke の identity は入らない）
 
