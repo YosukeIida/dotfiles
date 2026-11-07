@@ -87,5 +87,21 @@ if [[ "$_real" -ef "$_self" ]]; then
   exit 127
 fi
 
+# 4. 指示ファイルの `@` の参照を展開して ~/.codex/AGENTS.md に書く。Codex は `@` を展開せず、
+#    experience の索引（起動した repo ごとに変わる）と phrasing が届かないため。
+#    SessionStart の hook で渡さない: Codex は約 2,500 トークンを超える hook の出力を切る。
+_dotfiles="$(cd -- "$_self_dir_phys/../../.." && pwd -P)"
+if [[ -f "$HOME/.claude/CLAUDE.md" && -f "$_dotfiles/agents/render-instructions.sh" ]]; then
+  bash "$_dotfiles/claude/hooks/experience-inject.sh" </dev/null >/dev/null 2>&1 || true
+  # mv で置き換える: 前の版の ~/.codex/AGENTS.md は repo の AGENTS.md への symlink で、> で書くと repo を書き換える
+  if _tmp="$(mktemp "$HOME/.codex/AGENTS.md.XXXXXX")"; then
+    if bash "$_dotfiles/agents/render-instructions.sh" "$HOME/.claude/CLAUDE.md" >"$_tmp"; then
+      mv -f "$_tmp" "$HOME/.codex/AGENTS.md"
+    else
+      rm -f "$_tmp"
+    fi
+  fi
+fi
+
 # argv[0] は "codex" のまま渡す（Orca の agent 検出や ps を見るスクリプトのため）。
 exec -a codex "$_real" "$@"

@@ -116,7 +116,6 @@
     _link "$pub/claude/statusline.sh"              "$home/.claude/statusline.sh"
     _link "$pub/claude/subagent-statusline.sh"     "$home/.claude/subagent-statusline.sh"
     _link "${agentInstructionsFile}"                "$home/.claude/CLAUDE.md"
-    _link "${agentInstructionsFile}"                "$home/.codex/AGENTS.md"
 
     # public skills を ~/.claude/skills/ に展開
     # ~/.claude/skills が symlink なら実ディレクトリに移行
