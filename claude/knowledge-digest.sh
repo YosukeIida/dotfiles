@@ -5,7 +5,7 @@
 #
 # 使い方: knowledge-digest.sh <transcript.jsonl> [--dry-run]
 #   --dry-run: 区切った入力を $STATE/dry-run/ に書き出すだけで、claude は呼ばない
-# 環境変数 KNOWLEDGE_DIGEST_MAX_7D=<%> を渡すと、7日の使用率がそこに達した時点で止まる（終了コード 3）
+# 7日の使用率が、リセットの時刻にちょうど 100% になる線（経過時間に比例、1 時間ごとに上がる）を上回ったら止まる（終了コード 3）
 set -euo pipefail
 
 K="${KNOWLEDGE_DIR:?KNOWLEDGE_DIR が未設定}"
@@ -87,11 +87,14 @@ prompt=${prompt//SID/$sid}; prompt=${prompt//NOW/$(date +%Y-%m-%dT%H:%M:%S%z | s
 
 for chunk in "$work"/chunk-*.txt; do
   [ -f "$chunk" ] || continue
-  if [ -n "${KNOWLEDGE_DIGEST_MAX_7D:-}" ]; then
-    # 使用率はステータスラインの取得とキャッシュ（5分）に任せる
-    echo '{}' | bash "$(dirname "$0")/statusline.sh" >/dev/null 2>&1 || true
-    u=$(jq -r '.seven_day.utilization // empty' "${TMPDIR:-/tmp}/claude-sl/ClaudeCodecredentials.json" 2>/dev/null | cut -d. -f1)
-    if [ -n "$u" ] && [ "$u" -ge "$KNOWLEDGE_DIGEST_MAX_7D" ]; then echo "7日の使用率が ${u}% で、上限 ${KNOWLEDGE_DIGEST_MAX_7D}% に達したので止める" >&2; exit 3; fi
+  # 使用率はステータスラインの取得とキャッシュ（5分）に任せる
+  echo '{}' | bash "$(dirname "$0")/statusline.sh" >/dev/null 2>&1 || true
+  read -r u reset < <(jq -r '.seven_day | "\(.utilization // "" | tostring | split(".")[0]) \(.resets_at // "" | sub("\\.[0-9]+";"") | sub("\\+00:00$";"Z") | fromdateiso8601)"' \
+    "${TMPDIR:-/tmp}/claude-sl/ClaudeCodecredentials.json" 2>/dev/null) || true
+  if [ -n "${u:-}" ] && [ -n "${reset:-}" ]; then
+    h=$(( ($(date +%s) - (reset - 7*24*3600)) / 3600 ))
+    line=$(( h * 100 / 168 ))
+    if [ "$u" -gt "$line" ]; then echo "7日の使用率が ${u}% で、経過 ${h}/168 時間の線 ${line}% を上回ったので止める" >&2; exit 3; fi
   fi
   b=$(basename "$chunk" .txt); a=$(echo "$b" | cut -d- -f2 | sed 's/^0*//'); z=$(echo "$b" | cut -d- -f3 | sed 's/^0*//')
   bytes=$(wc -c < "$chunk" | tr -d ' ')

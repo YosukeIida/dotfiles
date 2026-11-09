@@ -765,7 +765,6 @@ in
       EnvironmentVariables = {
         LANG = "en_US.UTF-8";
         KNOWLEDGE_DIR = "${homedir}/workspace/github.com/YosukeIida/knowledge";
-        KNOWLEDGE_DIGEST_MAX_7D = "48";
         PATH = "${homedir}/.nix-profile/bin:/etc/profiles/per-user/${username}/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin";
       };
       StandardOutPath = "${homedir}/Library/Logs/knowledge-digest.log";
