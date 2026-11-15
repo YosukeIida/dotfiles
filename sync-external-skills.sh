@@ -73,7 +73,7 @@ WRITING_QUOTATION_REV="3b039715d24b401eb3495dd4154ce9b6f39b3c68"
 # 単体でも自動発動する。パッチ不要。
 GRILLING_REPO="mattpocock/skills"
 GRILLING_PATH="skills/productivity/grilling/SKILL.md"
-GRILLING_REV="95249b0b49782349740fd9b8c6ce32b4e59e497a"
+GRILLING_REV="7739eaed7f8f3915437a8def198a6d0d7206dbc7"
 
 # domain-modeling: GLOSSARY.md（2026-10 に upstream が CONTEXT.md から改名）/ ADR の執筆規律。SKILL.md 本文が同ディレクトリの
 # ADR-FORMAT.md / GLOSSARY-FORMAT.md を相対参照するため、この2ファイルも一緒に vendor
