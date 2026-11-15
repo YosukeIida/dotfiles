@@ -25,7 +25,7 @@
   # Use Touch ID for sudo.
   security.pam.services.sudo_local.touchIdAuth = true;
 
-  # Keep Touch ID sudo working inside tmux.
+  # Keep Touch ID sudo working in terminals detached from the GUI session (multiplexers, herdr-core).
   security.pam.services.sudo_local.reattach = true;
 
   # macOS defaults managed by nix-darwin.

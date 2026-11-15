@@ -56,7 +56,6 @@ in
     poppler-utils
     python3Packages.twscrape
     rclone
-    tmux
     tree
     uv
     zig

@@ -25,7 +25,6 @@ in
     ".config/ghostty/config".source = lnk "ghostty/config";
     ".config/direnv/direnvrc".source = lnk "direnv/direnvrc";
     ".config/direnv/direnv.toml".source = lnk "direnv/direnv.toml";
-    ".config/tmux/tmux.conf".source = lnk "tmux/tmux.conf";
     ".config/nvim/init.lua".source = lnk "nvim/init.lua";
 
     # Karabiner-Elements は GUI で設定変更すると karabiner.json を一時ファイル→rename で
