@@ -14,7 +14,6 @@
 # Claude Code 自身が /model や /plugin のたびにキー順を変えて書き込むため、キー順は
 # 無視しないと model 以外の理由で誤警告が出る。
 #
-# settings.api.json は生成物のためgit管理から除外（untracked）。dirty判定の対象外。
 
 DOTFILES="$HOME/workspace/github.com/YosukeIida/dotfiles"
 MODEL_FILES=(claude/settings.json)

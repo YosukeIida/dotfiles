@@ -95,6 +95,26 @@ if [[ "$_real" -ef "$_self" ]]; then
   exit 127
 fi
 
+# 4. api モード（cc api が export する AGSW_CLAUDE_MODE）は起動時の --settings で重ねる。
+#    settings.json の差し替えにしないのは、全端末と起動中のセッションまで巻き込むため。
+#    overlay に無い plugin は false で明示する（--settings の false は下位の true を上書きする。
+#    2.1.325 の `claude plugin list` で確認）。
+if [[ "${AGSW_CLAUDE_MODE:-sub}" == api ]]; then
+  _cfg="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+  _overlay="$_cfg/api-mode-overlay.json"
+  if [[ ! -f "$_overlay" ]]; then
+    echo "agent-switch claude shim: api モードの overlay がありません（$_overlay）。darwin-switch で張られます。" >&2
+    exit 1
+  fi
+  _live="$_cfg/settings.json"; [[ -f "$_live" ]] || _live=/dev/null
+  if ! _api_settings="$(jq -cn --slurpfile live "$_live" --slurpfile ov "$_overlay" \
+    '($live[0] // {}) as $l | $ov[0] | .enabledPlugins = (($l.enabledPlugins // {} | map_values(false)) + (.enabledPlugins // {}))')"; then
+    echo "agent-switch claude shim: api モードの設定を組み立てられませんでした（$_overlay）。" >&2
+    exit 1
+  fi
+  set -- --settings "$_api_settings" "$@"
+fi
+
 # argv[0] は "claude" のまま渡す（zsh 関数版の `command claude` と同じ見え方を保つ。
 # Orca の agent 検出や ps を見るスクリプトの挙動を変えないため）。
 exec -a claude "$_real" "$@"

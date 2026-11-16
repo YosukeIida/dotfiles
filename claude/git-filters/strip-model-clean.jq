@@ -1,4 +1,4 @@
-# git clean filter: settings.json / settings.api.json の "model" / "effortLevel" キーを
+# git clean filter: settings.json の "model" / "effortLevel" キーを
 # git のオブジェクトに保存する直前に取り除く。
 #
 # 効果: worktree 上の実ファイルは /model・/fast 等のコマンドで自由に書き換えられるが、

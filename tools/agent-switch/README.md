@@ -135,8 +135,8 @@ cc                # 状態表示
 cc list           # プロファイル一覧（* = このシェル）
 cc personal       # このターミナルを personal に切替
 cc labteam        # デフォルトに戻す（= unset。App/拡張と同じ認証）
-cc api            # API keyモードに切替
-cc personal sub   # personal + subscriptionモード
+cc api            # このターミナルを API key モードに切替（新しいターミナルは sub）
+cc personal sub   # このターミナルを personal + subscription モードに
 ```
 
 > **`cc app` は存在しない。** `cx app` に相当する機能が Claude には無いため、`cc app <name>` は
@@ -159,6 +159,8 @@ cc personal sub   # personal + subscriptionモード
 | `<name> api\|sub` | アカウント + モード | — |
 
 **アカウント（`personal` / `labteam` …）はサブスクの軸、`api` / `sub` はモードの軸**で、API キーは1つしかないためモードはアカウントの次元ではない。よって `cc api <name>` のような組み合わせは受け付けない（`cc <name> api` の順で指定する）。
+
+モードは `AGSW_CLAUDE_MODE` の export で、アカウントと同じくそのシェルだけに効く。api のとき、claude シム（`shims/claude`）が起動時に `$CLAUDE_CONFIG_DIR/api-mode-overlay.json` を `--settings` で重ねる。ファイルを書き換えないので、他の端末と起動済みのセッションは影響を受けない。新しい端末の既定を api にするなら `~/.zshenv` に `export AGSW_CLAUDE_MODE=api` を書く。
 
 > 以前の `cc` は全引数を走査するフラグ集合モデルで、語順が無関係だった（`cc api personal` が `cc personal api` と同義）。この緩さが `cc app personal` を黙って `cc personal` として通す原因になったため、`cx` と同じ位置固定に揃えた（2026-07-28）。
 

@@ -58,18 +58,16 @@ cc personal && claude
 | ファイル | 役割 |
 |---|---|
 | `settings.json` | live 設定＝サブスクモードの実体（plugin install 等の書き込みが symlink 経由でここに反映される。**必ず git commit**） |
-| `api-mode-overlay.json` | API モードで live から意図的に変える差分だけを書く（apiKeyHelper、絞った enabledPlugins）。**API モードの設定変更はここを編集** |
-| `settings.api.json` | **生成物・git管理外**（`gen-api-settings.sh` が live + overlay から darwin-switch 時に生成）。手で編集しない |
-| `gen-api-settings.sh` | settings.api.json の生成スクリプト（overlay のトップレベルキーで live を置換） |
+| `api-mode-overlay.json` | API モードで live に重ねる差分（apiKeyHelper、API モードで有効にする enabledPlugins）。**API モードの設定変更はここを編集** |
 | `get_key.sh` | API key 取得ヘルパー（`$CLAUDE_CONFIG_DIR/anthropic.env` を読む） |
 | `statusline.sh` | ステータスライン表示スクリプト |
 | `git-filters/strip-model-clean.py` | git clean filter 本体（`model` キーを除去） |
 
-> モード切替の仕組み: `cc api` は `settings.json` symlink を `settings.api.json`（生成物）へ、
-> `cc sub` は live の `settings.json` へ差し替える。サブスク専用ファイルは存在しない。
-> enabledPlugins はスコープ間で加算マージしかできない（上位で false 無効化は不可）ため、
-> plugin を絞る API モードは「ファイル差し替え」方式が唯一の実現手段。
-> ドリフトは生成方式により恒久解消（2026-07-06）。
+> モード切替の仕組み: `cc api` / `cc sub` はそのシェルの `AGSW_CLAUDE_MODE` を export するだけで、
+> ファイルは書き換えない。api のとき、agent-switch の claude シムが起動時に
+> `--settings` で overlay を重ねる。overlay に無い plugin はシムが `false` にして渡すので、
+> API モードで有効な plugin は overlay の `enabledPlugins` に書いたものだけになる。
+> 新しい端末の既定は sub（`AGSW_CLAUDE_MODE` 未設定）。起動済みのセッションは他の端末の切替の影響を受けない。
 
 > `model` キーは git 管理から除外している: `/model` コマンドで頻繁にローカル書き換えされ、
 > commit するたびに無関係な diff が出るため。`.gitattributes`（`filter=strip-model`）+

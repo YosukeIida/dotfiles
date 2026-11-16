@@ -15,7 +15,7 @@
 #                          デフォルトアカウント名（AGSW_CLAUDE_DEFAULT_NAME、
 #                          既定 labteam）は unset CLAUDE_CONFIG_DIR に相当し、
 #                          App/拡張と同じ認証を使う
-# cc sub / cc api        → 現在のアカウントのモード切替
+# cc sub / cc api        → モード切替（このシェルのみ。AGSW_CLAUDE_MODE を export）
 # cc <name> sub|api      → アカウント + モード同時切替
 #
 # 引数は cx と同じ「1語目がサブコマンド」の位置固定で解釈する。以前は全引数を
@@ -92,43 +92,13 @@ cc() {
     fi
   fi
 
-  # モード切り替え（ln -sf でシンボリックリンクのまま切り替え）
-  # - api: settings.api.json（live + api-mode-overlay.json からの生成物）に差し替え
-  # - sub: live の settings.json（settings.api.json の実体と同じディレクトリ）に戻す。
-  #   サブスク専用ファイルは持たない（live そのものがサブスク設定）。
-  if [[ -n "$mode" ]]; then
-    local config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
-
-    # モード切替は settings.json を書き換えるので、マーカー検査を通す。
-    # cc <name> 経由なら上で検査済みだが、`cc api` 単体は外部から export された
-    # CLAUDE_CONFIG_DIR にそのまま作用するため、ここを塞がないと未管理ディレクトリの
-    # settings.json を symlink で置換できてしまう（2026-07-28 実測）。
-    # 未設定（= デフォルトの ~/.claude）はマーカーを持たないので免除する。
-    if [[ -n "${CLAUDE_CONFIG_DIR:-}" ]]; then
-      _agsw_require_profile "$config_dir" \
-        "$_AGSW_DIR/bin/setup-claude-account ${config_dir##*/}" || return 1
-    fi
-
-    local dst="$config_dir/settings.json"
-    local src
-    case "$mode" in
-      api) src="$config_dir/settings.api.json" ;;
-      sub|subscription)
-        local api_real
-        api_real="$(readlink -f "$config_dir/settings.api.json" 2>/dev/null || true)"
-        if [[ -z "$api_real" || "${api_real%/*}/settings.json" == "$dst" ]]; then
-          echo "Error: live settings の場所を解決できません（$config_dir/settings.api.json を確認。darwin-switch で再生成できます）" >&2
-          return 1
-        fi
-        src="${api_real%/*}/settings.json"
-        ;;
-    esac
-    if [[ ! -e "$src" ]]; then
-      echo "Error: missing $src" >&2
-      return 1
-    fi
-    ln -sf "$src" "$dst"
-  fi
+  # モード切り替え（このシェルのみ）。api の設定は shims/claude が起動時に --settings で
+  # 重ねる。settings.json の symlink を差し替える方式は、全端末と起動中のセッションに
+  # 効いてしまうため採らない（2026-11-17）。
+  case "$mode" in
+    api) export AGSW_CLAUDE_MODE=api ;;
+    sub|subscription) export AGSW_CLAUDE_MODE=sub ;;
+  esac
 
   cc_status
 }
@@ -177,9 +147,7 @@ cc_status() {
   fi
 
   local mode="subscription"
-  local resolved
-  resolved=$(readlink "$config_dir/settings.json" 2>/dev/null || echo "")
-  [[ "$resolved" == *settings.api.json ]] && mode="api"
+  [[ "${AGSW_CLAUDE_MODE:-sub}" == api ]] && mode="api"
 
   local email="(not logged in)" display_name="" org_name=""
   if [[ -f "$json" ]]; then

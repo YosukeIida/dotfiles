@@ -59,8 +59,7 @@ DIR="${AGSW_CLAUDE_HOME_PREFIX:-$HOME/.claude-}$NAME"
 ASSETS_DIR="${AGSW_CLAUDE_ASSETS_DIR:-}"
 
 # assets dir から直接 symlink（各アカウント独立）
-# settings.api.json は生成物（gen-api-settings.sh が live + overlay から生成）
-ASSET_LINKS=(settings.api.json get_key.sh statusline.sh CLAUDE.md)
+ASSET_LINKS=(api-mode-overlay.json get_key.sh statusline.sh CLAUDE.md)
 
 # デフォルトアカウント (~/.claude) から共有する項目
 SHARED_FROM_BASE=(projects skills todos plans history.jsonl CLAUDE.md)

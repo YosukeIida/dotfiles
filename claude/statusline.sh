@@ -148,8 +148,7 @@ if [ -n "$HAS_RL" ]; then
   S7T=$(fmt_hms_unix "$S7R")
   RATE_SOURCE="stdin"
 else
-  _cfg="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
-  if jq -e '.apiKeyHelper' "$_cfg" >/dev/null 2>&1; then
+  if [ "${AGSW_CLAUDE_MODE:-sub}" = api ]; then
     RATE_SOURCE="apikey"
   else
     RATE_SOURCE="api"
