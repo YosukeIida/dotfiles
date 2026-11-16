@@ -139,6 +139,18 @@ fi
 export OMP_PROFILE=personal
 alias omp-personal='OMP_PROFILE=personal omp'
 alias omp-labteam='OMP_PROFILE=labteam omp'
+# Anthropic の API キー（Claude Code の api モードと同じ anthropic.env）で Opus を使う
+alias omp-api='ANTHROPIC_API_KEY="$(sh ~/.claude/get_key.sh)" omp --model anthropic/claude-opus-5-5'
+omp-help() {
+  cat <<EOF
+omp            既定の profile（OMP_PROFILE=${OMP_PROFILE:-未設定}）で起動
+omp-personal   personal の profile で起動
+omp-labteam    labteam の profile で起動
+omp-api        Anthropic の API キー（~/.claude/anthropic.env）で Opus 5.5 を起動
+               別のモデル: omp-api --model anthropic/claude-haiku-5-5
+1 回だけ応答させる: 上のどれかに -p "<質問>" を足す
+EOF
+}
 
 # =====================================================================
 # ==== クリップボード整形 ==============================================
