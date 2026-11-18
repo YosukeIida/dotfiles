@@ -38,6 +38,11 @@ When a repository's documentation and its existing code disagree, follow the con
 - 専門用語・業界用語は言い換えない。読み手が専門外と指定されたときだけ説明を添える。
 - 場面ごとの書き方は、user が実際に直した表現から作った次の一覧に従う: @~/.claude/skills/style-guide/references/phrasing.md
 
+## 結果の出し方
+
+- 結果（診断・監査・計画・調査を含む）は、全文を返答の本文に書く。「md に出しました」とパスを示すだけで終えない。cctag で接続中のセッションでは、返答の本文だけが Slack の相手に届く。
+- 後から参照する大切なこと（結論・判断の根拠・未確認の点）は、本文に書いたうえで md にも残す。置き場所は「記録の置き場」に従う。
+
 ## 実装の方針
 
 - Do not preserve backward compatibility. Remove obsolete paths instead of adding compatibility layers, fallbacks, or migrations.
@@ -50,7 +55,6 @@ When a repository's documentation and its existing code disagree, follow the con
 ## ツールの入れ方
 
 - グローバルな CLI は dotfiles の `nix/home/packages.nix`、Homebrew が要るものは `nix/profiles/darwin/homebrew.nix`、プロジェクト固有のものは各 repo の nix devshell に入れる。反映は `darwin-switch`
-- Node.js / npm をグローバルに入れない（`npm install -g` も素の `npx` も使わない）。node が要るプロジェクトは devshell に閉じ、node 依存の CLI はネイティブバイナリで置き換える
 - Python は uv 経由で使う（`uv run` / `uvx --with <pkg>`）。system python や `pip install --user` は使わない
 
 ## 記録の置き場
