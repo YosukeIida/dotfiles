@@ -333,7 +333,8 @@
     "data@synced": false,
     "ponytail@ponytail": true,
     "yomiyasu@yomiyasu": true,
-    "qa-guide@claude-qamods": true
+    "qa-guide@claude-qamods": true,
+    "cite-resolve@cite-resolve": true
   },
   "extraKnownMarketplaces": {
     "YosukeIida": {
@@ -402,6 +403,13 @@
         "source": "directory",
         "path": "/Users/yosuke/workspace/github.com/YosukeIida/claude_qamods"
       }
+    },
+    "cite-resolve": {
+      "source": {
+        "source": "github",
+        "repo": "TMLlaboratory/cite-resolve"
+      },
+      "autoUpdate": true
     }
   },
   "outputStyle": "Concise",
