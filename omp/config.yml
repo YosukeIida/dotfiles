@@ -3,7 +3,7 @@ composer:
   shape: box
 theme:
   dark: titanium
-setupVersion: 2
+setupVersion: 3
 modelRoles:
   vision: openai-codex/gpt-5.6-luna:max
   web: web/exa
@@ -16,7 +16,8 @@ skills:
   enableAgentsUser: true
   enableAgentsProject: true
 codexResets:
-  autoRedeem: "yes"
+  autoRedeem5h: "yes"
+  autoRedeemWeekly: "yes"
 retry:
   fallbackChains:
     web:
@@ -45,7 +46,8 @@ retry:
       - web/mojeek
       - web/public
       - openai-codex/gpt-6-luna
-      - openai-codex/gpt-5.6
-      - openai-codex/gpt-5.5
+      - openai-codex/gpt-5.6-sol
       - xai-oauth/grok-4.5
       - web/ollama
+update:
+  auto: true
