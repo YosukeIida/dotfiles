@@ -120,6 +120,17 @@ LATEX_DEVKIT_REPO="TMLlaboratory/latex-devkit"
 LATEX_DEVKIT_PATH="skills/latex-devkit/SKILL.md"
 LATEX_DEVKIT_REV="a65e238f463fe5356fb2f785d185bdc30bd827a0"
 
+# nihongo: 日本語の文章を人が書く文に近づける skill（AnIT012/nihongo、MIT）。
+# upstream は marketplace を配らず、skill 本体が repo 内の nihongo/ にあるため vendor する。
+# SKILL.md が references/ と scripts/ を、ALWAYS.md（常駐用の Lite）とともに相対参照するので、
+# nihongo/ の全 26 ファイルを同じ rev で取る。pin は repo の HEAD（複数ファイルを束ねるため。
+# 理由は gws-multi-account と同じ）。ALWAYS.md は取り込むだけで、CLAUDE.md・AGENTS.md には
+# 追記しない（常駐させるかは別の判断）。
+NIHONGO_REPO="AnIT012/nihongo"
+NIHONGO_PATH="nihongo/SKILL.md"
+NIHONGO_EXTRA="nihongo/ALWAYS.md:ALWAYS.md nihongo/references/ai-patterns.md:references/ai-patterns.md nihongo/references/business-email.md:references/business-email.md nihongo/references/conversation.md:references/conversation.md nihongo/references/craft.md:references/craft.md nihongo/references/entry-sheet.md:references/entry-sheet.md nihongo/references/essays-and-promotion.md:references/essays-and-promotion.md nihongo/references/keigo.md:references/keigo.md nihongo/references/make-profile.md:references/make-profile.md nihongo/references/media.md:references/media.md nihongo/references/messaging.md:references/messaging.md nihongo/references/notices.md:references/notices.md nihongo/references/orthography.md:references/orthography.md nihongo/references/personal-profile.md:references/personal-profile.md nihongo/references/register.md:references/register.md nihongo/references/review.md:references/review.md nihongo/references/slides-and-documents.md:references/slides-and-documents.md nihongo/references/speech.md:references/speech.md nihongo/references/technical-writing.md:references/technical-writing.md nihongo/references/titles.md:references/titles.md nihongo/references/translation.md:references/translation.md nihongo/references/ui-copy.md:references/ui-copy.md nihongo/scripts/check_meaning.py:scripts/check_meaning.py nihongo/scripts/revert_broken.py:scripts/revert_broken.py nihongo/scripts/trim_commas.py:scripts/trim_commas.py"
+NIHONGO_REV="c6566777c54751ed6c9bc1666190ed5f2f3a9276"
+
 DEST="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/agents/skills"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -313,6 +324,8 @@ sync_repo_file "gws-multi-account" "$GWS_MULTI_ACCOUNT_REPO" "$GWS_MULTI_ACCOUNT
 sync_repo_file "latex-devkit" "$LATEX_DEVKIT_REPO" "$LATEX_DEVKIT_PATH" "$LATEX_DEVKIT_REV" \
   "Bash(make:*), Bash(docker:*)" \
   'description: latex-devkit を使って LaTeX を Docker でビルドする操作スキル。「PDFをビルドして」「latexでコンパイルして」「ビルドして」などの表現がトリガー。外部リポジトリの papers/ 以下のプロジェクトのビルドにも対応。※既存 LaTeX プロジェクトのビルド専用。サーベイ論文の執筆工程一式（文献収集〜章ドラフト〜PDF 化）は tmllab-academic-survey-paper が担当。'
+sync_repo_file "nihongo" "$NIHONGO_REPO" "$NIHONGO_PATH" "$NIHONGO_REV" \
+  "" "" "" "$NIHONGO_EXTRA"
 # ローカルパッチ: upstream の SKILL.md は accounts.json のマージに裸の `node -e` を
 # 使い、「Claude Code や opencode を動かすマシンには必ず node がある」という前提で
 # 書かれている。この環境には nodeless-policy により裸の node が PATH に無いため、
