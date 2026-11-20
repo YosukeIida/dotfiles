@@ -50,10 +50,11 @@ trap 'rm -rf "$work"' EXIT
 # key は決定に関与しない、あくまで人間向けのラベル)。
 # 登録済みの repo は add しない。add は settings.json の該当エントリを source だけで
 # 書き直し、autoUpdate などのキーを消す（2026-10、Claude Code 2.1.311 で確認）。
-claude plugins marketplace list --json 2>/dev/null | jq -r '.[].repo // empty' | sort >"$work/known.txt" \
+claude plugins marketplace list --json 2>/dev/null | jq -r '.[] | (.repo // .path) // empty' | sort >"$work/known.txt" \
   || : >"$work/known.txt"
+# github は repo、directory（dotfiles の claude/local-marketplace など）は path を add の引数にする
 jq -r '.extraKnownMarketplaces // {} | to_entries[]
-       | select(.value.source.source == "github") | .value.source.repo' "$SETTINGS" \
+       | .value.source | if .source == "github" then .repo elif .source == "directory" then .path else empty end' "$SETTINGS" \
   | sort | comm -23 - "$work/known.txt" \
   | while IFS= read -r repo; do
       [ -n "$repo" ] || continue

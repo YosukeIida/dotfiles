@@ -14,7 +14,7 @@ Herdr app の自作の layout と、それが使う mod。darwin-switch が `ins
 
 - `mods/confirm-close/`: cmd-w で、フォーカスしている pane を閉じる前にダイアログで確かめる。タブの pane が 1 つだけのときはタブを閉じる（iTerm2 と同じ）（Enter で閉じる、Esc でやめる。ダイアログが出ている間にもう一度 cmd-w を押すと、やめる）。同梱の `tab.close` は、space の最後のタブのときしか確かめない。`install.sh` が `keys.json` の `cmd-w` を、同梱の既定の `tab.close` のときだけ `mod.open:confirm-close` に替える。layout によらず効く
 
-- `mods/agents-tree/`: 同梱の `agents`（0.1.13）の複製。別の agent が起動した agent でペインを持つもの（herdr-agent-team の席など）を、親の行の下に通常の行として字下げして並べ、上の階層には出さない（同梱の版は、親の下の木と自分の行の 2 回出す）。同じタブに agent が複数あるときは、各行にタブ名ではなく、herdr-agent-team の席なら label の `herdr-team.role`、それ以外は hc の端末名、名前が無ければ agent のタイトルを出す。同梱の版の更新は自動では入らないので、取り込むときは `cloned_from` の版との diff を読む
+- `mods/agents-tree/`: 同梱の `agents`（0.1.13）の複製。別の agent が起動した agent でペインを持つもの（herdr-agent-team の席など）を、親の行の下に通常の行として字下げして並べ、上の階層には出さない（同梱の版は、親の下の木と自分の行の 2 回出す）。同じタブに agent が複数あるときは、各行にタブ名ではなく、herdr-agent-team の席なら label の `herdr-team.role`、それ以外は hc の端末名、名前が無ければ agent のタイトルを出す。agent が自分の中で動かす sub-agent（Claude Code の Task tool）も、親の行の下に破線の枝と `sub` の表示で並べる（`hookSubs`・`hookRow`）。端末を持たないので、押しても何も開かない。動いている数と経過時間を見るための行である。paddock の hook が親の端末に付ける label `paddock.sub.<app>.<id>` を読む。hook は dotfiles の `claude/settings.json` に登録してある。行を押すと、親の Claude Code の画面をその sub-agent の会話に切り替える。要求のファイル（`~/.config/herdr-app/agent-view/<端末>.json`）を書き、親の pane を前面にし、`hc send` で `/herdr-agent-view` を打つ。受け側は Claude Code の plugin `herdr-agent-view`（`claude/local-marketplace/plugins/`、`enabledPlugins` の `herdr-agent-view@dotfiles-local`）で、`$.ui.view` を呼ぶ。切り替えた親の行を押すと main の画面に戻る（戻す要求は `agentId` なし）。同梱の版の更新は自動では入らないので、取り込むときは `cloned_from` の版との diff を読む
 
 ## 外部の mod
 
@@ -29,7 +29,7 @@ Herdr app の自作の layout と、それが使う mod。darwin-switch が `ins
 
 - 別の agent が起動した agent でペインを持つものを、親の行の下に通常の行（`agentRow` に木の線）として並べ、自分の space の位置には出さない。hc の名前を持つ端末は、行の後半に session ではなく label の `herdr-team.role`（無ければ端末名）を出す（`agents-data.js` の `nested`・`role`、`agents.js`、`main.js` の `agentRows`）。確認は `bun tests/paddock-agents.test.mjs`
 - この Mac の project・機体の行の `+` で、`space.new` に `machine: ""` を渡す（`main.js`・`overlay.js`）。upstream は機体を省いており、Herdr app はクリックで省かれた機体を「選んでいる space の機体」と解釈する。別の機体の space を選んでいると、その機体でこの Mac の folder に端末を起こそうとし、`space.new failed: cannot start a terminal` になった。upstream への PR: https://github.com/choam2426/herdr-paddock/pull/1（取り込まれたら、この変更は upstream の rev を取り込むだけで済む）
-- upstream の `hooks/`（Claude Code・Codex・Pi の内部の sub-agent を label で載せる hook）は取り込んだが、settings.json には登録していない。登録しない間は、内部の sub-agent の行は出ない。`main.js` の `agentRows` は、ペインを持つ席の行（上の変更）と、upstream の内部の sub-agent の行（`joinSubs`）を両方並べる
+- upstream の `hooks/`（Claude Code・Codex・Pi の内部の sub-agent を label で載せる hook）は取り込み、Claude Code の分を dotfiles の `claude/settings.json` に登録した。内部の sub-agent の行は spaces の一覧には出さず（`main.js` の `agentRows` から `joinSubs` を外した）、agents-tree の側だけに出す
 
 `activity` に加えた変更:
 
