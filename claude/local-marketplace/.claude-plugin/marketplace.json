@@ -1,0 +1,14 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "dotfiles-local",
+  "description": "dotfiles で管理する自作の Claude Code plugin",
+  "owner": { "name": "YosukeIida" },
+  "plugins": [
+    {
+      "name": "herdr-agent-view",
+      "description": "Herdr app の agents の行から、押された subagent の会話画面へ切り替える",
+      "version": "0.1.0",
+      "source": "./plugins/herdr-agent-view"
+    }
+  ]
+}

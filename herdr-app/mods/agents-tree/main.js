@@ -8,7 +8,7 @@
 
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
-import { agents, terminals, panes, focused, spaces, run, theme, shared, setShared, setAgentOrder, openOverlay, closeOverlay, props, window, layout } from "herdr";
+import { agents, terminals, panes, focused, spaces, run, theme, shared, setShared, setAgentOrder, openOverlay, closeOverlay, props, window, layout, exec, hc } from "herdr";
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -67,6 +67,23 @@ const kidStatus = (k, listed) => {
   const s = listed.get(k.address) ?? k.status;
   return s === "error" ? "blocked" : s === "done" ? "idle" : s;
 };
+// Sub-agents an agent runs inside itself (Claude Code's Task tool): no terminal, so paddock's
+// hooks put each on the agent's terminal as a label `paddock.sub.<app>.<id>` = {app, type, at}.
+// Older than 12 hours means its hooks never saw it end, so it is skipped.
+function hookSubs(app, labels, now) {
+  const out = [];
+  for (const [k, v] of Object.entries(labels ?? {})) {
+    const m = /^paddock\.sub\.([a-z0-9-]+)\.(.+)$/.exec(k);
+    if (!m || !v) continue;
+    let d;
+    try { d = JSON.parse(v); } catch { continue; }
+    if (!d || typeof d !== "object") continue;
+    const h = { id: m[2], app: typeof d.app === "string" ? d.app : m[1], type: typeof d.type === "string" ? d.type : "", at: Number.isFinite(d.at) ? d.at : 0 };
+    if (h.at && now - h.at >= 12 * 3600000) continue;
+    if (app && (app === h.app || app.startsWith(h.app))) out.push(h);
+  }
+  return out.sort((a, b) => a.at - b.at || a.id.localeCompare(b.id));
+}
 const SORTS = [
   { id: "priority", label: "Priority", icon: "clock" },
   { id: "grouped", label: "Grouped by space", icon: "layers" },
@@ -224,6 +241,56 @@ export default class Agents extends View {
       .child(this.status(t, { status: st }, compact));
   }
 
+  // A sub-agent the agent runs inside itself: a dashed branch and "sub" where a pane-holding
+  // agent's row says its machine. It has no terminal, so terminal.peek can't show it; a click
+  // switches the parent's Claude Code screen to it instead (viewSub).
+  hookRow(t, parent, { h, lines }, now) {
+    const pic = icon(parent.program, 14, t.dim);
+    return h_flex()
+      .id(`hook-${parent.address}-${h.app}-${h.id}`)
+      .pl(39)
+      .pr(8)
+      .rounded(8)
+      .h(26)
+      .flex_none()
+      .gap(0)
+      .items_center()
+      .text_size(12.5)
+      .hover((s) => s.bg(t.hover))
+      .on_click(() => this.viewSub(parent, h))
+      .tooltip(`${h.app} subagent${h.type ? `: ${h.type}` : ""}`)
+      .children(lines.map(l => div().self_start().mt(-4).w(9).h(17).mr(4).flex_none()
+        .when(Boolean(l), el => el.border_l(1.5).border_dashed().border_color(t.input))
+        .when(l === "└" || l === "├", el => el.border_b(1.5).border_dashed().rounded_bl(6))))
+      .when(Boolean(pic), el => el.child(div().mr(8).child(pic)))
+      .child(div().flex_1().truncate().text_color(t.muted).child(h.type || "subagent"))
+      .child(div().flex_none().mr(6).text_size(10.5).text_color(t.dim).child("sub"))
+      .child(div().flex_none().text_size(11).text_color(t.dim).child(h.at > 0 ? duration(now - h.at) : ""));
+  }
+
+  // Writes the request the herdr-agent-view plugin of the parent's Claude Code reads (on the
+  // machine the terminal runs on), brings the parent's pane forward, and types the plugin's command.
+  // `agentId` null switches back to the main conversation.
+  async showView(parent, agentId) {
+    const [machine, id] = parent.address.includes("/") ? parent.address.split("/") : [null, parent.address];
+    const request = JSON.stringify({ ...(agentId ? { agentId } : {}), expiresAt: Date.now() + 15000 });
+    await exec("sh", ["-c", 'd="$HOME/.config/herdr-app/agent-view"; mkdir -p "$d" && printf %s "$1" > "$d/$2.json"', "sh", request, id], { on: machine });
+    if (parent.pane) run("pane.focus", { pane: parent.pane });
+    await hc(["send", parent.address, "/herdr-agent-view"]);
+  }
+
+  // Which parents' screens this mod switched to a sub-agent: a click on the parent's row
+  // switches back only then, so an ordinary click doesn't type the command into the prompt.
+  viewSub(parent, h) {
+    (this.viewing ??= new Set()).add(parent.address);
+    return this.showView(parent, h.id);
+  }
+
+  focusAgent(a) {
+    if (this.viewing?.delete(a.address)) return this.showView(a, null);
+    run("pane.focus", { pane: a.pane });
+  }
+
   // compact: a ! for blocked where a header already says "Needs you".
   status(t, a, compact = false) {
     const color = t[a.status] ?? t.dim;
@@ -268,7 +335,14 @@ export default class Agents extends View {
       const subs = this.tree(all, a.address);
       const r = row(a, i, subs);
       if (this.folded.has(a.address)) return [r];
-      return [r, ...subs.map((s) => byAddr.has(s.t.address) ? row(byAddr.get(s.t.address), i, [], s.lines) : this.subRow(t, s, shown, byPriority))];
+      const hooks = hookSubs(a.app, terms.get(a.address)?.labels, now);
+      // With hook rows below, the last pane-holding row no longer ends the tree.
+      const lines = (s) => !hooks.length ? s.lines : s.lines[0] === "└" ? ["├", ...s.lines.slice(1)] : s.lines.length > 1 && s.lines[0] === "" ? ["│", ...s.lines.slice(1)] : s.lines;
+      return [
+        r,
+        ...subs.map((s) => byAddr.has(s.t.address) ? row(byAddr.get(s.t.address), i, [], lines(s)) : this.subRow(t, { ...s, lines: lines(s) }, shown, byPriority)),
+        ...hooks.map((h, j) => this.hookRow(t, a, { h, lines: [j === hooks.length - 1 ? "└" : "├"] }, now)),
+      ];
     };
 
     // The fold chevron; folded, the count too, colored by the most urgent one.
@@ -330,7 +404,7 @@ export default class Agents extends View {
           .items_center()
           .gap(4)
           .hover((s) => s.bg(t.hover))
-          .on_click(() => run("pane.focus", { pane: a.pane }))
+          .on_click(() => this.focusAgent(a))
           .child(div().flex_1().min_w(0).whitespace_nowrap().text_right().text_color(t.muted).child(String(i + 1)))
           .child(h_flex().w(14).flex_none().items_center().justify_center().child(this.status(t, a, true)));
       }
@@ -378,7 +452,7 @@ export default class Agents extends View {
           else if (this.hovered === a.address) this.hovered = null;
           cx.notify();
         })
-        .on_click(() => run("pane.focus", { pane: a.pane }))
+        .on_click(() => this.focusAgent(a))
         .when(Boolean(pic), el => el.child(div().id(`agent-fold-${a.address}`)
           .when(subs.length > 0, el => el.on_click((_e, cx) => {
             cx.stop_propagation();

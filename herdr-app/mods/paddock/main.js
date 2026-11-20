@@ -10,7 +10,7 @@
 import { View, div, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
 import { spaces, machines, panes, agents, terminals, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, layout, props, home, readTextFile } from "herdr";
-import { agentRow, subRow, tree, byParent, hookSubs, joinSubs, sameApp, nested, role } from "./agents.js";
+import { agentRow, subRow, tree, byParent, nested, role } from "./agents.js";
 import { groupRows, reposToAdd, projectList, addProject, urgent, fromSpaceFolders, placedOf, placeSpace, reorderProject, naturalProject, prunePlaced } from "./projects.js";
 import { Overlay, STORE, store, openMenu, openAdd, newSpaceIn } from "./overlay.js";
 
@@ -554,10 +554,6 @@ export default class Spaces extends View {
     this.term = new Map(all.map((k) => [k.address, k]));
     this.parentOf = new Map(all.map((k) => [k.address, k.parent]));
     this.agentOf = new Map(list.map((a) => [a.address, a]));
-    // Sub-agents an agent runs inside itself, from the labels its hooks put on its terminal.
-    // One its hooks never saw end (the agent killed mid-run) stops showing after 12 hours;
-    // the agent's next session start clears it.
-    this.hooked = new Map(all.map((k) => [k.address, hookSubs(k.labels, now)]).filter(([, h]) => h.length));
     this.listed = new Map(list.map((a) => [a.address, a.status]));
     for (const a of list) {
       (by[a.space] ??= []).push(a);
@@ -597,11 +593,12 @@ export default class Spaces extends View {
     const full = (a, lines = null) => agentRow(a, t, { inset, since: this.changed[a.address]?.at ?? 0, now, lines, termName: role(this.term?.get(a.address)) });
     // Each agent, then the ones it started under it: a full row for one with a pane
     // (it is left out of its own place), a sub-agent's row for a terminal without one
-    // (hc run), then those it runs inside itself (from its hooks).
+    // (hc run). Not the ones it runs inside itself (from its hooks): those are only in the
+    // agents-tree mod, so the spaces list stays a list of terminals.
     return list.filter((a) => !nested(a, this.parentOf ?? new Map(), this.listed ?? new Map())).flatMap((a) => [
       full(a),
-      ...joinSubs(tree(this.kids ?? new Map(), a.address), (this.hooked?.get(a.address) ?? []).filter((h) => sameApp(a.app, h.app)))
-        .map((s) => !s.hook && this.agentOf?.has(s.k.address) ? full(this.agentOf.get(s.k.address), s.lines) : subRow(s, t, { inset, listed: this.listed, parent: a, now })),
+      ...tree(this.kids ?? new Map(), a.address)
+        .map((s) => this.agentOf?.has(s.k.address) ? full(this.agentOf.get(s.k.address), s.lines) : subRow(s, t, { inset, listed: this.listed, parent: a, now })),
     ]);
   }
 

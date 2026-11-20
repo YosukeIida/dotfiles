@@ -1,0 +1,1 @@
+{ "name": "herdr-agent-view", "version": "0.1.0", "description": "Herdr app の agents の行から、押された subagent の会話画面へ切り替える" }
