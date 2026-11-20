@@ -5,7 +5,8 @@
 #
 # 使い方: knowledge-digest.sh <transcript.jsonl> [--dry-run]
 #   --dry-run: 区切った入力を $STATE/dry-run/ に書き出すだけで、claude は呼ばない
-# 7日の使用率が、リセットの時刻にちょうど 100% になる線（経過時間に比例、1 時間ごとに上がる）を上回ったら止まる（終了コード 3）
+# 7日の使用率が 50% を超え、かつリセットの時刻にちょうど 100% になる線（経過時間に比例、1 時間ごとに上がる）を上回ったら止まる（終了コード 3）
+# 線だけで止める方式は採らない: 使用率はリセット直後から線を上回って推移するので、digest がほとんど動かなくなる
 set -euo pipefail
 
 K="${KNOWLEDGE_DIR:?KNOWLEDGE_DIR が未設定}"
@@ -94,7 +95,7 @@ for chunk in "$work"/chunk-*.txt; do
   if [ -n "${u:-}" ] && [ -n "${reset:-}" ]; then
     h=$(( ($(date +%s) - (reset - 7*24*3600)) / 3600 ))
     line=$(( h * 100 / 168 ))
-    if [ "$u" -gt "$line" ]; then echo "7日の使用率が ${u}% で、経過 ${h}/168 時間の線 ${line}% を上回ったので止める" >&2; exit 3; fi
+    if [ "$u" -gt 50 ] && [ "$u" -gt "$line" ]; then echo "7日の使用率が ${u}% で、経過 ${h}/168 時間の線 ${line}% を上回ったので止める" >&2; exit 3; fi
   fi
   b=$(basename "$chunk" .txt); a=$(echo "$b" | cut -d- -f2 | sed 's/^0*//'); z=$(echo "$b" | cut -d- -f3 | sed 's/^0*//')
   bytes=$(wc -c < "$chunk" | tr -d ' ')
