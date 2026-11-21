@@ -141,8 +141,6 @@ in
   # MacBook Air（macbook-air.nix）は、この Mac Studio 側の 18789・18790 へ SSH でさらにつなぐ。
   # 鍵で入る（~/.ssh/id_ed25519.pub を VM の ~/.ssh/authorized_keys に登録しておく）。VM の IP は Lume の NAT の
   # 既定（lume ls の 192.168.64.2）。VM が止まっている間は接続に失敗して、ThrottleInterval ごとに入り直す。
-  # 16768 は VM の Orca の実行環境（6768）への転送。Mac Studio の Orca に environment「secretary-vm」として
-  # ws://127.0.0.1:16768 で登録してある（Orca.app は VM の IP に直接つながらなかったので loopback を通す）。
   launchd.user.agents.secretaryDashboardTunnel = {
     serviceConfig = {
       Label = "com.yosuke.secretary-dashboard-tunnel";
@@ -163,8 +161,6 @@ in
         "127.0.0.1:18789:127.0.0.1:18789"
         "-L"
         "127.0.0.1:18790:127.0.0.1:18790"
-        "-L"
-        "127.0.0.1:16768:127.0.0.1:6768"
         "lume@192.168.64.2"
       ];
       RunAtLoad = true;
@@ -192,100 +188,4 @@ in
       StandardErrorPath = "${homedir}/Library/Logs/secretary-gateway-tailnet-tunnel.log";
     };
   };
-
-  # Orca の runtime を launchd が所有する。GUI（Orca.app）は「別のクライアント」ではなく、
-  # この同じプロセスがウィンドウを開いたものになる。単一インスタンスロックが GUI 起動を
-  # 既存プロセスへの second-instance イベントとして配送し、
-  # shouldActivateDesktopForSecondInstance → desktopActivationGate →
-  # focusExistingMainWindow(openWindow) がウィンドウを開く経路（app.asar の main を読んで
-  # 確認、`open -a Orca` しても pid が変わらないことを実測）。つまりウィンドウを閉じても
-  # runtime は生き続ける。
-  #
-  # 以前は `--serve --serve-pairing-address <tailnet-ip>` で headless runtime server として
-  # 起動していたが、2点の理由でやめて素のデスクトップアプリ起動に変えた
-  # （2026-09-01、実機確認済み）:
-  #
-  # 1. Orca 公式ドキュメント（https://www.onorca.dev/docs/remote-servers）は
-  #    `--serve` を「headless Linux server / VM 向け」と位置づけており、Mac のような
-  #    常設デスクトップ機には「デスクトップアプリを起動したままにして
-  #    Settings → Remote Orca Servers → Advertise this app as a server で
-  #    access link を発行する」方式を推奨している。
-  # 2. 実測で `--serve` 経路は Tailscale 到達性のある LAN/tailnet 内でしかペアリング
-  #    できず、公式の relay server 経由の接続（スマホがモバイル回線のみでもバック
-  #    グラウンド通知が届く）が機能しなかった。素のデスクトップアプリ経由の
-  #    access link ならこの relay 経由の接続も機能することを確認した。
-  #
-  # なお `orca serve`（公式 CLI）を使わず Electron を直接叩いているのは、
-  # Orca 1.4.192 の macOS で `orca serve` が起動時に必ず落ちるバグの回避のため
-  # （CLI が packaged app に ORCA_SERVE_UPDATE_HANDOFF_PATH を常に渡し、
-  # setAppEnvironment() より前に getCanonicalUserDataPath() が走って
-  # "AppEnvironment not initialized" で落ちる）。素のデスクトップアプリ起動には
-  # このバグ自体が関係ない（`orca serve` を経由しないため）が、Electron 直叩きの
-  # ままにして起動経路を単純に保っている。upstream が直ったら `open -a Orca` や
-  # `orca open` に切り替えてもよい。
-  #
-  # 初回セットアップ: darwin-switch 後、Studio の画面で Orca を開き、
-  # Settings → Remote Orca Servers → Share this host → Advertise this app as a
-  # server → Connection address に Tailscale アドレスを選んで Generate Access Link。
-  # この access link は Orca 側のミュータブルな状態（orca-data.json）に保存されるので
-  # nix には焼き込めない。Air・スマホからはこの link で pair する。
-  #
-  # 注意: このウィンドウで Cmd+Q すると runtime ごと
-  # 落ちるので、管理下の terminal / agent が全部死ぬ。しかも KeepAlive を
-  # Crashed = true にしてあるため、Cmd+Q（正常終了）からは復活しない
-  # ── 意図した終了として尊重する。閉じたいだけならウィンドウを閉じる（赤ボタン）。
-  # 常駐に戻すときは `launchctl kickstart gui/$UID/com.yosuke.orca-app`
-  # （pairing 状態は orca-data.json に永続化されているので再ペアリングは不要）。
-  #
-  # 注意（導入順）: 素の Orca.app が既に起動していると単一インスタンスロックを先に
-  # 取られ、launchd 側の Orca は「既存ウィンドウを前面に出して自分は exit 3 で抜ける」
-  # という second-instance の作法で終了する。darwin-switch の前に Orca.app を
-  # 終了しておくこと。
-  launchd.user.agents.orcaApp = {
-    serviceConfig = {
-      Label = "com.yosuke.orca-app";
-      ProgramArguments = [ "/Applications/Orca.app/Contents/MacOS/Orca" ];
-      RunAtLoad = true;
-      # シグナルで落ちたクラッシュだけを復帰させ、終了コードでは判定しない。
-      # single-instance 退出は「既存ウィンドウを前面化して exit」なので、これを再起動すると
-      # 「前面化 → exit → 再起動」が ThrottleInterval（10 秒）周期で回るループになる。
-      # KeepAlive = true では exit 0 で（2026-09-01、runs=56）、SuccessfulExit = false では
-      # Orca がこの退出を exit 3 に変えた後に（2026-09-30、runs=185）発生した。
-      KeepAlive = { Crashed = true; };
-      # 以前の `orca serve` 相当の起動が cwd を app root に固定していたのに倣う
-      # （Electron のリソース解決が process.cwd() を見る経路があるため）。
-      WorkingDirectory = "/Applications/Orca.app/Contents/Resources/app.asar.unpacked";
-      EnvironmentVariables = {
-        # launchd agent は login shell を経ないので hm-session-vars が届かず、LANG が
-        # 無いと Orca 配下で spawn した経路の日本語が MacRoman 化する。
-        LANG = "en_US.UTF-8";
-        # Orca は agent（claude / codex）と git を自分で spawn するので、launchd の
-        # 最小 PATH のままだと nix 側の git や node を見失う。先頭の agent-switch/shims は、
-        # login shell を経ずに spawn された claude / codex にも node の PATH を通すため。
-        PATH = "${homedir}/.local/share/agent-switch/shims:${homedir}/.nix-profile/bin:/etc/profiles/per-user/${username}/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin";
-      };
-      StandardOutPath = "${homedir}/Library/Logs/orca-app.log";
-      StandardErrorPath = "${homedir}/Library/Logs/orca-app.log";
-    };
-  };
-
-  # darwin-switch のたびに Orca を launchd の管理下に置く。RunAtLoad は plist が
-  # 変わって読み直されたときしか走らないので、Cmd+Q 後などジョブが止まったままの状態を
-  # ここで kickstart して戻す。Orca が既に動いているときは kickstart しない
-  # （second-instance で既存ウィンドウを前面化するだけで管理下には入らない）。
-  # 管理外で動いている Orca は、落とすと中の terminal / agent が全部死ぬので
-  # 自動では落とさず、手順を表示するだけにする。
-  system.activationScripts.postActivation.text = ''
-    orca_uid="$(id -u -- ${username})"
-    orca_job="gui/$orca_uid/com.yosuke.orca-app"
-    orca_job_pid="$(launchctl print "$orca_job" 2>/dev/null | awk '$1 == "pid" { print $3; exit }')"
-    if [ -n "$orca_job_pid" ]; then
-      :
-    elif pgrep -x -u "$orca_uid" Orca >/dev/null; then
-      echo "Orca は launchd の管理外で動いています（クラッシュしても自動で起動し直しません）。" >&2
-      echo "  管理下に戻すには Orca を Cmd+Q で終了してから: launchctl kickstart $orca_job" >&2
-    else
-      launchctl kickstart "$orca_job" || true
-    fi
-  '';
 }

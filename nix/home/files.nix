@@ -71,7 +71,7 @@ in
     ".local/share/claude-runtime/bin/node".source = "${pkgs.nodejs}/bin/node";
 
     # claude 起動シム。zsh 関数（lib/claude.zsh の claude()）は対話 zsh でしか
-    # 定義されないため、非対話シェル・bash・Orca/cmux が自プロセスの env のまま
+    # 定義されないため、非対話シェル・bash・cmux が自プロセスの env のまま
     # spawn した claude では node が PATH に入らず、プラグインの hook が
     # `/bin/sh: node: command not found` で落ちていた。実行可能ファイルにすることで
     # シェルの種類に依存せず、PATH を継承した子プロセスにも効く。

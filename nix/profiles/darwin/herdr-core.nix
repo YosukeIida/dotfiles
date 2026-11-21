@@ -58,7 +58,7 @@ in
         SuccessfulExit = false;
       };
       EnvironmentVariables = {
-        # launchd は login shell を経ないので、LANG と PATH を orcaApp と同じ理由で渡す。
+        # launchd は login shell を経ないので、LANG と PATH を渡す。
         LANG = "en_US.UTF-8";
         PATH = path;
       };

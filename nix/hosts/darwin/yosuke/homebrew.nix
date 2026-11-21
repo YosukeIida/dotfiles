@@ -7,7 +7,6 @@
     tap "can1357/tap", trusted: true
     tap "mantrakp04/tap", trusted: true
     tap "solarphlare/tap", trusted: true
-    tap "stablyai/orca", trusted: true
     tap "xoshbin/asyar", trusted: true
     tap "yetanotherbrowser/tap", trusted: true
   '';
@@ -80,9 +79,6 @@
     "obsidian"
     "onlyoffice"
     "orbstack"
-    # Orca（並列エージェントを worktree ごとに走らせる ADE）。upstream 公式 tap の cask でのみ配布されており
-    # homebrew-core にも nixpkgs にも無いため tap 修飾で入れる。
-    "stablyai/orca/orca"
     "yosukeiida/casks-personal/pindrop"
     "yosukeiida/casks-personal/powerglance"
     "raycast"
