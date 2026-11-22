@@ -32,7 +32,8 @@ APP_AUTH="${AGSW_CODEX_APP_AUTH:-$HOME_CODEX/auth.json}"
 # ~/.codex-<name> から ~/.codex/* へ symlink するアイテム（実体は~/.codexに置いたまま）
 LINKED_ITEMS=(skills AGENTS.md config.toml sessions history.jsonl session_index.jsonl archived_sessions \
               memories memories_1.sqlite memories_1.sqlite-shm memories_1.sqlite-wal \
-              goals_1.sqlite transcription-history.jsonl models_cache.json)
+              goals_1.sqlite thread_history_1.sqlite thread_history_1.sqlite-shm thread_history_1.sqlite-wal \
+              transcription-history.jsonl models_cache.json)
 
 # 共有 symlink を張る先に「実ファイル / 実ディレクトリ」があるかを事前検査する。
 # 実装は lib/setup-common.bash に共有（実測 2026-07-28 で見つかった破壊パターン:
