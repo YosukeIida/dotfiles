@@ -15,6 +15,10 @@
 #        writing-quotation（mathbullet/skills）は marketplace 構造の repo だが、
 #        `/plugin install` は使わない（~/.claude の mutable state に入り、
 #        nix/dotfiles の宣言的管理から外れるため。判断は dotfiles/AGENTS.md 参照）。
+#        autoUpdate の plugin にもしない（2026-11-22 に検討して見送り）: upstream は plugin.json と
+#        marketplace.json の version を 1.0.0 から上げておらず（SKILL.md は 10/17・10/18 に変更済み）、
+#        Claude Code は version の文字列で更新を判定するため、自動更新が届かない見込みである。
+#        Codex 用の plugin 定義も無く、移すと Codex から skill が消える。
 #        domain-modeling は SKILL.md から ADR-FORMAT.md / GLOSSARY-FORMAT.md を相対参照
 #        するため、この2ファイルも extra_files で同じ rev から一緒に vendor する。
 #        gws-multi-account（indentcorp/gws-multi-account）も同じ理由:
