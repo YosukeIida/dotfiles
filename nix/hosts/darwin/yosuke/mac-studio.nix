@@ -28,13 +28,7 @@ let
 in
 
 {
-  # omlx（jundot/omlx）は formula の upgrade/ビルドが重く、持ち歩く Air には不要なため
-  # Studio 専用インストールにする。ローカルの LLM は Studio では omlx に一本化する（LM Studio は Air だけ）。
-  homebrew.extraConfig = ''
-    tap "jundot/omlx", "https://github.com/jundot/omlx", trusted: true
-  '';
   homebrew.brews = [
-    "jundot/omlx/omlx"
     # Apple Container 本体（CLI + XPC バックエンド）。Orchard（cask）はこの GUI フロント
     # エンドで、本体がないと "XPC connection error" になる。常駐サービス化はせず、
     # 使うときに `container system start` を手動実行する運用。
@@ -49,6 +43,11 @@ in
     # テレメトリは home.sessionVariables の LUME_TELEMETRY_ENABLED で止める。
     "yosukeiida/casks-personal/lume"
     "orchard"
+    # ローカルの LLM は Studio では omlx に一本化する（LM Studio は Air だけ）。持ち歩く Air には入れない。
+    # 公式 tap（jundot/omlx）の formula は upgrade のたびにソースからビルドし、rust と python@3.11 を
+    # 入れるので、公証済みの DMG のアプリを置く自前 cask を使う。更新は brew upgrade で行い、
+    # アプリ内の自動更新は下の home.activation で止める。
+    "yosukeiida/casks-personal/omlx"
   ];
 
   # Xcode は Swift のビルド（ararat など）に要る。宣言に無い App Store アプリは
@@ -58,7 +57,24 @@ in
   # HuggingFace のキャッシュ（モデル・データセット）を外付け SSD（PRO-G40, 4TB）に置く。
   # 既定は yosuke/common.nix の mkDefault（~/.cache/huggingface）で、ここで素の値で上書きする。
   # ディスク未接続時はこのパスが存在せず、ロードもダウンロードも失敗する。
-  home-manager.users.${username}.home.sessionVariables.HF_HOME = "/Volumes/PRO-G40/huggingface";
+  home-manager.users.${username} =
+    { lib, ... }:
+    {
+      home.sessionVariables.HF_HOME = "/Volumes/PRO-G40/huggingface";
+
+      # omlx のアプリが置く CLI（omlx start/stop/status）。アプリは初回起動時に .zshrc へ PATH を
+      # 書くかを尋ねるが、.zshrc は nix が持つので断り、ここで足す。
+      home.sessionPath = [ "$HOME/.omlx/bin" ];
+
+      # omlx のアプリ内の自動更新は、24 時間ごとに確認のダイアログを出してクリックを待つ。
+      # 更新は cask の brew upgrade に任せるので、確認そのものを切る（autoCheck だけを書き換え、他の値は残す）。
+      home.activation.omlxNoSelfUpdate = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        prefs="$HOME/Library/Application Support/oMLX/update-prefs.json"
+        mkdir -p "$(dirname "$prefs")"
+        [ -s "$prefs" ] || echo '{}' > "$prefs"
+        ${pkgs.jq}/bin/jq '.autoCheck = false' "$prefs" > "$prefs.tmp" && mv "$prefs.tmp" "$prefs"
+      '';
+    };
 
   # 常設機なので寝かせない。ディスプレイだけは離席時に消す。
   power = {
@@ -103,6 +119,22 @@ in
       Match Address *,!100.64.0.0/10
         DenyUsers *
     '';
+  };
+
+  # omlx のアプリをログイン時に裏で起動する。サーバはアプリの子で、~/.omlx/settings.json の
+  # server.auto_start_on_launch（既定で true）によりアプリの起動と同時に立ち上がる。サーバが落ちたら
+  # アプリが起動し直す。KeepAlive は付けない（omlx stop や Quit で意図して止めたものを起こし直さないため）。
+  launchd.user.agents.omlx = {
+    serviceConfig = {
+      Label = "com.yosuke.omlx";
+      ProgramArguments = [
+        "/usr/bin/open"
+        "-g"
+        "-a"
+        "oMLX"
+      ];
+      RunAtLoad = true;
+    };
   };
 
   # OpenClaw 秘書を閉じ込めた Lume の macOS VM（darwinConfigurations.secretary を適用したもの。
