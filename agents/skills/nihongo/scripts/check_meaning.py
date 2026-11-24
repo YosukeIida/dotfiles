@@ -29,7 +29,7 @@ MODALITY = {
     "推奨": ["推奨", "望まし", "おすすめ", "お勧め"],
     "任意": ["任意", "必須ではあ", "必須ではな"],
     "不要": ["不要", "必要ありませ", "必要はありませ", "なくて大丈夫", "なくても大丈夫", "なくても問題"],
-    "お願い": ["お願い", "ください", "いただけますでしょうか", "いただけますと幸い", "いただけますか"],
+    "お願い": ["お願い", "ください", "下さい", "いただけますでしょうか", "いただけますと幸い", "いただけますか"],
     "可能": ["できます", "可能です", "可能となって", "ことができ"],
     "未定": ["未定", "決まっていな", "決まり次第", "まだ分かって", "まだわかって", "調査中", "確認中", "検討中"],
 }
@@ -37,6 +37,8 @@ MODALITY = {
 # 程度や約束の言葉。消えたら出す
 DEGREE = ["大幅", "抜本", "全力", "心より", "心から", "深く", "根本", "必ず", "最大", "最小", "すべて", "全て",
           "一切", "絶対", "のみ", "だけ", "限り", "以上", "以下", "未満", "超え", "まで", "約", "およそ", "頃"]
+# 直した文で勝手に増えると意味（締切の曖昧化・範囲の限定・言いすぎ）が変わりやすい語
+DEGREE_ADDED = ("頃", "約", "およそ", "のみ", "だけ", "限り", "必ず", "すべて", "全て", "一切", "絶対")
 
 NEG = re.compile(r"(?:ない|なく|ません|ず[、。に]|ぬ|なし|無し|ではな)")
 # 未対応の英字単位が続く場合も、数字は全桁読む。英字の境界は単位にだけ当てる。
@@ -68,7 +70,7 @@ def orgs(text):
 
 WEEK = re.compile(r"[月火水木金土日]曜日?|[（(][月火水木金土日][）)]")
 CODE = re.compile(r"`[^`\n]+`")
-URL = re.compile(r"https?://\S+")
+URL = re.compile(r"https?://[A-Za-z0-9\-._~:/?#\[\]@!$&'+,;=%]+")
 SENT = re.compile(r"[^。！？!?\n]+[。！？!?]?")
 CONTENT = re.compile(r"[一-龥々]{2,}|[ァ-ヴー]{3,}|[A-Za-z][A-Za-z0-9_\-./]{2,}")
 
@@ -76,8 +78,12 @@ CONTENT = re.compile(r"[一-龥々]{2,}|[ァ-ヴー]{3,}|[A-Za-z][A-Za-z0-9_\-./
 def norm(s):
     s = unicodedata.normalize("NFKC", s)
     s = s.replace("```", "\n")
-    s = re.sub(r"(?<![0-9])([0-9]{1,2}):00(?![0-9])", r"\1時", s)
-    s = re.sub(r"(?<![0-9])([0-9]{1,2}):([0-9]{2})(?![0-9])", r"\1時\2分", s)
+    s = re.sub(r"(?<![0-9.:/])([01]?[0-9]|2[0-4]):00(?![0-9:])", lambda m: f"{int(m.group(1))}時", s)
+    s = re.sub(
+        r"(?<![0-9.:/])([01]?[0-9]|2[0-4]):([0-5][0-9])(?![0-9:])",
+        lambda m: f"{int(m.group(1))}時{int(m.group(2))}分",
+        s,
+    )
     # 午前・午後の時刻は24時間表記にそろえる（午後3時 と 15時 を同じものとして扱う）
     s = re.sub(r"午後([0-9]{1,2})時", lambda m: f"{int(m.group(1)) % 12 + 12}時", s)
     s = re.sub(r"午前([0-9]{1,2})時", lambda m: f"{int(m.group(1)) % 12}時", s)
@@ -86,6 +92,7 @@ def norm(s):
 
 # 程度の言葉のうち、別の語の一部として出てくるものを外す（いただけ、お疲れさまで、など）
 DEGREE_SKIP = {"だけ": ["いただけ", "頂け"], "まで": ["さまで", "様で"], "約": ["予約", "契約", "要約", "節約", "規約", "約束"],
+               "頃": ["手頃", "見頃", "年頃", "日頃"],
                "限り": [], "以上": ["以上です", "以上となります", "以上、"], "以下": ["以下のとおり", "以下の通り", "以下をご", "以下に"]}
 
 
@@ -165,7 +172,11 @@ def check(src, dst):
     out = []
 
     for name, pat in (("数値・日時", NUM), ("曜日", WEEK), ("コード", CODE), ("URL", URL)):
-        ca, cb = Counter(m.strip() for m in pat.findall(a)), Counter(m.strip() for m in pat.findall(b))
+        if name == "URL":
+            ca = Counter(m.strip().rstrip(".,;:") for m in pat.findall(a))
+            cb = Counter(m.strip().rstrip(".,;:") for m in pat.findall(b))
+        else:
+            ca, cb = Counter(m.strip() for m in pat.findall(a)), Counter(m.strip() for m in pat.findall(b))
         lost = [x for x in ca if x and cb[x] < ca[x]]
         added = [x for x in cb if x and ca[x] < cb[x]]
         if lost:
@@ -195,6 +206,8 @@ def check(src, dst):
         ca, cb = count_degree(a, w), count_degree(b, w)
         if ca > cb:
             out.append(f"[程度・約束] 「{w}」が減った（{ca}→{cb}）")
+        elif cb > ca and w in DEGREE_ADDED:
+            out.append(f"[程度・約束] 「{w}」が増えた（{ca}→{cb}）")
 
     na, nb = len(NEG.findall(a)), len(NEG.findall(b))
     if na != nb:

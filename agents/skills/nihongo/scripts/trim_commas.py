@@ -27,15 +27,17 @@ CLAUSE_AFTER = re.compile(r"(てから|でから|たら|だら|れば|ので|な
 KEEP_DE = re.compile(r"(無料|有料|簡単|可能|不要|必要|便利|安全|丁寧|元気|静か)で$")
 
 
-def trim_sentence(s):
+def trim_sentence(s, mark_head=None):
     """1文から外せる読点を外す。外した後の文と、外した理由の一覧を返す。"""
+    if mark_head is None:
+        mark_head = MARK_HEAD
     body = s
     marks = [m.start() for m in re.finditer("、", body)]
     drop = []
     for i in marks:
         before = body[:i]
         after = body[i + 1:]
-        if after.lstrip().startswith(MARK_HEAD):
+        if after.lstrip().startswith(mark_head):
             continue  # コードやURLの直前の読点は、日本語との境目の印なので残す
         if before.endswith("を"):
             drop.append((i, "「を」の後"))
@@ -60,6 +62,19 @@ def trim_sentence(s):
 INLINE = re.compile(r"`[^`\n]*`|https?://[^\s、。）)」]+")
 MARK_HEAD, MARK_BODY = "\ue000", "\ue001"
 MARK = re.compile(MARK_HEAD + MARK_BODY + "*")
+
+
+def pick_markers(text):
+    """本文に出てこない2文字を退避用の印に選ぶ。"""
+    picked = []
+    for start, end in ((0xE000, 0xF900), (0xF0000, 0xFFFFE)):
+        for cp in range(start, end):
+            ch = chr(cp)
+            if ch not in text:
+                picked.append(ch)
+                if len(picked) == 2:
+                    return picked[0], picked[1]
+    raise RuntimeError("退避用の印を選べませんでした")
 
 
 FENCE_OPEN = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})(.*)$")
@@ -99,19 +114,21 @@ def trim(text):
         lines = part.split("\n")
         new_lines = []
         for line in lines:
+            mark_head, mark_body = pick_markers(line)
+            mark = re.compile(re.escape(mark_head) + re.escape(mark_body) + "*")
             kept = INLINE.findall(line)
-            masked = INLINE.sub(lambda m: MARK_HEAD + MARK_BODY * (len(m.group()) - 1), line)
+            masked = INLINE.sub(lambda m: mark_head + mark_body * (len(m.group()) - 1), line)
             pieces = re.split(r"(?<=[。！？!?])", masked)
             new_pieces = []
             for p in pieces:
                 head = re.match(r"^(\s*(?:#+|[-*・]|\d+[.)]|>)?\s*)", p).group(1)
-                body, why = trim_sentence(p[len(head):])
+                body, why = trim_sentence(p[len(head):], mark_head=mark_head)
                 if why:
-                    shown = MARK.sub("…", p.strip())
+                    shown = mark.sub("…", p.strip())
                     log.append(f"外した（{'・'.join(why)}）：{shown[:50]}")
                 new_pieces.append(head + body)
             restored = iter(kept)
-            new_lines.append(MARK.sub(lambda m: next(restored), "".join(new_pieces)))
+            new_lines.append(mark.sub(lambda m: next(restored), "".join(new_pieces)))
         out.append("\n".join(new_lines))
     return "".join(out), log
 
