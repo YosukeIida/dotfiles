@@ -46,6 +46,13 @@ if [[ "${1:-}" == */yomiyasu/scripts/*.py ]]; then
   exec uv run --no-project python "$@"
 fi
 
+# security-guidance（plugin）の hook は python を `-c ""` で probe するので、上の $1 の判定には当たらない。
+# `uv run` に渡さないのは、hook の env の CLAUDE_PLUGIN_ROOT を継いだ uv が PATH のこのガードを
+# probe し、ここへ戻って uv を呼び返すため。--managed-python なら uv は PATH を probe しない。
+if [[ "${CLAUDE_PLUGIN_ROOT:-}" == */security-guidance/* ]]; then
+  py="$(uv python find --managed-python --no-project 2>/dev/null)" && exec "$py" "$@"
+fi
+
 # 3. どちらの根拠も無ければ拒否する（/usr/bin の system python への無自覚な
 #    フォールバックを防ぐ）。uv からの probe もここに落ちて 1 を返し、uv は
 #    この候補を諦めて managed python に進む。
