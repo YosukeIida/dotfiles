@@ -135,6 +135,17 @@ NIHONGO_PATH="nihongo/SKILL.md"
 NIHONGO_EXTRA="nihongo/ALWAYS.md:ALWAYS.md nihongo/references/ai-patterns.md:references/ai-patterns.md nihongo/references/business-email.md:references/business-email.md nihongo/references/conversation.md:references/conversation.md nihongo/references/craft.md:references/craft.md nihongo/references/entry-sheet.md:references/entry-sheet.md nihongo/references/essays-and-promotion.md:references/essays-and-promotion.md nihongo/references/keigo.md:references/keigo.md nihongo/references/make-profile.md:references/make-profile.md nihongo/references/marketing-copy.md:references/marketing-copy.md nihongo/references/media.md:references/media.md nihongo/references/messaging.md:references/messaging.md nihongo/references/notices.md:references/notices.md nihongo/references/orthography.md:references/orthography.md nihongo/references/personal-profile.md:references/personal-profile.md nihongo/references/register.md:references/register.md nihongo/references/review.md:references/review.md nihongo/references/slides-and-documents.md:references/slides-and-documents.md nihongo/references/speech.md:references/speech.md nihongo/references/technical-writing.md:references/technical-writing.md nihongo/references/titles.md:references/titles.md nihongo/references/translation.md:references/translation.md nihongo/references/ui-copy.md:references/ui-copy.md nihongo/scripts/__init__.py:scripts/__init__.py nihongo/scripts/check_meaning.py:scripts/check_meaning.py nihongo/scripts/cli.py:scripts/cli.py nihongo/scripts/inbox.py:scripts/inbox.py nihongo/scripts/revert_broken.py:scripts/revert_broken.py nihongo/scripts/trim_commas.py:scripts/trim_commas.py"
 NIHONGO_REV="f12455390e4dd4c53decd5d12d659aafcdb24dfd"
 
+# tsuzuri: 日本語の文章を、執筆意図と文機能を記録しながら一文ずつ書く skill（MaryCache/tsuzuri）。
+# upstream は marketplace を配らず（plugin 定義が無い）、skill 本体が repo 内の skills/tsuzuri/ にあるため vendor する。
+# SKILL.md が references/ と scripts/tsuzuri.py を相対参照するので、tests/ を除く全ファイルを同じ rev で取る。
+# pin は repo の HEAD（複数ファイルを束ねるため。理由は gws-multi-account と同じ）。
+# 閲覧アプリ（app/）は skill に含まれないので vendor せず、~/workspace/github.com/MaryCache/tsuzuri の clone から起動する。
+# SKILL.md は同梱スクリプトを素の python3 で呼ぶため、tools/agent-switch/runtime-guards/python-guard.sh が uv に渡す。
+TSUZURI_REPO="MaryCache/tsuzuri"
+TSUZURI_PATH="skills/tsuzuri/SKILL.md"
+TSUZURI_EXTRA="skills/tsuzuri/references/checklist.md:references/checklist.md skills/tsuzuri/references/cold-read.md:references/cold-read.md skills/tsuzuri/references/cold-reader-prompt.md:references/cold-reader-prompt.md skills/tsuzuri/references/intent-quality.md:references/intent-quality.md skills/tsuzuri/references/requirements-and-design.md:references/requirements-and-design.md skills/tsuzuri/references/review-load.md:references/review-load.md skills/tsuzuri/references/session-log-prompt.md:references/session-log-prompt.md skills/tsuzuri/references/tag-vocabulary.md:references/tag-vocabulary.md skills/tsuzuri/references/templates/README.md:references/templates/README.md skills/tsuzuri/references/templates/ブログとエッセイ.md:references/templates/ブログとエッセイ.md skills/tsuzuri/references/templates/仕事の報告と提案.md:references/templates/仕事の報告と提案.md skills/tsuzuri/references/words.tsv:references/words.tsv skills/tsuzuri/scripts/tsuzuri.py:scripts/tsuzuri.py"
+TSUZURI_REV="61e346b5d491b6b25b9b4be28f9496fdfc14789a"
+
 DEST="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/agents/skills"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -330,6 +341,8 @@ sync_repo_file "latex-devkit" "$LATEX_DEVKIT_REPO" "$LATEX_DEVKIT_PATH" "$LATEX_
   'description: latex-devkit を使って LaTeX を Docker でビルドする操作スキル。「PDFをビルドして」「latexでコンパイルして」「ビルドして」などの表現がトリガー。外部リポジトリの papers/ 以下のプロジェクトのビルドにも対応。※既存 LaTeX プロジェクトのビルド専用。サーベイ論文の執筆工程一式（文献収集〜章ドラフト〜PDF 化）は tmllab-academic-survey-paper が担当。'
 sync_repo_file "nihongo" "$NIHONGO_REPO" "$NIHONGO_PATH" "$NIHONGO_REV" \
   "" "" "" "$NIHONGO_EXTRA"
+sync_repo_file "tsuzuri" "$TSUZURI_REPO" "$TSUZURI_PATH" "$TSUZURI_REV" \
+  "" "" "" "$TSUZURI_EXTRA"
 # ローカルパッチ: upstream の SKILL.md は accounts.json のマージに裸の `node -e` を
 # 使い、「Claude Code や opencode を動かすマシンには必ず node がある」という前提で
 # 書かれている。この環境には nodeless-policy により裸の node が PATH に無いため、

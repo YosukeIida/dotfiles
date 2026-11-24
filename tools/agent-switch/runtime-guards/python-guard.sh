@@ -39,10 +39,10 @@ while [[ "$dir" != "/" && "$dir" != "$HOME" ]]; do
   dir="$(dirname "$dir")"
 done
 
-# yomiyasu（marketplace から入れる plugin）の SKILL.md は同梱スクリプトを素の python3 で呼ぶ。
+# yomiyasu（marketplace から入れる plugin）と tsuzuri（vendor）の SKILL.md は同梱スクリプトを素の python3 で呼ぶ。
 # SKILL.md を書き換えると自動更新のたびに消えるので、ここで uv に渡す。uv の probe は
 # このパスを引数に持たないため、上の 2. に書いたデッドロックは起きない。
-if [[ "${1:-}" == */yomiyasu/scripts/*.py ]]; then
+if [[ "${1:-}" == */yomiyasu/scripts/*.py || "${1:-}" == */tsuzuri/scripts/*.py ]]; then
   exec uv run --no-project python "$@"
 fi
 
