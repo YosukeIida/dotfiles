@@ -59,6 +59,9 @@ in
     # 呼び直すため。非対話ログインシェル（zsh -lc）は zshrc を読まないので、
     # ここで呼ばないと agent-switch のシムが Homebrew に負ける。
     ".zprofile".source = lnk "zsh/zprofile";
+    # Claude Code の Bash ツール用（CLAUDE_CODE_SHELL=bash）。関数は zshrc と共有する。
+    ".bashrc".source = lnk "bash/bashrc";
+    ".config/shell/common.sh".source = lnk "shell/common.sh";
 
     # codex プラグイン（sites 等）の MCP サーバが `command: "node"` で起動されるための node。
     # 通常の PATH には載せない（node は devshell のみの方針）。agent-switch の codex()

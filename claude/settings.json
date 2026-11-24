@@ -1,5 +1,8 @@
 {
   "skillListingBudgetFraction": 0.02,
+  "env": {
+    "CLAUDE_CODE_SHELL": "bash"
+  },
   "attribution": {
     "commit": "",
     "pr": "",
