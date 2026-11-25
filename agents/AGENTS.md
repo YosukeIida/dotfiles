@@ -52,6 +52,10 @@ When a repository's documentation and its existing code disagree, follow the con
 - Make architectural decisions for the long term. Do not accept a stopgap that only works for now and is meant to be replaced later.
 - 書き分け（t_wada）: コードには How、テストコードには What、コミットログには Why、コードコメントには Why not（あえて採らなかった方法とその理由）を書く。コードコメントには Why not 以外を基本的に書かない。
 
+## Codex への委譲
+
+- hc の端末の中（`HC_TERMINAL_ID` がある）で動くセッションから Codex に作業を頼むときは、codex plugin の `codex:rescue` ではなく skill `codex-in-hc` で起動する。Herdr app の peek で Codex の作業が見えるようにするためである。hc の端末の外では `codex:rescue` を使う。
+
 ## ツールの入れ方
 
 - グローバルな CLI は dotfiles の `nix/home/packages.nix`、Homebrew が要るものは `nix/profiles/darwin/homebrew.nix`、プロジェクト固有のものは各 repo の nix devshell に入れる。反映は `darwin-switch`
