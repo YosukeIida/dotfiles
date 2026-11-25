@@ -143,7 +143,7 @@
           },
           {
             "type": "command",
-            "command": "bash /Users/yosuke/workspace/github.com/YosukeIida/dotfiles/claude/hooks/codex-in-hc-cleanup.sh",
+            "command": "bash /Users/yosuke/workspace/github.com/YosukeIida/dotfiles/claude/hooks/herdr-peek-agent-cleanup.sh",
             "timeout": 5
           }
         ]
