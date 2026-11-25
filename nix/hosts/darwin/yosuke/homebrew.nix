@@ -49,6 +49,9 @@
     # 「exists in multiple taps」で bundle 全体を止める。trusted: の宣言も
     # リダイレクト後の名前と一致せず「Untrusted tap」になる（2026-08-20 に遭遇）。
     "solarphlare/tap/airmute"
+    # Ararat（自作のブラウザ）。GitHub Releases の ad-hoc 署名の zip を指す自前 cask で、
+    # preview も含めて tap の毎時の bump が取り込む。
+    "yosukeiida/casks-personal/ararat"
     "arc"
     "mantrakp04/tap/ardia"
     "xoshbin/asyar/asyar"
