@@ -13,7 +13,7 @@
     {
       "name": "slash-substring",
       "description": "文の途中の / でも、skill とコマンドを名前の部分一致で候補に出す",
-      "version": "0.1.0",
+      "version": "0.1.2",
       "source": "./plugins/slash-substring"
     }
   ]
