@@ -54,7 +54,7 @@ When a repository's documentation and its existing code disagree, follow the con
 
 ## Codex への委譲
 
-- hc の端末の中（`HC_TERMINAL_ID` がある）で動くセッションから Codex に作業を頼むときは、codex plugin の `codex:rescue` ではなく skill `herdr-peek-agent` で起動する。Herdr app の peek で Codex の作業が見えるようにするためである。hc の端末の外では `codex:rescue` を使う。
+- hc の端末の中（`HC_TERMINAL_ID` がある）で動くセッションから Codex に作業を頼むときは、codex plugin の `codex:rescue` ではなく skill `peek-hc-agent` で起動する。Herdr app の peek で Codex の作業が見えるようにするためである。hc の端末の外では `codex:rescue` を使う。
 
 ## ツールの入れ方
 

@@ -143,7 +143,7 @@
           },
           {
             "type": "command",
-            "command": "bash /Users/yosuke/workspace/github.com/YosukeIida/dotfiles/claude/hooks/herdr-peek-agent-cleanup.sh",
+            "command": "bash /Users/yosuke/workspace/github.com/YosukeIida/dotfiles/claude/hooks/peek-hc-agent-cleanup.sh",
             "timeout": 5
           }
         ]
@@ -269,7 +269,8 @@
     "yomiyasu@yomiyasu": true,
     "qa-guide@claude-qamods": true,
     "cite-resolve@cite-resolve": true,
-    "herdr-agent-view@dotfiles-local": true
+    "herdr-agent-view@dotfiles-local": true,
+    "slash-substring@dotfiles-local": true
   },
   "extraKnownMarketplaces": {
     "YosukeIida": {

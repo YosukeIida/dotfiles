@@ -9,6 +9,12 @@
       "description": "Herdr app の agents の行から、押された subagent の会話画面へ切り替える",
       "version": "0.1.0",
       "source": "./plugins/herdr-agent-view"
+    },
+    {
+      "name": "slash-substring",
+      "description": "文の途中の / でも、skill とコマンドを名前の部分一致で候補に出す",
+      "version": "0.1.0",
+      "source": "./plugins/slash-substring"
     }
   ]
 }

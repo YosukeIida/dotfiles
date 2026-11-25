@@ -1,0 +1,1 @@
+{ "name": "slash-substring", "version": "0.1.0", "description": "文の途中の / でも、skill とコマンドを名前の部分一致で候補に出す" }
